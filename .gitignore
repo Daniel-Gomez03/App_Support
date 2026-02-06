@@ -1,0 +1,30 @@
+# --- GENERAL ---
+.DS_Store
+Thumbs.db
+node_modules/
+vendor/
+
+# --- ENVIRONMENTS (Seguridad) ---
+.env
+.env.backup
+.env.production
+
+# --- LARAVEL ---
+/backend/public/hot
+/backend/public/storage
+/backend/storage/*.key
+/backend/vendor
+/backend/.phpunit.result.cache
+
+# --- MOBILE (Android/iOS builds) ---
+/mobile_app/android/app/build/
+/mobile_app/android/.gradle/
+/mobile_app/ios/Pods/
+/mobile_app/ios/build/
+*.apk
+*.aab
+
+# --- LOGS ---
+*.log
+npm-debug.log*
+yarn-debug.log*
