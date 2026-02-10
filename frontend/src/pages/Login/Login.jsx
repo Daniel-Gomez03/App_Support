@@ -20,7 +20,7 @@ const Login = () => {
 
                     <div className={styles.header}>
                         <div className={styles.logoPlaceholder}>
-                            <div className={styles.logoIcon}>📦</div>
+                            <div className={styles.logoIcon}></div>
                             <div className={styles.logoText}>
                                 <h1>TBOXSA</h1>
                                 <small>THINK OUTSIDE THE BOX</small>
@@ -33,14 +33,14 @@ const Login = () => {
                     <form>
                         <Input
                             label="Correo Electrónico"
-                            placeholder="nombre@tboxsa.com"
+                            placeholder="Correo Electrónico"
                             type="email"
                             icon={FaUser}
                         />
 
                         <Input
                             label="Contraseña"
-                            placeholder="••••••••"
+                            placeholder="Contraseña"
                             type="password"
                             icon={FaLock}
                         />
@@ -62,7 +62,7 @@ const Login = () => {
                     </form>
 
                     <footer className={styles.copyright}>
-                        COPYRIGHT © TBOXSA 2026
+                        COPYRIGHT &copy; TBOXSA 2026
                     </footer>
                 </div>
             </div>

@@ -3,65 +3,65 @@
 .inputGroup {
     margin-bottom: 20px;
     width: 100%;
-}
 
-.label {
-    display: block;
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: @text-main;
-    font-size: 14px;
-}
-
-.inputWrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.input {
-    width: 100%;
-    padding: 14px 14px 14px 45px;
-    background-color: @bg-input;
-    border: 1px solid transparent;
-    border-radius: @border-radius-input;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.3s ease;
-    color: @text-main;
-
-    &::placeholder {
-        color: #A0A0A0;
+    .label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: @text-main;
+        font-size: 14px;
     }
 
-    &:focus {
-        border-color: @primary-color;
-        background-color: #fff;
-        box-shadow: 0 0 0 4px rgba(46, 92, 56, 0.1);
-    }
-}
+    .inputWrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
 
-.iconLeft {
-    position: absolute;
-    left: 15px;
-    color: @text-main;
-    font-size: 18px;
-    display: flex;
-    pointer-events: none;
-}
+        .input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            background-color: @bg-input;
+            border: 1px solid transparent;
+            border-radius: @border-radius-input;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            color: @text-main;
 
-.iconRight {
-    position: absolute;
-    right: 15px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: @text-muted;
-    display: flex;
-    font-size: 18px;
-    transition: color 0.2s;
+            &::placeholder {
+                color: #A0A0A0;
+            }
 
-    &:hover {
-        color: @primary-color;
+            &:focus {
+                border-color: @primary-color;
+                background-color: #fff;
+                box-shadow: 0 0 0 4px rgba(46, 92, 56, 0.1);
+            }
+        }
+
+        .iconLeft {
+            position: absolute;
+            left: 15px;
+            color: @text-main;
+            font-size: 18px;
+            display: flex;
+            pointer-events: none;
+        }
+
+        .iconRight {
+            position: absolute;
+            right: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: @text-muted;
+            display: flex;
+            font-size: 18px;
+            transition: color 0.2s;
+
+            &:hover {
+                color: @primary-color;
+            }
+        }
     }
 }
