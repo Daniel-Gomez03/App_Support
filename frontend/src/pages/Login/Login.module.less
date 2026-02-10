@@ -1,0 +1,148 @@
+@import "../../styles/variables.less";
+
+.loginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: @bg-body;
+  padding: 20px;
+}
+
+.card {
+  display: flex;
+  width: 100%;
+  max-width: 1000px; /* Ancho máximo para pantallas grandes */
+  min-height: 600px;
+  background-color: @bg-card;
+  border-radius: @border-radius-card;
+  box-shadow: @shadow-soft;
+  overflow: hidden; /* Para que la imagen no se salga de las esquinas redondeadas */
+
+  /* Responsivo: En celulares se pone uno debajo del otro */
+  @media (max-width: 768px) {
+    flex-direction: column;
+    min-height: auto;
+  }
+}
+
+/* --- LADO IZQUIERDO (Ilustración) --- */
+.leftSide {
+  flex: 1; /* Ocupa el 50% */
+  background-color: #f9f9f9; /* Color de fondo temporal */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+
+  @media (max-width: 768px) {
+    display: none; /* Opcional: Ocultar imagen en celular para ahorrar espacio */
+  }
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, @secondary-color 0%, @primary-color 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  opacity: 0.3; /* Efecto transparente */
+}
+
+/* --- LADO DERECHO (Formulario) --- */
+.rightSide {
+  flex: 1; /* Ocupa el otro 50% */
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    padding: 30px;
+  }
+}
+
+.header {
+  margin-bottom: 40px;
+  text-align: left; /* Alineado a la izquierda según tu imagen */
+}
+
+.logoPlaceholder {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+
+  .logoIcon {
+    font-size: 40px;
+  }
+
+  .logoText {
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #555;
+      margin: 0;
+      line-height: 1;
+    }
+    small {
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: @text-muted;
+      font-weight: 600;
+    }
+  }
+}
+
+.welcomeTitle {
+  font-size: 32px;
+  font-weight: 400; /* Letra fina */
+  font-style: italic; /* Letra cursiva como en el diseño */
+  color: #000;
+  margin: 0;
+}
+
+.formFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  font-size: 14px;
+  color: @text-main;
+
+  .checkboxContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    
+    input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+  }
+
+  .forgotPassword {
+    font-weight: 600;
+    font-style: italic;
+    color: #000;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.copyright {
+  margin-top: auto; 
+  padding-top: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: @text-muted;
+  text-transform: uppercase;
+}

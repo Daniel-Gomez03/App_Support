@@ -1,0 +1,31 @@
+@import "../../styles/variables.less";
+
+.btn {
+    width: 100%;
+    padding: 16px;
+    background-color: @primary-color;
+    color: @text-inverse;
+    border: none;
+    border-radius: @border-radius-input;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(46, 92, 56, 0.2);
+
+    &:hover {
+        background-color: lighten(@primary-color, 5%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(46, 92, 56, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    &:disabled {
+        background-color: @text-muted;
+        cursor: not-allowed;
+        transform: none;
+    }
+}
