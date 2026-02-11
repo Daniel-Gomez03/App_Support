@@ -1,0 +1,108 @@
+@import "../../styles/variables.less";
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background-color: @bg-body; 
+  margin-bottom: 20px;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.menuBtn {
+  background: #9CA3AF; 
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.searchContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .searchIcon {
+    position: absolute;
+    left: 15px;
+    color: #A0AEC0;
+  }
+
+  .searchInput {
+    width: 300px;
+    padding: 12px 40px 12px 40px; 
+    border: none;
+    border-radius: 20px; 
+    background-color: white;
+    outline: none;
+    color: @text-main;
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+
+    &::placeholder {
+      color: #A0AEC0;
+    }
+  }
+
+  .filterIcon {
+    position: absolute;
+    right: 15px;
+    font-size: 10px;
+    color: #A0AEC0;
+    border: 1px solid #E2E8F0;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.notificationItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+
+  .fireIcon {
+    color: #F97316; 
+    font-size: 18px;
+  }
+}
+
+.separator {
+  width: 1px;
+  height: 20px;
+  background-color: #CBD5E1;
+}
+
+.logoutBtn {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94A3B8; 
+  cursor: pointer;
+  font-size: 13px;
+  
+  &:hover {
+    color: @text-main;
+  }
+}

@@ -1,13 +1,14 @@
 import React from 'react'
 import './styles/main.less'
-import Login from './pages/Login/Login'
+import MainLayout from './layouts/MainLayout';
 
 function App() {
 
   return (
-    <div>
-      <Login />
-    </div>
+    <MainLayout>
+      <h1>Aquí irán los Widgets del Dashboard</h1>
+      <p>Si ves esto, el Layout funciona.</p>
+    </MainLayout>
   )
 }
 

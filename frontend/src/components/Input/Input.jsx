@@ -8,10 +8,12 @@ const Input = ({ label, icon: Icon, type = 'text', placeholder, ...props }) => {
 
     return (
         <div className={styles.inputGroup}>
-            {label && <label className={styles.label}>{label}</label>}
+            <div className={styles.labelRow}>
+                {Icon && <span className={styles.iconTop}><Icon /></span>}
+                {label && <label className={styles.label}>{label}</label>}
+            </div>
 
             <div className={styles.inputWrapper}>
-                {Icon && <span className={styles.iconLeft}><Icon /></span>}
 
                 <input
                     type={isPassword ? (showPassword ? 'text' : 'password') : type}

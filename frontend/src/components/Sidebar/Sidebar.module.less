@@ -1,0 +1,111 @@
+@import "../../styles/variables.less";
+
+.sidebar {
+    width: 260px;
+    /* Ancho fijo */
+    height: 100vh;
+    /* Altura completa de la pantalla */
+    background-color: @sidebar-bg;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    /* Fijo a la izquierda */
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+
+    .logoArea {
+        padding: 30px 24px;
+        display: flex;
+        align-items: center;
+
+        .logo {
+            max-width: 140px;
+            /* Ajusta según tu logo */
+            height: auto;
+        }
+    }
+
+    .nav {
+        flex: 1;
+        /* Ocupa todo el espacio disponible */
+        padding-top: 20px;
+
+        .menuList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+
+            .menuItem {
+                display: flex;
+                align-items: center;
+                padding: 16px 30px;
+                /* Espaciado interno cómodo */
+                cursor: pointer;
+                color: @sidebar-text;
+                /* Gris verdoso */
+                font-size: 14px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                border-left: 4px solid transparent;
+                /* Borde invisible por defecto */
+
+                .icon {
+                    font-size: 18px;
+                    margin-right: 16px;
+                }
+
+                /* Efecto Hover (pasar el mouse) */
+                &:hover {
+                    color: #fff;
+                    background-color: rgba(255, 255, 255, 0.05);
+                }
+
+                /* Estado ACTIVO (Como en la imagen: Dashboard) */
+                &.active {
+                    color: @sidebar-active;
+                    /* Verde brillante */
+                    background: linear-gradient(90deg, rgba(74, 222, 128, 0.1) 0%, transparent 100%);
+                    border-left-color: @sidebar-active;
+                    /* La línea verde a la izquierda */
+                }
+            }
+        }
+    }
+
+    .profileSection {
+        margin-top: auto;
+        /* Empuja esto al fondo */
+        padding: 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .userInfo {
+            display: flex;
+            flex-direction: column;
+
+            .userName {
+                color: #fff;
+                font-weight: 600;
+                font-size: 14px;
+                margin: 0;
+            }
+
+            .userEmail {
+                color: @sidebar-text;
+                font-size: 11px;
+            }
+        }
+    }
+}

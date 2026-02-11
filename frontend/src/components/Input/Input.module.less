@@ -4,10 +4,26 @@
     margin-bottom: 20px;
     width: 100%;
 
+    .labelRow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        /* Espacio entre el icono y el texto */
+        margin-bottom: 8px;
+        color: @text-main;
+        /* Color para el icono y el texto */
+
+        .iconTop {
+            font-size: 18px;
+            display: flex;
+            color: @text-main;
+        }
+    }
+
     .label {
         display: block;
         font-weight: 500;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         color: @text-main;
         font-size: 14px;
     }
@@ -19,7 +35,7 @@
 
         .input {
             width: 100%;
-            padding: 14px 14px 14px 45px;
+            padding: 14px 14px 14px;
             background-color: @bg-input;
             border: 1px solid transparent;
             border-radius: @border-radius-input;
