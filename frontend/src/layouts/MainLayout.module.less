@@ -1,0 +1,21 @@
+@import "../styles/variables.less";
+
+.layoutContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: @bg-body;
+}
+
+.mainContent {
+  flex: 1; /* Ocupa todo el ancho restante */
+  margin-left: 260px; /* IMPORTANTE: Deja el espacio para el Sidebar fijo */
+  display: flex;
+  flex-direction: column;
+}
+
+.pageContent {
+  padding: 0 30px 30px 30px; /* Margen a los lados */
+  width: 100%;
+  max-width: 1600px; /* Para que no se estire infinito en pantallas gigantes */
+  margin: 0 auto;
+}

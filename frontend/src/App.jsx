@@ -1,5 +1,5 @@
 import React from 'react'
-import './styles/main.less'
+import './less/main.less'
 import MainLayout from './layouts/MainLayout';
 
 function App() {
