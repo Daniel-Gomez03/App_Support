@@ -1,6 +1,6 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar/Sidebar';
-import Header from '../components/Header/Header';
+// import Header from '../components/Header/Header';
 import styles from './MainLayout.module.less';
 
 const MainLayout = ({ children }) => {
@@ -12,8 +12,8 @@ const MainLayout = ({ children }) => {
       
       {/* 2. Área Principal (Header + Contenido) */}
       <main className={styles.mainContent}>
-        <Header />
-        
+        {/* <Header />
+         */}
         {/* Aquí se inyectan las páginas (Dashboard, Tickets, etc) */}
         <div className={styles.pageContent}>
           {children}
