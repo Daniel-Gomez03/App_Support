@@ -1,14 +1,21 @@
 import React from 'react'
 import './less/main.less'
 import MainLayout from './layouts/MainLayout';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Dashboard from './pages/CreateTicket';
+import CreateTicket from './pages/CreateTicket';
 
 function App() {
 
   return (
-    <MainLayout>
-      <h1>Aquí irán los Widgets del Dashboard</h1>
-      <p>Si ves esto, el Layout funciona.</p>
-    </MainLayout>
+    <BrowserRouter>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/tickets/create" element={<Tickets title="Crear Ticket" />} />
+        </Routes>
+      </MainLayout>
+    </BrowserRouter>
   )
 }
 
