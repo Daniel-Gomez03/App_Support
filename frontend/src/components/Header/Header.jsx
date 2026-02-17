@@ -1,40 +1,44 @@
 import React from 'react';
-import { FaBars, FaSearch, FaFire, FaSignOutAlt } from 'react-icons/fa';
+import { FaFire } from "react-icons/fa";
+import search from '../../assets/icons/Lens-icon.svg';
+import logOut from '../../assets/icons/Log-out-icon.svg';
 import styles from './Header.module.less';
 
-const Header = () => {
+const Header = ({ toggleSidebar }) => {
   return (
     <header className={styles.header}>
-      
       <div className={styles.leftSection}>
-        <button className={styles.menuBtn}>
-          <FaBars />
+        <button className={styles.hamburgerBtn} onClick={toggleSidebar}>
+          <div className={styles.bar}></div>
+          <div className={styles.bar}></div>
+          <div className={styles.bar}></div>
         </button>
-        
-        <div className={styles.searchContainer}>
-          <FaSearch className={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Search task" 
-            className={styles.searchInput} 
+      </div>
+
+      <div className={styles.searchSection}>
+        <div className={styles.searchBar}>
+          <img src={search} alt="Buscar" className={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Search task"
+            className={styles.searchInput}
           />
-          <span className={styles.filterIcon}>⌘F</span>
+          <div className={styles.shortcutBadge}>⌘F</div>
         </div>
       </div>
 
       <div className={styles.rightSection}>
-        
-        <div className={styles.notificationItem}>
-            <FaFire className={styles.fireIcon} />
-            <span className={styles.badge}>3</span>
+
+        <div className={styles.streakContainer}>
+          <FaFire className={styles.fireIcon} />
+          <span className={styles.streakNumber}>0</span>
         </div>
 
-        <div className={styles.separator}></div>
+        <div className={styles.logoutContainer}>
+          <img src={logOut} alt="Logout" className={styles.logoutIcon} />
+          <span className={styles.logoutText}>Cerrar Sesión</span>
+        </div>
 
-        <button className={styles.logoutBtn}>
-            <FaSignOutAlt />
-            <span>Cerrar Sesión</span>
-        </button>
       </div>
     </header>
   );

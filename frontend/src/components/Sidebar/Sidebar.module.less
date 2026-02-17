@@ -13,6 +13,7 @@
     padding-bottom: 20px;
     border-right: 1px solid rgba(255, 255, 255, 0.05);
     overflow-y: auto;
+    transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
 
     .logoArea {
         padding: 25px 30.65px 31px 23px;
@@ -45,7 +46,7 @@
                 margin-right: 16px;
                 border-radius: 12px;
                 cursor: pointer;
-                transition: all 0.2s ease;
+                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
                 color: #ffffff;
 
                 &:hover {
@@ -53,7 +54,8 @@
                 }
 
                 &.active {
-                    background-color: #FFFFFFCF;
+                    background-color: #ffffff;
+                    opacity: 81%;
                     color: @quaternary-color;
                     font-weight: 600;
                     margin-right: 0;
@@ -63,7 +65,8 @@
                     border-bottom-left-radius: 30px;
 
                     .icon {
-                        filter: none;
+                        filter: brightness(0);
+                        transform: scale(1.05);
                     }
                 }
 
@@ -86,6 +89,8 @@
                 width: 20px;
                 height: 20px;
                 margin-right: 12px;
+                filter: brightness(0) invert(1);
+                transition: filter 0.3s ease, transform 0.3s ease;
             }
 
             .text {
@@ -103,10 +108,12 @@
                 .subItem {
                     padding: 8px 16px 8px 40px;
                     margin-bottom: 2px;
+                    margin-right: 16px;
                     cursor: pointer;
                     border-radius: 8px;
-                    color: #B0B0B0;
+                    color: #ffffff;
                     font-size: 13px;
+                    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
                     transition: color 0.2s;
                     display: flex;
                     align-items: center;
@@ -115,6 +122,29 @@
                     &:hover {
                         color: #fff;
                         background-color: rgba(255, 255, 255, 0.05);
+
+                        .icon {
+                            opacity: 1;
+                            transform: translateX(2px);
+                        }
+                    }
+
+                    &.active {
+                        background-color: #ffffff;
+                        opacity: 81%;
+                        color: @quaternary-color;
+                        font-weight: 600;
+                        margin-right: 0;
+                        border-top-right-radius: 0;
+                        border-bottom-right-radius: 0;
+                        border-top-left-radius: 30px;
+                        border-bottom-left-radius: 30px;
+
+                        .icon {
+                            filter: brightness(0);
+                            opacity: 1;
+                            transform: scale(1.05);
+                        }
                     }
 
                     .icon {
@@ -202,5 +232,10 @@
                 }
             }
         }
+    }
+
+    &.closed {
+        transform: translateX(-100%);
+        width: 0;
     }
 }
