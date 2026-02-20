@@ -14,7 +14,7 @@ const MainLayout = ({ children }) => {
   return (
     <div className={styles.layoutContainer}>
 
-      <Sidebar isOpen={isSidebarOpen} />
+      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar}/>
 
       <main className={`${styles.mainContent} ${!isSidebarOpen ? styles.expanded : ''}`}>
         <Header toggleSidebar={toggleSidebar} />

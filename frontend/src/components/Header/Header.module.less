@@ -9,10 +9,13 @@
   justify-content: space-between;
   padding: 0 32px;
   box-sizing: border-box;
+  position: sticky;
 
   @media (max-width: #breaks[tablet]) {
     padding: 0 16px;
     height: 60px;
+    top: 0;
+    z-index: 90;
   }
 
   .hamburgerBtn {
@@ -22,7 +25,6 @@
     opacity: 50%;
     border: none;
     border-radius: 6.8px;
-
     cursor: pointer;
     display: flex;
     flex-direction: column;

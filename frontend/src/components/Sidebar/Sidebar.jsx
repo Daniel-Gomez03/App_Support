@@ -13,8 +13,9 @@ import qaIcon from '../../assets/icons/QA-icon.svg';
 import arrorIcon from '../../assets/icons/Arrow-icon.svg';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './Sidebar.module.less';
+import { MdClose } from "react-icons/md";
 
-const Sidebar = ({ isOpen }) => {
+const Sidebar = ({ isOpen, toggleSidebar }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const isActive = (path) => location.pathname === path;
@@ -24,6 +25,10 @@ const Sidebar = ({ isOpen }) => {
 
             <div className={styles.logoArea}>
                 <img src={logoImg} alt="TBOXSA" className={styles.logo} />
+
+                <button className={styles.closeBtn} onClick={toggleSidebar}>
+                    <MdClose />
+                </button>
             </div>
 
             <nav className={styles.nav}>

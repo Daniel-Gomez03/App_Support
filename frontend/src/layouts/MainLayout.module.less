@@ -6,6 +6,7 @@
   background-color: @secondary-color;
   position: relative;
   overflow-x: hidden;
+  width: 100%;
 
   .mainContent {
     margin-left: 256px;
@@ -20,8 +21,13 @@
       width: 100%;
     }
 
+    @media (max-width: 768px) {
+     margin-left: 0;
+     width: 100%;
+  }
+
     .pageContent {
-      padding: 0 30px 30px 30px;
+      padding: 24px 30px 30px 30px;
       width: 100%;
       margin: 0 auto;
       flex: 1;

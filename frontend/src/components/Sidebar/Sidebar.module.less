@@ -20,11 +20,32 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
 
         .logo {
             width: 100%;
             height: auto;
             object-fit: contain;
+        }
+
+        .closeBtn {
+            display: none;
+
+            @media (max-width: 768px) {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                background: transparent;
+                border: none;
+                color: #ffffff;
+                font-size: 28px;
+                cursor: pointer;
+
+                position: absolute;
+                right: 5px;
+                top: 3px;
+            }
         }
     }
 
@@ -237,5 +258,11 @@
     &.closed {
         transform: translateX(-100%);
         width: 0;
+    }
+
+    @media (max-width: #breaks[tablet]) {
+        height: 100dvh;
+        z-index: 2000;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
     }
 }
