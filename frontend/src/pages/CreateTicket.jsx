@@ -1,11 +1,22 @@
-import React from 'react';
+import React, {useEffect} from 'react';
+import styles from './CreateTicket.module.less';
 
-const Dashboard = () => {
+const CreateTicket = () => {
+
+  useEffect(() => {
+    document.title = "Soporte | Crear Ticket";
+  }, []);
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Asignacion de tickets</h1>
-      <p>prueba de que la pagina funciona xD</p>
+    <div className={styles.createTicketContainer}>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.title}>Crear Nuevo Ticket</h1>
+        <p className={styles.subtitle}>Ingresa la información detallada </p>
+      </div>
+      <div className=''>
+
+      </div>
     </div>
   );
 };
-export default Dashboard;
+export default CreateTicket;
