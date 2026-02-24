@@ -6,6 +6,10 @@
     .pageHeader {
         margin-bottom: 32px;
 
+        @media(max-width: #breaks[tablet]) {
+            margin-bottom: 24px;
+        }
+
         .title {
             font-size: 30px;
             font-weight: 700;
@@ -28,28 +32,61 @@
 
         @media (max-width: #breaks[desktop]) {
             grid-template-columns: repeat(2, 1fr);
+            justify-items: center;
         }
 
         @media (max-width: #breaks[tablet]) {
-            grid-template-columns: 1fr;
+            gap: 16px;
+            justify-items: center;
+        }
+
+        @media (max-width: 767px) {
+            grid-template-columns: (1fr);
         }
     }
 
     .contentGrid {
         display: grid;
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 3fr 1.3fr;
         gap: 24px;
         padding-bottom: 32px;
 
-        @media (max-width: 1024px) {
+        @media (max-width: #breaks[desktop]) {
             grid-template-columns: 1fr;
+        }
+
+        @media (max-width: #breaks[tablet]) {
+            gap: 16px;
         }
     }
 
-    .leftColumn,
+    .leftColumn {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        gap: 24px;
+
+        @media(max-width: #breaks[desktop]) {
+            justify-content: center;
+        }
+
+        @media(max-width: #breaks[tablet]) {
+            gap: 16px;
+        }
+    }
+
     .rightColumn {
         display: flex;
         flex-direction: column;
         min-width: 0;
+        gap: 24px;
+
+        @media(max-width: #breaks[desktop]) {
+            justify-content: center;
+        }
+
+        @media(max-width: #breaks[tablet]) {
+            gap: 16px;
+        }
     }
 }

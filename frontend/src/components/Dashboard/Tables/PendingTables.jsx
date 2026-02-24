@@ -44,32 +44,32 @@ const PendingCasesTable = ({ data }) => {
         {
             name: 'NUEVO',
             selector: row => row.nuevo,
-            center: true,
+            center: "true",
             cell: row => <span className={row.nuevo === 0 ? styles.faded : ''}>{row.nuevo}</span>
         },
         {
             name: 'EN PROCESO',
             selector: row => row.enProceso,
-            center: true,
+            center: "true",
             cell: row => <span className={row.enProceso === 0 ? styles.faded : ''}>{row.enProceso}</span>
         },
         {
             name: 'PENDIENTE DE INFORMACIÓN',
             selector: row => row.pendienteInfo,
-            center: true,
+            center: "true",
             $grow: 2, 
             cell: row => <span className={row.pendienteInfo === 0 ? styles.faded : ''}>{row.pendienteInfo}</span>
         },
         {
             name: 'ESCALADO',
             selector: row => row.escalado,
-            center: true,
+            center: "true",
             cell: row => <span className={row.escalado === 0 ? styles.faded : ''}>{row.escalado}</span>
         },
         {
             name: 'RESUELTO',
             selector: row => row.resuelto,
-            center: true,
+            center: "true",
             cell: row => <span className={styles.boldNumber}>{row.resuelto}</span>
         },
     ];

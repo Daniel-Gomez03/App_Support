@@ -5,9 +5,9 @@ import styles from './TicketGraph.module.less';
 const TicketGraph = () => {
     
     const data = [
-        { name: 'Alta', value: 10, color: '#DC2626' },   
-        { name: 'Media', value: 10, color: '#EAB308' },  
-        { name: 'Baja', value: 10, color: '#105030' },   
+        { name: 'Alta', value: 0, color: '#DC2626' },   
+        { name: 'Media', value: 0, color: '#EAB308' },  
+        { name: 'Baja', value: 0, color: '#105030' },   
     ];
 
     const total = data.reduce((sum, item) => sum + item.value, 0);
