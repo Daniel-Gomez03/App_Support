@@ -40,7 +40,7 @@
     .bar {
       width: 20px;
       height: 2.5px;
-      background-color: #ffffff;
+      background-color: @background-color;
       border-radius: 2px;
     }
   }
@@ -60,7 +60,7 @@
     .searchBar {
       width: 384px;
       height: 48px;
-      background-color: #ffffff;
+      background-color: @background-color;
       border-radius: 18px;
       display: flex;
       align-items: center;
@@ -74,13 +74,13 @@
         justify-content: center;
         border-radius: 50%;
         cursor: pointer;
-        background-color: #ffffff;
+        background-color: @background-color;
       }
 
       .searchIcon {
         margin-right: 12px;
 
-        @media (max-width: 768px) {
+        @media (max-width: #breaks[tablet]) {
           margin-right: 0;
           opacity: 0.7;
         }
