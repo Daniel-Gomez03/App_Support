@@ -1,14 +1,14 @@
 @import "../less/variables.less";
 
 .createTicketContainer {
-    width: 75%;
+    width: 80%;
     margin: 0 auto;
 
-    @media(max-width: #breaks[desktop]){
+    @media(max-width: #breaks[desktop]) {
         width: 100%;
     }
 
-    @media(max-width: #breaks[tablet]){
+    @media(max-width: #breaks[tablet]) {
         width: 100%;
     }
 
@@ -71,7 +71,7 @@
                 width: 28px;
                 height: 28px;
                 background-color: @primary-color;
-                color:@background-color;
+                color: @background-color;
                 border-radius: 50%;
                 display: flex;
                 justify-content: center;
@@ -104,6 +104,75 @@
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 24px;
+
+        .phoneContainer {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            background-color: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 0 12px;
+            overflow: hidden;
+            transition: all 0.2s;
+
+            &:focus-within {
+                border-color: #1B4D3E;
+                background-color: #ffffff;
+                box-shadow: 0 0 0 3px rgba(27, 77, 62, 0.1);
+            }
+
+            .flagWrapper {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 8px;
+
+                span {
+                    font-size: 18px;
+                    /* Tamaño de la bandera */
+                    border-radius: 2px;
+                    /* Un poquito de borde suave a la bandera */
+                    box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+                    /* Sombra para que se note si es blanca */
+                }
+            }
+
+            /* EL SELECT */
+            .countrySelect {
+                background-color: transparent;
+                border: none;
+                padding: 8px 0;
+                font-size: 14px;
+                color: #111827;
+                font-weight: 500;
+                cursor: pointer;
+                outline: none;
+                width: auto;
+                appearance: none;
+                -webkit-appearance: none;
+
+            }
+
+            .divider {
+                width: 1px;
+                height: 24px;
+                background-color: #D1D5DB;
+                margin: 0 10px;
+            }
+
+            .phoneInput {
+                flex: 1;
+                border: none;
+                background-color: transparent;
+                padding: 12px 0;
+                font-size: 14px;
+                color: #111827;
+                outline: none;
+                box-shadow: none;
+                width: 100%;
+            }
+        }
 
         @media(max-width: 768px) {
             grid-template-columns: 1fr;
@@ -151,7 +220,7 @@
             }
 
             &:focus {
-                border-color: #1B4D3E;
+                border-color: @quaternary-color;
                 background-color: @background-color;
                 box-shadow: 0 0 0 3px rgba(27, 77, 62, 0.1);
             }
@@ -236,8 +305,8 @@
         }
 
         .btnSubmit {
-            background-color: @quaternary-color;
-            border: 1px solid @quaternary-color; 
+            background-color: @tertiary-color;
+            border: 1px solid @tertiary-color;
             color: white;
 
             &:hover {
@@ -253,6 +322,205 @@
             button {
                 width: 100%;
             }
+        }
+    }
+
+    .modalOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .confirmationCard {
+        background-color: @background-color;
+        border-radius: 20px;
+        padding: 32px;
+        width: 100%;
+        max-width: 420px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .iconWrapper {
+            width: 64px;
+            height: 64px;
+            background-color: @tertiary-color;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 24px;
+
+            .faIcon {
+                color: @background-color;
+                font-size: 32px;
+            }
+        }
+
+        .modalTitle {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 16px 0;
+        }
+
+        .modalText {
+            font-size: 14px;
+            color: #6B7280;
+            margin: 0 0 4px 0;
+            line-height: 1.5;
+        }
+
+        .modalButtons {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            margin-top: 32px;
+
+            button {
+                flex: 1;
+                padding: 12px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .btnCancelModal {
+                background-color: @background-color;
+                border: 1px solid @secondary-color;
+                color: #374151;
+
+                &:hover {
+                    background-color: #F9FAFB;
+                }
+            }
+
+            .btnAcceptModal {
+                background-color: @quaternary-color;
+                border: 1px solid @quaternary-color;
+                color: white;
+
+                &:hover {
+                    background-color: #105030;
+                }
+            }
+        }
+    }
+
+    .successToast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 2000;
+        background-color: #F0FDF4;
+        border: 1px solid #DCFCE7;
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        max-width: 400px;
+        animation: slideInRight 0.3s ease-out;
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toastIcon {
+            background-color: #16A34A;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+
+            .checkIcon {
+                font-size: 16px;
+                stroke-width: 3px;
+            }
+        }
+
+        .toastContent {
+            flex: 1;
+
+            h4 {
+                margin: 0 0 4px 0;
+                font-size: 14px;
+                font-weight: 700;
+                color: #15803D;
+            }
+
+            p {
+                margin: 0;
+                font-size: 13px;
+                color: #166534;
+                line-height: 1.4;
+            }
+        }
+
+        .toastClose {
+            background: transparent;
+            border: none;
+            color: #166534;
+            cursor: pointer;
+            padding: 0;
+            font-size: 18px;
+            display: flex;
+            opacity: 0.7;
+
+            &:hover {
+                opacity: 1;
+            }
+        }
+    }
+
+    @media (max-width: #breaks[tablet]) {
+        .successToast {
+            top: auto;
+            bottom: 24px;
+            right: 16px;
+            left: 16px;
+            width: auto;
+            max-width: none;
         }
     }
 }
