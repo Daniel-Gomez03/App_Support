@@ -1,3 +1,206 @@
+@import "../less/variables.less"; // Ajusta la ruta si es necesario
+
 .assignedTicketContainer {
-    background-color: aliceblue;
+    width: 100%;
+    
+    .pageHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+
+        .headerLeft {
+            .title {
+                font-size: 30px;
+                font-weight: 700;
+                color: #101828;
+                margin: 0 0 6px 0;
+            }
+            .subtitle {
+                font-size: 16px;
+                color: #6A7282;
+                margin: 0;
+            }
+        }
+
+        .createBtn {
+            background-color: #1B4D3E; /* Verde Oscuro TBOXSA */
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+
+            &:hover {
+                background-color: #153d31;
+            }
+        }
+    }
+
+    /* GRID PRINCIPAL DE 2 COLUMNAS */
+    .mainGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 50% y 50% */
+        gap: 32px;
+        align-items: start; /* Para que no se estiren las columnas si una es más corta */
+
+        @media (max-width: 1024px) {
+            grid-template-columns: 1fr; /* Una columna en pantallas pequeñas */
+        }
+    }
+
+    .columnTitle {
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 24px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .greenDot {
+            width: 8px;
+            height: 8px;
+            background-color: #1B4D3E;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    }
+
+    /* --- ESTILOS DE LA COLUMNA IZQUIERDA (Tickets Nuevos) --- */
+    .leftColumn {
+        /* Es transparente, los tickets flotan sobre el fondo */
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* --- ESTILOS DE LA COLUMNA DERECHA (Backlog) --- */
+    .rightColumn {
+        background-color: #F3F4F6; /* Fondo gris claro según imagen */
+        border-radius: 24px;
+        padding: 24px;
+        min-height: 500px; /* Altura mínima para que se vea el bloque gris */
+        
+        .emptyBacklogHint {
+            color: #9CA3AF;
+            text-align: center;
+            margin-top: 40px;
+            font-style: italic;
+        }
+    }
+
+    /* --- DISEÑO DE LA TARJETA (TICKET CARD) --- */
+    .ticketCard {
+        background-color: #FFFFFF;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        transition: box-shadow 0.2s;
+
+        &:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .cardTopRow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .ticketId {
+                background-color: #ECFDF5; /* Verde menta muy claro */
+                color: #059669; /* Verde texto */
+                font-size: 12px;
+                font-weight: 700;
+                padding: 4px 12px;
+                border-radius: 6px;
+            }
+
+            .timeWrapper {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #6B7280;
+                font-size: 13px;
+                
+                img {
+                    width: 16px;
+                    opacity: 0.6;
+                }
+            }
+        }
+
+        .cardContent {
+            .clientName {
+                font-size: 16px;
+                font-weight: 700;
+                color: #111827;
+                margin: 0 0 4px 0;
+            }
+
+            .ticketIssue {
+                font-size: 14px;
+                color: #6B7280;
+                margin: 0;
+            }
+        }
+
+        .tagRow {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+
+            .tag {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 6px 12px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            /* Colores específicos de etiquetas */
+            .tagBlue {
+                background-color: #EFF6FF;
+                color: #3B82F6;
+            }
+
+            .tagOrange {
+                background-color: #FFF7ED;
+                color: #F97316;
+            }
+        }
+
+        .btnDetails {
+            background-color: #ffffff;
+            border: 1px solid #E5E7EB;
+            color: #374151;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            transition: all 0.2s;
+
+            &:hover {
+                background-color: #F9FAFB;
+                border-color: #D1D5DB;
+                color: #111827;
+            }
+        }
+    }
 }
