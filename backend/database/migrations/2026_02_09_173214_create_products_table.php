@@ -22,11 +22,11 @@ return new class extends Migration
                 'categories', 'category_id'
             );
 
-            $table->string('product_name', 50);
+            $table->string('product_deviceType', 50);
             $table->string('product_model', 50);
             $table->string('product_serialNumber', 50)->unique();
-            $table->date('product_purchaseDate');
-            $table->boolean('product_status');
+            $table->date('product_purchaseDate')->nullable();
+            $table->boolean('product_status')->default(true);
         });
     }
 

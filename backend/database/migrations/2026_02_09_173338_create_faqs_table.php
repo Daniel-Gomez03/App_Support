@@ -20,11 +20,11 @@ return new class extends Migration
             );
             $table->foreignId('user_id')->constrained(
                 'users', 'user_id'
-            );
+            )->onDelete('cascade');
 
             $table->string('faq_question', 255);
-            $table->string('faq_answer', 255);
-            $table->boolean('faq_status');
+            $table->text('faq_answer');
+            $table->boolean('faq_status')->default(true);
         });
     }
 

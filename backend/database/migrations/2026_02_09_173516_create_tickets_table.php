@@ -24,18 +24,20 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained(
                 'categories', 'category_id'
             );
-            $table->foreignId('priority_id')->constrained(
+            $table->foreignId('ticket_status_id')->constrained(
+               'tickets_statuses', 'ticket_status_id'
+            );
+            $table->foreignId('priority_id')->nullable()->constrained(
                 'priorities', 'priority_id'
             );
-            $table->foreignId('user_id')->constrained(
+            $table->foreignId('user_id')->nullable()->constrained(
                 'users', 'user_id'
             );
-            $table->foreignId('ticket_status_id')->constrained(
-                'tickets_statuses', 'ticket_status_id'
-            );
 
-            $table->timestamp('ticket_createdAt');
-            $table->boolean('ticket_status');
+            $table->string('ticket_subject', 255);
+            $table->text('ticket_description');
+            $table->timestamp('ticket_createdAt')->useCurrent();
+            $table->boolean('ticket_status')->default(true);
         });
     }
 

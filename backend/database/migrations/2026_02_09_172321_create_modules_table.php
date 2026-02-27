@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('modules', function (Blueprint $table) {
             $table->id('module_id');
             $table->string('module_name', 50);
-            $table->string('module_descripcion', 50);
-            $table->boolean('module_status');
+            $table->string('module_description', 50);
+            $table->boolean('module_status')->default(true);
         });
     }
 

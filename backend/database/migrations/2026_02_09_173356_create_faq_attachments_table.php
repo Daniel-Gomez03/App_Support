@@ -17,7 +17,7 @@ return new class extends Migration
             //Relaciones
             $table->foreignId('faq_id')->constrained(
                 'faqs', 'faq_id'
-            );
+            )->onDelete('cascade');
 
             $table->string('attachment_path', 255);
             $table->string('attachment_name', 100);

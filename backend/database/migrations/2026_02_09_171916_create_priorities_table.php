@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('priorities', function (Blueprint $table) {
             $table->id('priority_id');
-            $table->string('priority _name', 20);
+            $table->string('priority_name', 20);
             $table->string('priority_description',30);
         });
     }

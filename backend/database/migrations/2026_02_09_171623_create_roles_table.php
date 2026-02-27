@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('rol_id');
             $table->string('rol_name', 20);
             $table->string('rol_description', 50);
-            $table->boolean('rol_status');
+            $table->boolean('rol_status')->default(true);
         });
     }
 

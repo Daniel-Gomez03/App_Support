@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('position_id');
             $table->string('position_name', 50);
             $table->string('position_description', 50);
-            $table->boolean('position_status');
+            $table->boolean('position_status')->default(true);
         });
     }
 

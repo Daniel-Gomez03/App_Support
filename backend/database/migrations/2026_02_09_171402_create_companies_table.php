@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('companies', function (Blueprint $table) {
             $table->id('company_id');
             $table->string('company_name', 50);
-            $table->boolean('company_status');
+            $table->boolean('company_status')->default(true);
         });
     }
 

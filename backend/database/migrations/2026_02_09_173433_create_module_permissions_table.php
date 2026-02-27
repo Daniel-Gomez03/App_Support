@@ -22,10 +22,10 @@ return new class extends Migration
                 'modules', 'module_id'
             );
 
-            $table->boolean('module_permission_view');
-            $table->boolean('module_permission_create');
-            $table->boolean('module_permission_edit');
-            $table->boolean('module_permission_delete');
+            $table->boolean('module_permission_view')->default(true);
+            $table->boolean('module_permission_create')->default(false);
+            $table->boolean('module_permission_edit')->default(false);
+            $table->boolean('module_permission_delete')->default(false);
         });
     }
 

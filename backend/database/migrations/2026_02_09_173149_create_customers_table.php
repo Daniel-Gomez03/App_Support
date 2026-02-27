@@ -15,18 +15,17 @@ return new class extends Migration
             $table->id('customer_id');
             
             //Referencias
-            $table->foreignId('company_id')->contrained(
+            $table->foreignId('company_id')->constrained(
                 'companies', 'company_id'
             );
 
-            $table->string('customer_firstName', 50);
-            $table->string('customer_lastName', 50);
+            $table->string('customer_name', 50);
             $table->string('customer_email', 50)->unique();
             $table->string('customer_phone', 20);
             $table->string('customer_country', 50);
             $table->text('customer_address');
             $table->string('customer_image', 255)->nullable();
-            $table->boolean('customer_status');
+            $table->boolean('customer_status')->default(true);
         });
     }
 

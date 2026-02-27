@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->date('warranty_start');
             $table->date('warranty_end');
-            $table->boolean('warranty_status');
+            $table->boolean('warranty_status')->default(true);
         });
     }
 

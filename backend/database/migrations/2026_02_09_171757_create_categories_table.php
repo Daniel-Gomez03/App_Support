@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('category_id');
             $table->string('category_name', 50);
             $table->string('category_decription', 50);
-            $table->boolean('category_status');
+            $table->boolean('category_status' ->default(true));
         });
     }
 

@@ -17,11 +17,10 @@ return new class extends Migration
             //Relaciones
             $table->foreignId('ticket_id')->constrained(
                 'tickets', 'ticket_id'
-            );
+            )->onDelete('cascade');
 
             $table->string('ticket_evidence_path', 255);
-            $table->string('ticket_evidence_description', 50);
-            $table->timestamp('ticket_evidence_uploadedAt');
+            $table->timestamp('ticket_evidence_uploadedAt')->useCurrent();
         });
     }
 

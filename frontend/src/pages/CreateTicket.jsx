@@ -139,16 +139,17 @@ const CreateTicket = () => {
                 required />
             </div>
             <div className={styles.inputGroup}>
-              <label>Email</label>
+              <label>Email <span className={styles.required}>*</span></label>
               <input
                 type="email"
                 name='email'
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="correo@ejemplo.com" />
+                placeholder="correo@ejemplo.com" 
+                required/>
             </div>
             <div className={styles.inputGroup}>
-              <label>Teléfono</label>
+              <label>Teléfono <span className={styles.required}>*</span></label>
               <div className={styles.phoneContainer}>
                 <div className={styles.flagWrapper}>
                   <span className={`fi fi-${currentFlag}`}></span>
@@ -175,6 +176,7 @@ const CreateTicket = () => {
                   onChange={handleChange}
                   placeholder="9702-9226"
                   className={styles.phoneInput}
+                  required
                 />
               </div>
             </div>
