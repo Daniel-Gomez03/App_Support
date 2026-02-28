@@ -170,7 +170,7 @@
             }
         }
 
-        @media(max-width: 768px) {
+        @media(max-width: #breaks[tablet]) {
             grid-template-columns: 1fr;
             gap: 16px;
         }
@@ -210,6 +210,7 @@
             outline: none;
             transition: all 0.2s;
             box-sizing: border-box;
+            font-family: inherit;
 
             &::placeholder {
                 color: #9CA3AF;

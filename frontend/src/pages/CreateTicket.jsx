@@ -174,7 +174,7 @@ const CreateTicket = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="9702-9226"
+                  placeholder="9999-9999"
                   className={styles.phoneInput}
                   required
                 />
