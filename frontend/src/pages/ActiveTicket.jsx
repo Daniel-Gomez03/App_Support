@@ -4,7 +4,7 @@ const ActiveTicket = () => {
     return (
         <div style={{ padding: '20px' }}>
             <h1>Tickets Activos</h1>
-            <p>Pruebaaaaa</p>
+            <p>Solo Diosito sabe como hare este modulo :(</p>
         </div>
     );
 };

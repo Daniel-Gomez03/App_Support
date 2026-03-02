@@ -10,24 +10,27 @@ import History from './pages/Historial';
 import Users from './pages/Usuarios';
 import Departures from './pages/Salidas';
 import QA from './pages/QA';
+import { TicketProvider } from './context/TicketContext';
 
 function App() {
 
   return (
-    <BrowserRouter>
-      <MainLayout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/tickets/createTicket" element={<CreateTicket title="Crear Ticket" />} />
-          <Route path="/tickets/assignedTicket" element={<AssignedTicket title="Asignar Tickets" />} />
-          <Route path="/tickets/activeTicket" element={<ActiveTicket title="Tickets Activos" />} />
-          <Route path='/history' element={<History />} />
-          <Route path='/users' element={<Users />} />
-          <Route path='/departures' element={<Departures />} />
-          <Route path='/qa' element={<QA />} />
-        </Routes>
-      </MainLayout>
-    </BrowserRouter>
+    <TicketProvider>
+      <BrowserRouter>
+        <MainLayout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/tickets/createTicket" element={<CreateTicket title="Crear Ticket" />} />
+            <Route path="/tickets/assignedTicket" element={<AssignedTicket title="Asignar Tickets" />} />
+            <Route path="/tickets/activeTicket" element={<ActiveTicket title="Tickets Activos" />} />
+            <Route path='/history' element={<History />} />
+            <Route path='/users' element={<Users />} />
+            <Route path='/departures' element={<Departures />} />
+            <Route path='/qa' element={<QA />} />
+          </Routes>
+        </MainLayout>
+      </BrowserRouter>
+    </TicketProvider>
   )
 }
 

@@ -14,108 +14,116 @@ import arrorIcon from '../../assets/icons/Arrow-icon.svg';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './Sidebar.module.less';
 import { MdClose } from "react-icons/md";
+import { useTicketContext } from '../../context/TicketContext';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const isActive = (path) => location.pathname === path;
+    const { assignedCount } = useTicketContext();
 
     return (
-        <aside className={`${styles.sidebar} ${!isOpen ? styles.closed : ''}`}>
+        <>
+            <div
+                className={`${styles.sidebarOverlay} ${isOpen ? styles.open : ''}`}
+                onClick={toggleSidebar}
+            />
+            <aside className={`${styles.sidebar} ${!isOpen ? styles.closed : ''}`}>
 
-            <div className={styles.logoArea}>
-                <img src={logoImg} alt="TBOXSA" className={styles.logo} />
+                <div className={styles.logoArea}>
+                    <img src={logoImg} alt="TBOXSA" className={styles.logo} />
 
-                <button className={styles.closeBtn} onClick={toggleSidebar}>
-                    <MdClose />
-                </button>
-            </div>
+                    <button className={styles.closeBtn} onClick={toggleSidebar}>
+                        <MdClose />
+                    </button>
+                </div>
 
-            <nav className={styles.nav}>
-                <ul className={styles.menuList}>
+                <nav className={styles.nav}>
+                    <ul className={styles.menuList}>
 
-                    <li className={`${styles.menuItem} ${isActive('/') ? styles.active : ''}`} onClick={() => navigate('/')}>
-                        <img src={dashboardIcon} alt="Dashboard" className={styles.icon} />
-                        <span className={styles.text}>Dashboard</span>
-                    </li>
+                        <li className={`${styles.menuItem} ${isActive('/') ? styles.active : ''}`} onClick={() => navigate('/')}>
+                            <img src={dashboardIcon} alt="Dashboard" className={styles.icon} />
+                            <span className={styles.text}>Dashboard</span>
+                        </li>
 
-                    <li className={styles.menuGroup}>
-                        <div className={styles.menuHeader}>
-                            <div className={styles.leftContent}>
-                                <img src={ticketIcon} alt="Tickets" className={styles.icon} />
-                                <span className={styles.text}>Tickets</span>
+                        <li className={styles.menuGroup}>
+                            <div className={styles.menuHeader}>
+                                <div className={styles.leftContent}>
+                                    <img src={ticketIcon} alt="Tickets" className={styles.icon} />
+                                    <span className={styles.text}>Tickets</span>
+                                </div>
+                                <img src={arrorIcon} alt="Flecha" className={styles.arrowIcon} />
                             </div>
-                            <img src={arrorIcon} alt="Flecha" className={styles.arrowIcon} />
+
+                            <ul className={styles.subMenu}>
+                                <li className={`${styles.subItem} ${isActive('/tickets/createTicket') ? styles.active : ''}`} onClick={() => navigate('/tickets/createTicket')}>
+                                    <div className={styles.spaceBetween}>
+                                        <div className={styles.subItemContent}>
+                                            <img src={addTicketIcon} alt="AddTicket" className={styles.icon} />
+                                            <span className={styles.subText}>Crear Ticket</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li className={`${styles.subItem} ${isActive('/tickets/AssignedTicket') ? styles.active : ''}`} onClick={() => navigate('/tickets/AssignedTicket')}>
+                                    <div className={styles.spaceBetween}>
+                                        <div className={styles.subItemContent}>
+                                            <img src={assignedTicketIcon} alt="AddTicket" className={styles.icon} />
+                                            <span className={styles.subText}>Asignar Tickets</span>
+                                        </div>
+                                        <span className={styles.badge}>{assignedCount}</span>
+                                    </div>
+                                </li>
+
+                                <li className={`${styles.subItem} ${isActive('/tickets/ActiveTicket') ? styles.active : ''}`} onClick={() => navigate('/tickets/ActiveTicket')}>
+                                    <div className={styles.spaceBetween}>
+                                        <div className={styles.subItemContent}>
+                                            <img src={activeTicketIcon} alt="AddTicket" className={styles.icon} />
+                                            <span className={styles.subText}>Tickets Activos</span>
+                                        </div>
+                                        <span className={styles.badge}>0</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li className={`${styles.menuItem} ${isActive('/history') ? styles.active : ''}`} onClick={() => navigate('/history')}>
+                            <img src={historyIcon} alt="Historial" className={styles.icon} />
+                            <span className={styles.text}>Historial</span>
+                        </li>
+
+
+                        <li className={`${styles.menuItem} ${isActive('/users') ? styles.active : ''}`} onClick={() => navigate('/users')} >
+                            <img src={usersIcon} alt="Usuarios" className={styles.icon} />
+                            <span className={styles.text}>Usuarios</span>
+                        </li>
+
+                        <li className={`${styles.menuItem} ${isActive('/departures') ? styles.active : ''}`} onClick={() => navigate('/departures')}>
+                            <img src={locationIcon} alt="Salidas" className={styles.icon} />
+                            <span className={styles.text}>Salidas</span>
+                        </li>
+
+                        <li className={`${styles.menuItem} ${isActive('/qa') ? styles.active : ''}`} onClick={() => navigate('/qa')}>
+                            <img src={qaIcon} alt="Q&A" className={styles.icon} />
+                            <span className={styles.text}>Q&A</span>
+                        </li>
+
+                    </ul>
+                </nav>
+
+                <div className={styles.profileSection}>
+                    <div className={styles.profileCard}>
+                        <div className={styles.avatarPlaceholder}>
+                            <CiUser className={styles.userIcon} />
                         </div>
-
-                        <ul className={styles.subMenu}>
-                            <li className={`${styles.subItem} ${isActive('/tickets/createTicket') ? styles.active : ''}`} onClick={() => navigate('/tickets/createTicket')}>
-                                <div className={styles.spaceBetween}>
-                                    <div className={styles.subItemContent}>
-                                        <img src={addTicketIcon} alt="AddTicket" className={styles.icon} />
-                                        <span className={styles.subText}>Crear Ticket</span>
-                                    </div>
-                                </div>
-                            </li>
-
-                            <li className={`${styles.subItem} ${isActive('/tickets/AssignedTicket') ? styles.active : ''}`} onClick={() => navigate('/tickets/AssignedTicket')}>
-                                <div className={styles.spaceBetween}>
-                                    <div className={styles.subItemContent}>
-                                        <img src={assignedTicketIcon} alt="AddTicket" className={styles.icon} />
-                                        <span className={styles.subText}>Asignar Tickets</span>
-                                    </div>
-                                    <span className={styles.badge}>0</span>
-                                </div>
-                            </li>
-
-                            <li className={`${styles.subItem} ${isActive('/tickets/ActiveTicket') ? styles.active : ''}`} onClick={() => navigate('/tickets/ActiveTicket')}>
-                                <div className={styles.spaceBetween}>
-                                    <div className={styles.subItemContent}>
-                                        <img src={activeTicketIcon} alt="AddTicket" className={styles.icon} />
-                                        <span className={styles.subText}>Tickets Activos</span>
-                                    </div>
-                                    <span className={styles.badge}>0</span>
-                                </div>
-                            </li>
-                        </ul>
-                    </li>
-
-                    <li className={`${styles.menuItem} ${isActive('/history') ? styles.active : ''}`} onClick={() => navigate('/history')}>
-                        <img src={historyIcon} alt="Historial" className={styles.icon} />
-                        <span className={styles.text}>Historial</span>
-                    </li>
-
-
-                    <li className={`${styles.menuItem} ${isActive('/users') ? styles.active : ''}`} onClick={() => navigate('/users')} >
-                        <img src={usersIcon} alt="Usuarios" className={styles.icon} />
-                        <span className={styles.text}>Usuarios</span>
-                    </li>
-
-                    <li className={`${styles.menuItem} ${isActive('/departures') ? styles.active : ''}`} onClick={() => navigate('/departures')}>
-                        <img src={locationIcon} alt="Salidas" className={styles.icon} />
-                        <span className={styles.text}>Salidas</span>
-                    </li>
-
-                    <li className={`${styles.menuItem} ${isActive('/qa') ? styles.active : ''}`} onClick={() => navigate('/qa')}>
-                        <img src={qaIcon} alt="Q&A" className={styles.icon} />
-                        <span className={styles.text}>Q&A</span>
-                    </li>
-
-                </ul>
-            </nav>
-
-            <div className={styles.profileSection}>
-                <div className={styles.profileCard}>
-                    <div className={styles.avatarPlaceholder}>
-                        <CiUser className={styles.userIcon} />
-                    </div>
-                    <div className={styles.userInfo}>
-                        <p className={styles.userName}>Usuario</p>
-                        <span className={styles.userEmail}>usuario@tboxsa.com</span>
+                        <div className={styles.userInfo}>
+                            <p className={styles.userName}>Usuario</p>
+                            <span className={styles.userEmail}>usuario@tboxsa.com</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </aside>
+            </aside>
+        </>
     );
 };
 

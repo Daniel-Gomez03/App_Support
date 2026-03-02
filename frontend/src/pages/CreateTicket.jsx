@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import styles from './CreateTicket.module.less';
-import { LuUpload, LuCheck, LuX } from "react-icons/lu";
+import { LuUpload, LuCheck, LuX, LuLoaderCircle } from "react-icons/lu";
 import { FaQuestion } from "react-icons/fa"
 import "flag-icons/css/flag-icons.min.css";
+import { useTicketContext } from '../context/TicketContext';
 
 const CreateTicket = () => {
 
@@ -21,6 +22,8 @@ const CreateTicket = () => {
     description: '',
     files: null
   });
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCancel = () => {
 
@@ -49,9 +52,7 @@ const CreateTicket = () => {
   ];
 
   const currentFlag = countries.find(c => c.code === formData.countryCode)?.iso || 'hn';
-
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
@@ -67,10 +68,22 @@ const CreateTicket = () => {
   };
 
   const handleFileChange = (e) => {
-    setFormData(prevState => ({
-      ...prevState,
-      files: e.target.files[0]
-    }));
+    const file = e.target.files[0];
+
+    if (file) {
+      const maxSize = 15 * 1024 * 1024;
+
+      if (file.size > maxSize) {
+        alert("⚠️ El archivo es demasiado pesado. El límite es de 15MB.");
+        e.target.value = null;
+        return;
+      }
+
+      setFormData(prevState => ({
+        ...prevState,
+        files: file
+      }));
+    }
   };
 
   const handleReview = (e) => {
@@ -78,15 +91,29 @@ const CreateTicket = () => {
     setIsModalOpen(true);
   };
 
-  const handleFinalSubmit = () => {
-    console.log("--- ENVIANDO A LARAVEL ---", formData);
-    setIsModalOpen(false);
+  const { addTicket } = useTicketContext();
 
-    setShowSuccess(true);
+  const handleFinalSubmit = () => {
+    setIsLoading(true);
 
     setTimeout(() => {
-      setShowSuccess(false);
-    }, 5000);
+
+      console.log("[MOCK API] Enviando datos a Laravel:", {
+        ...formData,
+        files: formData.files ? `Archivo: ${formData.files.name} (${(formData.files.size / 1024 / 1024).toFixed(2)} MB)` : "Sin adjuntos"
+      });
+
+      addTicket(formData);
+
+      setIsLoading(false);
+      setIsModalOpen(false);
+      setShowSuccess(true);
+      handleCancel();
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 5000);
+
+    }, 2000)
   };
 
   return (
@@ -145,8 +172,8 @@ const CreateTicket = () => {
                 name='email'
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="correo@ejemplo.com" 
-                required/>
+                placeholder="correo@ejemplo.com"
+                required />
             </div>
             <div className={styles.inputGroup}>
               <label>Teléfono <span className={styles.required}>*</span></label>
@@ -270,19 +297,24 @@ const CreateTicket = () => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label>Adjuntar Evidencia <span className={styles.required}>*</span></label>
+            <label>Adjuntar Evidencia <span className={styles.optional} style={{ fontSize: '12px', color: '#6B7280', fontWeight: 'normal' }}>(Opcional)</span></label>
             <div className={styles.uploadArea}>
               <input
                 type="file"
                 onChange={handleFileChange}
-                style={{ display: 'none' }} />
-              <div className={styles.uploadContent}>
-                <LuUpload className={styles.luUpload} />
-                <span className={styles.uploadText}>
-                  {formData.files ? formData.files.name : "Haga clic o arrastre archivos aquí"}
-                </span>
-                <span className={styles.uploadHint}>Soporta: JPG, PNG, PDF, MP4 (Max 15MB)</span>
-              </div>
+                accept=".jpg,.png,.pdf,.mp4"
+                style={{ display: 'none' }}
+                id="fileUpload"
+              />
+              <label htmlFor="fileUpload" style={{ cursor: 'pointer', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <div className={styles.uploadContent}>
+                  <LuUpload className={styles.luUpload} />
+                  <span className={styles.uploadText}>
+                    {formData.files ? formData.files.name : "Haga clic o arrastre archivos aquí"}
+                  </span>
+                  <span className={styles.uploadHint}>Soporta: JPG, PNG, PDF, MP4 (Max 15MB)</span>
+                </div>
+              </label>
             </div>
           </div>
         </div>
@@ -319,8 +351,20 @@ const CreateTicket = () => {
               <button onClick={() => setIsModalOpen(false)} className={styles.btnCancelModal}>
                 Cancelar
               </button>
-              <button onClick={handleFinalSubmit} className={styles.btnAcceptModal}>
-                Aceptar
+              <button
+                onClick={handleFinalSubmit}
+                className={styles.btnAcceptModal}
+                disabled={isLoading}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isLoading ? 0.7 : 1 }}
+              >
+                {isLoading ? (
+                  <>
+                    <LuLoaderCircle className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+                    Enviando...
+                  </>
+                ) : (
+                  "Aceptar"
+                )}
               </button>
             </div>
 
@@ -342,6 +386,12 @@ const CreateTicket = () => {
           </button>
         </div>
       )}
+      <style>{`
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
