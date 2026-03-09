@@ -15,18 +15,13 @@ return new class extends Migration
             $table->id('product_id');
 
             //Relaciones
-            $table->foreignId('customer_id')->constrained(
-                'customers', 'customer_id'
-            );
             $table->foreignId('category_id')->constrained(
                 'categories', 'category_id'
             );
 
-            $table->string('product_deviceType', 50);
-            $table->string('product_model', 50);
-            $table->string('product_serialNumber', 50)->unique();
-            $table->date('product_purchaseDate')->nullable();
+            $table->string('product_name', 100)->unique();
             $table->boolean('product_status')->default(true);
+            $table->timestamps();
         });
     }
 

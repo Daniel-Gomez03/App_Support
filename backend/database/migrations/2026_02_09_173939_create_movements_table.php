@@ -20,9 +20,12 @@ return new class extends Migration
             );
             $table->foreignId('ticket_id')->constrained(
                 'tickets', 'ticket_id'
+            )->onDelete('cascade');
+            $table->foreignId('ticket_status_id')->constrained(
+                'tickets_statuses', 'ticket_status_id'
             );
 
-            $table->timestamp('movement_createdAt');
+            $table->timestamp('movement_createdAt')->useCurrent();
         });
     }
 

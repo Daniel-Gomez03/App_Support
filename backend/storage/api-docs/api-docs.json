@@ -1,0 +1,3860 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API de App de Soporte",
+        "description": "Documentación de la API para el sistema de Soporte",
+        "contact": {
+            "name": "Henry Paz",
+            "email": "henry@tboxsa.com"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/categories": {
+            "get": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Obtener lista de categorías activas",
+                "description": "Retorna todas las categorías con estado activo ordenadas alfabéticamente",
+                "operationId": "2e501ded245e7de3a19655e54b93fa88",
+                "responses": {
+                    "200": {
+                        "description": "Lista de categorías obtenidas con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Categories"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "category_id": 2,
+                                        "category_name": "Soluciones",
+                                        "category_description": "Soluciones tecnologicas disponibles",
+                                        "category_status": true,
+                                        "created_at": "2026-03-05T10:30:00.000000Z",
+                                        "updated_at": "2026-03-05T10:30:00.000000Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener categorías"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Database connection error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Crear una nueva categoría",
+                "description": "Crea una nueva categoría con estado activo por defecto",
+                "operationId": "0220109ed3221f93fdd93d9f258f07fb",
+                "requestBody": {
+                    "description": "Datos de la nueva categoría (JSON)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_name",
+                                    "category_description"
+                                ],
+                                "properties": {
+                                    "category_name": {
+                                        "description": "Nombre de la categoría (debe ser único)",
+                                        "type": "string",
+                                        "example": "Sistemas"
+                                    },
+                                    "category_description": {
+                                        "description": "Descripción de la categoría",
+                                        "type": "string",
+                                        "example": "Sistemas para productos de software"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Categoría creada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Categories"
+                                },
+                                "example": {
+                                    "category_id": 4,
+                                    "category_name": "Sistemas",
+                                    "category_description": "Sistemas para productos de software",
+                                    "category_status": true,
+                                    "created_at": "2026-03-05T15:45:00.000000Z",
+                                    "updated_at": "2026-03-05T15:45:00.000000Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no eran válidos."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "category_name": [
+                                                    "El campo de nombre de categoría es obligatorio.",
+                                                    "El nombre de la categoría ya está tomado."
+                                                ],
+                                                "category_description": [
+                                                    "El campo de descripción de categoría es obligatorio."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la petición"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/categories/inactives": {
+            "get": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Obtener lista de categorías inactivas",
+                "description": "Retorna todas las categorías con estado inactivo ordenadas alfabéticamente",
+                "operationId": "e50483bf039e01392543d4384708c5a0",
+                "responses": {
+                    "200": {
+                        "description": "Lista de categorías inactivas obtenidas con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Categories"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "category_id": 3,
+                                        "category_name": "Servicios",
+                                        "category_description": "Servicios de reparación",
+                                        "category_status": false,
+                                        "created_at": "2026-03-05T10:30:00.000000Z",
+                                        "updated_at": "2026-03-05T10:30:00.000000Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Categoría no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Categoría no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener categorías inactivas"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Obtener una categoría específica",
+                "description": "Retorna los detalles de una categoría por su ID",
+                "operationId": "c5916df093e6352c5f6d7cce5d754f17",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la categoría",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categoría obtenida con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Categories"
+                                },
+                                "example": {
+                                    "category_id": 1,
+                                    "category_name": "Dispositivos",
+                                    "category_description": "Productos tecnologicos de la empresa",
+                                    "category_status": true,
+                                    "created_at": "2026-03-05T10:30:00.000000Z",
+                                    "updated_at": "2026-03-05T10:30:00.000000Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Categoría no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Categoría no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener la Categoria especifico"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Actualizar una categoría",
+                "description": "Actualiza el nombre y descripción de una categoría existente",
+                "operationId": "ee7c82ac9d83255337f5f8504f2de002",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la categoría",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos a actualizar (JSON)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_name",
+                                    "category_description"
+                                ],
+                                "properties": {
+                                    "category_name": {
+                                        "description": "Nuevo nombre de la categoría",
+                                        "type": "string",
+                                        "example": "Servicio Actualizado"
+                                    },
+                                    "category_description": {
+                                        "description": "Nueva descripción de la categoría",
+                                        "type": "string",
+                                        "example": "Descripción actualizada de sistemas"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Categoría actualizada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Categories"
+                                },
+                                "example": {
+                                    "category_id": 1,
+                                    "category_name": "Servicio Actualizado",
+                                    "category_description": "Descripción actualizada de sistemas",
+                                    "category_status": true,
+                                    "created_at": "2026-03-05T10:30:00.000000Z",
+                                    "updated_at": "2026-03-05T16:00:00.000000Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Categoría no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Categoría no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no eran válidos."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la solicitud"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Eliminar una categoría",
+                "description": "Elimina una categoría de la base de datos de forma permanente",
+                "operationId": "7a512846d20a1a1396d9946f1496394f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la categoría",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categoría eliminada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Categoría eliminada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Categoría no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Categoría no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la solicitud"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/categories/{id}/toggle": {
+            "patch": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Cambiar el estado de una categoría (Activar/Desactivar)",
+                "description": "Alterna el estado de una categoría entre activa e inactiva",
+                "operationId": "53fe93757cbe00fc6af68d9b41a0784f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la categoría",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Estado de la categoría actualizado"
+                                        },
+                                        "category_name": {
+                                            "type": "string",
+                                            "example": "Software"
+                                        },
+                                        "category_description": {
+                                            "type": "string",
+                                            "example": "Categoría para productos de software"
+                                        },
+                                        "new_status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Categoría no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "No se pudo actualizar el estado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener la Categoria especifico"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/departments": {
+            "get": {
+                "tags": [
+                    "Departamentos"
+                ],
+                "summary": "Obtener todos los departamentos",
+                "operationId": "609fe4b236597615a801133f5a5c618d",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                }
+            }
+        },
+        "/api/faqs": {
+            "get": {
+                "tags": [
+                    "Preguntas Frecuentes"
+                ],
+                "summary": "Obtener lista de preguntas frecuentes activas",
+                "description": "Retorna todas las preguntas frecuentes con estado activo ordenadas por fecha de creación",
+                "operationId": "5b662ab218d1461d9ce20443a12aa76b",
+                "responses": {
+                    "200": {
+                        "description": "Lista de FAQs obtenida con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/FAQ"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "faq_id": 1,
+                                        "category_id": 1,
+                                        "product_id": 1,
+                                        "product_model_id": 1,
+                                        "faq_question": "¿Que sistemas operativos tiene?",
+                                        "faq_answer": "Windows, Linux y Android",
+                                        "faq_video_url": "https://www.youtube.com/",
+                                        "faq_status": true,
+                                        "created_at": null,
+                                        "updated_at": null,
+                                        "category": {
+                                            "category_id": 1,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-09T14:39:21.000000Z",
+                                            "updated_at": "2026-03-09T14:39:21.000000Z"
+                                        },
+                                        "product": {
+                                            "product_id": 1,
+                                            "category_id": 1,
+                                            "product_name": "All in one",
+                                            "product_status": true,
+                                            "created_at": "2026-03-09T14:41:21.000000Z",
+                                            "updated_at": "2026-03-09T14:41:21.000000Z"
+                                        },
+                                        "product_model": {
+                                            "product_model_id": 1,
+                                            "product_id": 1,
+                                            "product_model_name": "Hybrid Tablet",
+                                            "product_model_status": true,
+                                            "created_at": "2026-03-09T14:42:14.000000Z",
+                                            "updated_at": "2026-03-09T14:42:14.000000Z"
+                                        },
+                                        "attachments": []
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener las preguntas frecuentes"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Database connection error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Preguntas Frecuentes"
+                ],
+                "summary": "Crear una nueva pregunta frecuente",
+                "description": "Crea una nueva pregunta frecuente con estado activo por defecto",
+                "operationId": "a1210209d083eef73890298dcf02ca45",
+                "requestBody": {
+                    "description": "Datos de la nueva pregunta frecuente (JSON)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "product_id",
+                                    "product_model_id",
+                                    "faq_question",
+                                    "faq_answer",
+                                    "faq_video_url"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "description": "ID de la categoría",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "product_id": {
+                                        "description": "ID del producto",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "product_model_id": {
+                                        "description": "ID del modelo del producto",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "faq_question": {
+                                        "description": "Pregunta frecuente",
+                                        "type": "string",
+                                        "example": "¿Cómo reiniciar el dispositivo?"
+                                    },
+                                    "faq_answer": {
+                                        "description": "Respuesta a la pregunta",
+                                        "type": "string",
+                                        "example": "Mantenga presionado el botón de encendido durante 10 segundos..."
+                                    },
+                                    "faq_video_url": {
+                                        "description": "URL del video",
+                                        "type": "string",
+                                        "example": "https://www.youtube.com/"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "FAQ creada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FAQ"
+                                },
+                                "example": [
+                                    {
+                                        "category_id ": 1,
+                                        "product_id": 1,
+                                        "product_model_id": 1,
+                                        "faq_question": "¿Cómo reiniciar el dispositivo?",
+                                        "faq_answer": "Mantenga presionado el botón de encendido durante 10 segundos...",
+                                        "faq_video_url": "https://www.youtube.com/",
+                                        "faq_status": true,
+                                        "updated_at": "2026-03-09T15:40:43.000000Z",
+                                        "created_at": "2026-03-09T15:40:43.000000Z",
+                                        "faq_id": 2,
+                                        "category": {
+                                            "category_id": 1,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-09T14:39:21.000000Z",
+                                            "updated_at": "2026-03-09T14:39:21.000000Z"
+                                        },
+                                        "product": {
+                                            "product_id": 1,
+                                            "category_id": 1,
+                                            "product_name": "All in one",
+                                            "product_status": true,
+                                            "created_at": "2026-03-09T14:41:21.000000Z",
+                                            "updated_at": "2026-03-09T14:41:21.000000Z"
+                                        },
+                                        "product_model": {
+                                            "product_model_id": 1,
+                                            "product_id": 1,
+                                            "product_model_name": "Hybrid Tablet",
+                                            "product_model_status": true,
+                                            "created_at": "2026-03-09T14:42:14.000000Z",
+                                            "updated_at": "2026-03-09T14:42:14.000000Z"
+                                        },
+                                        "attachments": []
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no eran válidos."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "category_id": [
+                                                    "El campo de ID de categoria es obligatorio."
+                                                ],
+                                                "product_id": [
+                                                    "El campo de ID de producto es obligatorio."
+                                                ],
+                                                "product_model_id": [
+                                                    "El campo ID del producto de modelo es obligatorio"
+                                                ],
+                                                "faq_question": [
+                                                    "El campo del nombre de la pregunta es obligatorio."
+                                                ],
+                                                "faq_answer": [
+                                                    "El campo de la respuesta de la pregunta es obligatoria."
+                                                ],
+                                                "faq_video_url": [
+                                                    "El campo del video es obligatorio"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la petición"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/faqs/inactives": {
+            "get": {
+                "tags": [
+                    "Preguntas Frecuentes"
+                ],
+                "summary": "Obtener lista de preguntas frecuentes inactivas",
+                "description": "Retorna todas las preguntas frecuentes con estado inactivo",
+                "operationId": "b9262ab91b9b84e9bc0db07106e6672d",
+                "responses": {
+                    "200": {
+                        "description": "Lista de FAQs inactivas obtenida con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/FAQ"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "faq_id": 1,
+                                        "category_id": 1,
+                                        "product_id": 1,
+                                        "product_model_id": 1,
+                                        "faq_question": "¿Que sistemas operativos tiene?",
+                                        "faq_answer": "Windows, Linux y Android",
+                                        "faq_video_url": "https://www.youtube.com/",
+                                        "faq_status": false,
+                                        "created_at": null,
+                                        "updated_at": null,
+                                        "category": {
+                                            "category_id": 1,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-09T14:39:21.000000Z",
+                                            "updated_at": "2026-03-09T14:39:21.000000Z"
+                                        },
+                                        "product": {
+                                            "product_id": 1,
+                                            "category_id": 1,
+                                            "product_name": "All in one",
+                                            "product_status": true,
+                                            "created_at": "2026-03-09T14:41:21.000000Z",
+                                            "updated_at": "2026-03-09T14:41:21.000000Z"
+                                        },
+                                        "product_model": {
+                                            "product_model_id": 1,
+                                            "product_id": 1,
+                                            "product_model_name": "Hybrid Tablet",
+                                            "product_model_status": true,
+                                            "created_at": "2026-03-09T14:42:14.000000Z",
+                                            "updated_at": "2026-03-09T14:42:14.000000Z"
+                                        },
+                                        "attachments": []
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener las preguntas frecuentes inactivas"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/faqs/{id}": {
+            "get": {
+                "tags": [
+                    "Preguntas Frecuentes"
+                ],
+                "summary": "Obtener una pregunta frecuente específica",
+                "description": "Retorna los detalles de una pregunta frecuente por su ID",
+                "operationId": "e7927d0c24deac99330b0a1d2d89b2cd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la pregunta frecuente",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQ obtenida con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FAQ"
+                                },
+                                "example": [
+                                    {
+                                        "faq_id": 1,
+                                        "category_id": 1,
+                                        "product_id": 1,
+                                        "product_model_id": 1,
+                                        "faq_question": "¿Que sistemas operativos tiene?",
+                                        "faq_answer": "Windows, Linux y Android",
+                                        "faq_video_url": "https://www.youtube.com/",
+                                        "faq_status": false,
+                                        "created_at": null,
+                                        "updated_at": null,
+                                        "category": {
+                                            "category_id": 1,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-09T14:39:21.000000Z",
+                                            "updated_at": "2026-03-09T14:39:21.000000Z"
+                                        },
+                                        "product": {
+                                            "product_id": 1,
+                                            "category_id": 1,
+                                            "product_name": "All in one",
+                                            "product_status": true,
+                                            "created_at": "2026-03-09T14:41:21.000000Z",
+                                            "updated_at": "2026-03-09T14:41:21.000000Z"
+                                        },
+                                        "product_model": {
+                                            "product_model_id": 1,
+                                            "product_id": 1,
+                                            "product_model_name": "Hybrid Tablet",
+                                            "product_model_status": true,
+                                            "created_at": "2026-03-09T14:42:14.000000Z",
+                                            "updated_at": "2026-03-09T14:42:14.000000Z"
+                                        },
+                                        "attachments": []
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "FAQ no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "FAQ no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener la pregunta frecuente especifico"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Preguntas Frecuentes"
+                ],
+                "summary": "Actualizar una pregunta frecuente",
+                "description": "Actualiza los datos de una pregunta frecuente existente",
+                "operationId": "9e256dd35fc7a9d1ef20bd32ebda5b58",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la pregunta frecuente",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos a actualizar (JSON)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "product_id",
+                                    "product_model_id",
+                                    "faq_question",
+                                    "faq_answer",
+                                    "faq_video_url"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "product_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "product_model_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "faq_question": {
+                                        "type": "string",
+                                        "example": "¿Cómo reiniciar el dispositivo?"
+                                    },
+                                    "faq_answer": {
+                                        "type": "string",
+                                        "example": "Mantenga presionado el botón de encendido..."
+                                    },
+                                    "faq_video_url": {
+                                        "description": "URL del video",
+                                        "type": "string",
+                                        "example": "https://www.youtube.com/"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "FAQ actualizada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": [
+                                    {
+                                        "faq_id": 1,
+                                        "category_id": 1,
+                                        "product_id": 1,
+                                        "product_model_id": 1,
+                                        "faq_question": "¿Cómo reiniciar el dispositivo?",
+                                        "faq_answer": "Mantenga presionado el botón de encendido...",
+                                        "faq_video_url": "https://www.youtube.com/",
+                                        "faq_status": false,
+                                        "created_at": null,
+                                        "updated_at": "2026-03-09T15:57:21.000000Z",
+                                        "category": {
+                                            "category_id": 1,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-09T14:39:21.000000Z",
+                                            "updated_at": "2026-03-09T14:39:21.000000Z"
+                                        },
+                                        "product": {
+                                            "product_id": 1,
+                                            "category_id": 1,
+                                            "product_name": "All in one",
+                                            "product_status": true,
+                                            "created_at": "2026-03-09T14:41:21.000000Z",
+                                            "updated_at": "2026-03-09T14:41:21.000000Z"
+                                        },
+                                        "product_model": {
+                                            "product_model_id": 1,
+                                            "product_id": 1,
+                                            "product_model_name": "Hybrid Tablet",
+                                            "product_model_status": true,
+                                            "created_at": "2026-03-09T14:42:14.000000Z",
+                                            "updated_at": "2026-03-09T14:42:14.000000Z"
+                                        },
+                                        "attachments": []
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "FAQ no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "FAQ no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no eran válidos."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la solicitud"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Preguntas Frecuentes"
+                ],
+                "summary": "Eliminar una pregunta frecuente",
+                "description": "Elimina una pregunta frecuente de la base de datos de forma permanente",
+                "operationId": "ea25eadce18cf367b631bd68395ac44e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la pregunta frecuente",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQ eliminada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "FAQ eliminada existosamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "FAQ no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "FAQ no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la solicitud"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/faqs/{id}/toggle": {
+            "patch": {
+                "tags": [
+                    "Preguntas Frecuentes"
+                ],
+                "summary": "Cambiar el estado de una pregunta frecuente",
+                "description": "Alterna el estado de una pregunta frecuente entre activa e inactiva",
+                "operationId": "e2d51da4c3ae1a5b1889a013af0efb15",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la pregunta frecuente",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Estado de la FAQ actualizado"
+                                        },
+                                        "faq_question": {
+                                            "type": "string",
+                                            "example": "¿Cómo reiniciar el dispositivo?"
+                                        },
+                                        "new_status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "FAQ no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "No se pudo actualizar el estado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener el producto  especifico"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{product_id}/models": {
+            "get": {
+                "tags": [
+                    "Modelos de Productos"
+                ],
+                "summary": "Obtener lista de modelos de un producto",
+                "description": "Retorna todos los modelos activos de un producto específico",
+                "operationId": "6cfdf5f22f90f4528f848a2c319d6a41",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de modelos obtenida con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductModel"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "product_model_id": 1,
+                                        "product_id": 1,
+                                        "product_model_name": "Hybrid Tablet",
+                                        "product_model_status": true,
+                                        "created_at": "2026-03-06T10:30:00.000000Z",
+                                        "updated_at": "2026-03-06T10:30:00.000000Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Modelo del producto no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Modelo del producto no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener el Modelo del Producto especifico"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Modelos de Productos"
+                ],
+                "summary": "Crear un nuevo modelo de producto",
+                "description": "Crea un nuevo modelo con estado activo por defecto",
+                "operationId": "82f9774fa5e1228229707e60981bf273",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos del nuevo modelo (JSON)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_model_name"
+                                ],
+                                "properties": {
+                                    "product_model_name": {
+                                        "description": "Nombre del modelo",
+                                        "type": "string",
+                                        "example": "Acrobat"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Modelo creado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductModel"
+                                },
+                                "example": [
+                                    {
+                                        "product_model_id": 1,
+                                        "product_id": 1,
+                                        "product_model_name": "N150",
+                                        "product_model_status": true,
+                                        "created_at": "2026-03-07T05:55:04.813Z",
+                                        "updated_at": "2026-03-07T05:55:04.813Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no eran válidos."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "product_id": [
+                                                    "El campo de ID de producto es obligatorio."
+                                                ],
+                                                "product_model_name": [
+                                                    "El campo del nombre del modulo del producto es obligatorio."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la petición"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{product_id}/models/inactives": {
+            "get": {
+                "tags": [
+                    "Modelos de Productos"
+                ],
+                "summary": "Obtener lista de modelos inactivos de un producto",
+                "description": "Retorna todos los modelos inactivos de un producto específico",
+                "operationId": "bdf670dbb1a8ee6a660f0825348c42ad",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de modelos inactivos obtenida con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductModel"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "product_model_id": 2,
+                                        "product_id": 1,
+                                        "product_model_name": "Monitor 1053FPH",
+                                        "product_model_status": false,
+                                        "created_at": null,
+                                        "updated_at": null
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Modelo del producto no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Modelo del producto no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener el Modelo del Producto especifico"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{product_id}/models/{model_id}": {
+            "get": {
+                "tags": [
+                    "Modelos de Productos"
+                ],
+                "summary": "Obtener un modelo específico",
+                "description": "Retorna los detalles de un modelo de producto",
+                "operationId": "54a5acba9689a6f0f3cc5e4d676a8e91",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "model_id",
+                        "in": "path",
+                        "description": "ID del modelo",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Modelo obtenido con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductModel"
+                                },
+                                "example": [
+                                    {
+                                        "product_model_id": 1,
+                                        "product_id": 1,
+                                        "product_model_name": "SAT PL5005C",
+                                        "product_model_status": true,
+                                        "created_at": "2026-03-07T05:22:27.284Z",
+                                        "updated_at": "2026-03-07T05:22:27.284Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto o modelo no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Producto o modelo no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener el Produto y el Modelo especifico"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Modelos de Productos"
+                ],
+                "summary": "Actualizar un modelo",
+                "description": "Actualiza los datos de un modelo existente",
+                "operationId": "400f1b94a1d0e433c619abf65c78f8eb",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "model_id",
+                        "in": "path",
+                        "description": "ID del modelo",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos a actualizar (JSON)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_model_name"
+                                ],
+                                "properties": {
+                                    "product_model_name": {
+                                        "type": "string",
+                                        "example": "N140"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Modelo actualizado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": [
+                                    {
+                                        "product_model_id": 1,
+                                        "product_id": 1,
+                                        "product_model_name": "N140",
+                                        "product_model_status": true,
+                                        "created_at": null,
+                                        "updated_at": "2026-03-07T17:24:27.000000Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto o modelo no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Producto o modelo no encontrado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no eran válidos."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la solicitud"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Modelos de Productos"
+                ],
+                "summary": "Eliminar un modelo",
+                "description": "Elimina un modelo de la base de datos de forma permanente",
+                "operationId": "af209dc7c383411c0a9801c3b1e3ce34",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "model_id",
+                        "in": "path",
+                        "description": "ID del modelo",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Modelo eliminado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Modelo eliminado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto o modelo no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Producto o Modelo no encontrado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la solicitud"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{product_id}/models/{model_id}/toggle": {
+            "patch": {
+                "tags": [
+                    "Modelos de Productos"
+                ],
+                "summary": "Cambiar el estado de un modelo",
+                "description": "Alterna el estado de un modelo entre activo e inactivo",
+                "operationId": "e28a6cc33d66ee200128918a05082cde",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "model_id",
+                        "in": "path",
+                        "description": "ID del modelo",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Estado del model actualizado"
+                                        },
+                                        "product_model_name": {
+                                            "type": "string",
+                                            "example": "N150"
+                                        },
+                                        "new_status": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto o modelo no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "No se pudo actualizar el estado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la solicitud"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/models/bulk-upload": {
+            "post": {
+                "tags": [
+                    "Modelos de Productos"
+                ],
+                "summary": "Carga masiva de modelos de productos",
+                "description": "Carga múltiples modelos de diferentes productos desde un archivo CSV o Excel (máximo 5MB). El archivo DEBE contener exactamente estos encabezados en la primera fila: product_id, product_model_name, product_model_status (en minúsculas, sin espacios extra)",
+                "operationId": "d33d68db8e2f0ea056d4498d5f005d62",
+                "requestBody": {
+                    "description": "Archivo CSV o Excel con los modelos. REQUERIDO: Los encabezados de la primera fila deben ser exactamente: product_id, product_model_name, product_model_status (en minúsculas, sin espacios extra)",
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "description": "Archivo CSV o XLSX (máximo 5MB). ENCABEZADOS REQUERIDOS: product_id, product_model_name, product_model_status",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Carga completada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Carga de modelos completada"
+                                        },
+                                        "total_processed": {
+                                            "description": "Total de filas procesadas",
+                                            "type": "integer",
+                                            "example": 52
+                                        },
+                                        "successful": {
+                                            "description": "Modelos creados exitosamente",
+                                            "type": "integer",
+                                            "example": 52
+                                        },
+                                        "failed": {
+                                            "description": "Modelos que fallaron",
+                                            "type": "integer",
+                                            "example": 0
+                                        },
+                                        "duplicated_omitted": {
+                                            "description": "Modelos omitidos por ser duplicados",
+                                            "type": "integer",
+                                            "example": 0
+                                        },
+                                        "errors": {
+                                            "description": "Errores encontrados en filas específicas",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {},
+                                                "type": "object"
+                                            }
+                                        },
+                                        "file_saved": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Archivo no proporcionado o falta el campo 'file'",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "El campo file es obligatorio"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Archivo excede el tamaño máximo permitido (5MB)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "El archivo excede el tamaño máximo de 5MB"
+                                        },
+                                        "max_size": {
+                                            "type": "string",
+                                            "example": "5MB"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errores de validación - Encabezados inválidos, formato no soportado o archivo corrupto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "title": "Encabezados inválidos",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Encabezados inválidos en el archivo"
+                                                },
+                                                "expected_headers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "product_id",
+                                                        "product_model_name",
+                                                        "product_model_status "
+                                                    ]
+                                                },
+                                                "received_headers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "id",
+                                                        "nombre",
+                                                        "estado"
+                                                    ]
+                                                },
+                                                "file_saved": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "title": "Formato de archivo no soportado",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Formato de archivo no soportado"
+                                                },
+                                                "supported_formats": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "CSV",
+                                                        "XLSX",
+                                                        "XLS"
+                                                    ]
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "title": "Archivo corrupto o dañado",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Error al procesar el archivo Excel"
+                                                },
+                                                "error": {
+                                                    "type": "string",
+                                                    "example": "Archivo corrupto o dañado"
+                                                },
+                                                "file_saved": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al procesar el archivo"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products": {
+            "get": {
+                "tags": [
+                    "Productos"
+                ],
+                "summary": "Obtener lista de productos activos",
+                "description": "Retorna todos los productos con estado activo ordenados por nombre",
+                "operationId": "8a786ab503de469d309caf24297752e8",
+                "responses": {
+                    "200": {
+                        "description": "Lista de productos obtenida con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Products"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "product_id": 30,
+                                        "category_id": 1,
+                                        "product_name": "ALl in One",
+                                        "product_status": true,
+                                        "created_at": "2026-03-05T22:57:45.000000Z",
+                                        "updated_at": "2026-03-05T22:57:45.000000Z",
+                                        "category": {
+                                            "category_id": 11,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-05T20:23:21.000000Z",
+                                            "updated_at": "2026-03-05T20:37:23.000000Z"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener los productos"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Database connection error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Productos"
+                ],
+                "summary": "Crear un nuevo producto",
+                "description": "Crea un nuevo producto con estado activo por defecto",
+                "operationId": "3de14fdb8bf0dd86c0808f116f78d279",
+                "requestBody": {
+                    "description": "Datos del nuevo producto (JSON)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "product_name"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "description": "ID de la categoría",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "product_name": {
+                                        "description": "Nombre del producto",
+                                        "type": "string",
+                                        "example": "Mini PC'S"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Producto creado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Products"
+                                },
+                                "example": [
+                                    {
+                                        "category_id": 1,
+                                        "product_name": "UPS",
+                                        "product_status": true,
+                                        "updated_at": "2026-03-06T15:34:51.000000Z",
+                                        "created_at": "2026-03-06T15:34:51.000000Z",
+                                        "product_id": 12,
+                                        "category": {
+                                            "category_id": 1,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-05T20:23:21.000000Z",
+                                            "updated_at": "2026-03-05T20:37:23.000000Z"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no eran válidos."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "category_id": [
+                                                    "El campo de ID de categoria es obligatorio.",
+                                                    "El ID de la categoria ya está tomado."
+                                                ],
+                                                "product_name": [
+                                                    "El campo del nombre del producto es obligatorio."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la petición"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/inactives": {
+            "get": {
+                "tags": [
+                    "Productos"
+                ],
+                "summary": "Obtener lista de productos inactivos",
+                "description": "Retorna todos los productos con estado inactivo",
+                "operationId": "fa1887ffa57a4ff57660c5551a1311b1",
+                "responses": {
+                    "200": {
+                        "description": "Lista de productos inactivos obtenida con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Products"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "product_id": 9,
+                                        "category_id": 1,
+                                        "product_name": "Impresoras",
+                                        "product_status": false,
+                                        "created_at": "2026-03-05T23:19:48.000000Z",
+                                        "updated_at": "2026-03-05T23:19:48.000000Z",
+                                        "category": {
+                                            "category_id": 1,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-05T20:23:21.000000Z",
+                                            "updated_at": "2026-03-05T20:37:23.000000Z"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener los Productos inactivas"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{id}": {
+            "get": {
+                "tags": [
+                    "Productos"
+                ],
+                "summary": "Obtener un producto específico",
+                "description": "Retorna los detalles de un producto por su ID",
+                "operationId": "c8b774a163d82b689101de30d105e33e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Producto obtenido con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Products"
+                                },
+                                "example": [
+                                    {
+                                        "product_id": 1,
+                                        "category_id": 12,
+                                        "product_name": "Computadoras Moviles",
+                                        "product_status": true,
+                                        "created_at": "2026-03-05T22:57:45.000000Z",
+                                        "updated_at": "2026-03-05T22:57:45.000000Z",
+                                        "category": {
+                                            "category_id": 1,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-05T20:23:21.000000Z",
+                                            "updated_at": "2026-03-05T20:37:23.000000Z"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Categoría no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Categoria no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener el Produto especifico"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Productos"
+                ],
+                "summary": "Actualizar un producto",
+                "description": "Actualiza los datos de un producto existente",
+                "operationId": "5ddd606f7fe4ad9d4fc28af3b92a4f9c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos a actualizar (JSON)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "product_name"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "product_name": {
+                                        "type": "string",
+                                        "example": "Escaneres y Soluciones"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Producto actualizado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": [
+                                    {
+                                        "product_id": 1,
+                                        "category_id": 1,
+                                        "product_name": "Cajones Monederos",
+                                        "product_status": true,
+                                        "created_at": "2026-03-06T16:31:24.000000Z",
+                                        "updated_at": "2026-03-06T17:41:29.000000Z",
+                                        "category": {
+                                            "category_id": 1,
+                                            "category_name": "Dispositivos",
+                                            "category_description": "Dispositivos tecnológicos disponibles",
+                                            "category_status": true,
+                                            "created_at": "2026-03-06T16:10:46.000000Z",
+                                            "updated_at": "2026-03-06T16:13:57.000000Z"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Producto no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no eran válidos."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la solicitud"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Productos"
+                ],
+                "summary": "Eliminar un producto",
+                "description": "Elimina un producto de la base de datos de forma permanente",
+                "operationId": "06527a09afedc3ea5cbdfcfa079ae59c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Producto eliminado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Producto eliminado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Producto no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error en procesar la solicitud"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{id}/toggle": {
+            "patch": {
+                "tags": [
+                    "Productos"
+                ],
+                "summary": "Cambiar el estado de un producto",
+                "description": "Alterna el estado de un producto entre activo e inactivo",
+                "operationId": "f1df9d7f2596b90b14fadcfdbf9d6790",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del producto",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Estado del producto actualizado"
+                                        },
+                                        "product_name": {
+                                            "type": "string",
+                                            "example": "UPS"
+                                        },
+                                        "new_status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "No se pudo actualizar el estado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al obtener el producto  especifico"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/bulk-upload": {
+            "post": {
+                "tags": [
+                    "Productos"
+                ],
+                "summary": "Carga masiva de productos",
+                "description": "Archivo CSV o Excel con los productos. REQUERIDO: Los encabezados de la primera fila deben ser exactamente: category_id, product_name, product_status (en minúsculas, sin espacios extra)",
+                "operationId": "8be623d6822998f94c06bc2b7c0516d3",
+                "requestBody": {
+                    "description": "Archivo CSV o Excel con los productos",
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "description": "Archivo CSV o XLSX (máximo 5MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Carga completada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Carga de productos completada"
+                                        },
+                                        "total_processed": {
+                                            "description": "Total de filas procesadas",
+                                            "type": "integer",
+                                            "example": 150
+                                        },
+                                        "successful": {
+                                            "description": "Productos creados exitosamente",
+                                            "type": "integer",
+                                            "example": 120
+                                        },
+                                        "failed": {
+                                            "description": "Productos que fallaron",
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "duplicated_omitted": {
+                                            "description": "Productos omitidos por ser duplicados",
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "errors": {
+                                            "description": "Errores encontrados en filas específicas",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "row": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "error": {
+                                                        "type": "string",
+                                                        "example": "Categoría 99 no existe"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "example": [
+                                                {
+                                                    "row": 5,
+                                                    "error": "Categoría 99 no existe"
+                                                },
+                                                {
+                                                    "row": 12,
+                                                    "error": "Faltan campos requeridos (category_id, product_name)"
+                                                }
+                                            ]
+                                        },
+                                        "file_saved": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Archivo no proporcionado o falta el campo 'file'",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "El campo file es obligatorio"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Archivo excede el tamaño máximo permitido (5MB)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "El archivo excede el tamaño máximo de 5MB"
+                                        },
+                                        "max_size": {
+                                            "type": "string",
+                                            "example": "5MB"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errores de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "title": "Encabezados inválidos",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Encabezados inválidos en el archivo"
+                                                },
+                                                "expected_headers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "category_id",
+                                                        "product_name",
+                                                        "product_status"
+                                                    ]
+                                                },
+                                                "received_headers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "id",
+                                                        "nombre",
+                                                        "estado"
+                                                    ]
+                                                },
+                                                "file_saved": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "title": "Formato de archivo no soportado",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Formato de archivo no soportado"
+                                                },
+                                                "supported_formats": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "CSV",
+                                                        "XLSX",
+                                                        "XLS"
+                                                    ]
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "title": "Archivo corrupto o dañado",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Error al procesar el archivo Excel"
+                                                },
+                                                "error": {
+                                                    "type": "string",
+                                                    "example": "Archivo corrupto o dañado"
+                                                },
+                                                "file_saved": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al procesar el archivo"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tickets": {
+            "get": {
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Obtiene todos los tickets",
+                "operationId": "4e5baf58ca879573b99c3c967b0e057d",
+                "responses": {
+                    "200": {
+                        "description": "Lista de tickets con relaciones"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Crea un ticket, guarda evidencias y notifica por Reverb",
+                "operationId": "7f0bcfe92c2d19d5e767da6b61a06dfd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "customer_id",
+                                    "category_id",
+                                    "ticket_subject",
+                                    "ticket_description",
+                                    "ticket_invoice_number"
+                                ],
+                                "properties": {
+                                    "customer_id": {
+                                        "type": "integer"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "product_model_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "ticket_subject": {
+                                        "type": "string"
+                                    },
+                                    "ticket_description": {
+                                        "type": "string"
+                                    },
+                                    "ticket_invoice_number": {
+                                        "type": "string"
+                                    },
+                                    "ticket_serial_number": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "evidences[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Ticket creado y transmitido"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Categories": {
+                "properties": {
+                    "category_id": {
+                        "description": "Codigo de la categoria del producto",
+                        "type": "integer"
+                    },
+                    "category_name": {
+                        "description": "Nombre de la categoría",
+                        "type": "string",
+                        "example": "Servicios"
+                    },
+                    "category_description": {
+                        "description": "Descripción de la categoría",
+                        "type": "string",
+                        "example": "Categoría para productos de software"
+                    },
+                    "category_status": {
+                        "description": "Estado de la categoría (activa/inactiva)",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "description": "Fecha de creación",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Fecha de actualización",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "FAQ": {
+                "properties": {
+                    "faq_id": {
+                        "description": "Código único de la pregunta frecuente",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "description": "ID de la categoría",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "product_id": {
+                        "description": "ID del producto",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "product_model_id": {
+                        "description": "ID del modelo del producto",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "faq_question": {
+                        "description": "Pregunta frecuente",
+                        "type": "string",
+                        "example": "¿Cómo reiniciar el dispositivo?"
+                    },
+                    "faq_answer": {
+                        "description": "Respuesta a la pregunta",
+                        "type": "string",
+                        "example": "Para reiniciar el dispositivo, mantenga presionado el botón de encendido..."
+                    },
+                    "faq_video_url": {
+                        "description": "URL del video tutorial de YouTube",
+                        "type": "string",
+                        "example": "https://www.youtube.com/",
+                        "nullable": true
+                    },
+                    "faq_status": {
+                        "description": "Estado de la pregunta (true = activa, false = inactiva)",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "description": "Fecha y hora de creación",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Fecha y hora de última actualización",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ProductModel": {
+                "properties": {
+                    "product_model_id": {
+                        "description": "Código único del modelo del producto",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "product_id": {
+                        "description": "ID del producto al que pertenece este modelo",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "product_model_name": {
+                        "description": "Nombre del modelo del producto",
+                        "type": "string",
+                        "example": "SAT PL5005C"
+                    },
+                    "product_model_status": {
+                        "description": "Estado del modelo (true = activo, false = inactivo)",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "description": "Fecha y hora de creación",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Fecha y hora de última actualización",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Products": {
+                "properties": {
+                    "product_id": {
+                        "description": "Código único del producto",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_id": {
+                        "description": "ID de la categoría a la que pertenece",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "product_name": {
+                        "description": "Nombre del producto",
+                        "type": "string",
+                        "example": "All in One"
+                    },
+                    "product_status": {
+                        "description": "Estado del producto (true = activo, false = inactivo)",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "description": "Fecha y hora de creación",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Fecha y hora de última actualización",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Categorías",
+            "description": "Categorías"
+        },
+        {
+            "name": "Departamentos",
+            "description": "Departamentos"
+        },
+        {
+            "name": "Preguntas Frecuentes",
+            "description": "Preguntas Frecuentes"
+        },
+        {
+            "name": "Modelos de Productos",
+            "description": "Modelos de Productos"
+        },
+        {
+            "name": "Productos",
+            "description": "Productos"
+        },
+        {
+            "name": "Tickets",
+            "description": "Tickets"
+        }
+    ]
+}

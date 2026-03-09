@@ -19,13 +19,13 @@ return new class extends Migration
                 'companies', 'company_id'
             );
 
-            $table->string('customer_name', 50);
+            $table->string('customer_name', 100);
             $table->string('customer_email', 50)->unique();
+            $table->string('customer_country_code', 10);
             $table->string('customer_phone', 20);
-            $table->string('customer_country', 50);
-            $table->text('customer_address');
             $table->string('customer_image', 255)->nullable();
             $table->boolean('customer_status')->default(true);
+            $table->timestamps();
         });
     }
 

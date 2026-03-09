@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('tickets_statuses', function (Blueprint $table) {
             $table->id('ticket_status_id');
-            $table->string('ticket_status_name', 30);
+            $table->string('ticket_status_name', 30)->unique();
+            $table->timestamps();
         });
     }
 

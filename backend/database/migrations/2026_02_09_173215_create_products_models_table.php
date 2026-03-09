@@ -11,17 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('warranties', function (Blueprint $table) {
-            $table->id('warranty_id');
-            
+        Schema::create('products_models', function (Blueprint $table) {
+            $table->id('product_model_id');
+
             //Relaciones
             $table->foreignId('product_id')->constrained(
                 'products', 'product_id'
-            )->onDelete('cascade');
+            );
 
-            $table->date('warranty_start');
-            $table->date('warranty_end');
-            $table->boolean('warranty_status')->default(true);
+            $table->string('product_model_name', 100)->unique();
+            $table->boolean('product_model_status')->default(true);
+            $table->timestamps();
         });
     }
 
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('warranties');
+        Schema::dropIfExists('products_models');
     }
 };

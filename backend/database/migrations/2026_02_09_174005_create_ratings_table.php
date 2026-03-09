@@ -17,17 +17,17 @@ return new class extends Migration
             //Relaciones
             $table->foreignId('ticket_id')->constrained(
                 'tickets', 'ticket_id'
-            );
+            )->onDelete('cascade');
             $table->foreignId('customer_id')->constrained(
                 'customers', 'customer_id'
-            );
+            )->onDelete('cascade');
             $table->foreignId('user_id')->constrained(
                 'users', 'user_id'
-            );
+            )->onDelete('cascade');
 
-            $table->integer('rating_score');
-            $table->string('rating_comment', 255);
-            $table->timestamp('rating_createdAt');
+            $table->tinyInteger('rating_score');
+            $table->string('rating_comment', 255)->nullable();
+            $table->timestamp('rating_createdAt')->useCurrent();
         });
     }
 

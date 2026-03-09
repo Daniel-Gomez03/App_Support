@@ -7,30 +7,30 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OpenApi\Attributes as OA;
 
 #[OA\Schema(
-    schema: "Products",
+    schema: "ProductModel",
     properties: [
+        new OA\Property(
+            property: "product_model_id",
+            type: "integer",
+            description: "Código único del modelo del producto",
+            example: 1
+        ),
         new OA\Property(
             property: "product_id",
             type: "integer",
-            description: "Código único del producto",
+            description: "ID del producto al que pertenece este modelo",
             example: 1
         ),
         new OA\Property(
-            property: "category_id",
-            type: "integer",
-            description: "ID de la categoría a la que pertenece",
-            example: 1
-        ),
-        new OA\Property(
-            property: "product_name",
+            property: "product_model_name",
             type: "string",
-            description: "Nombre del producto",
-            example: "All in One"
+            description: "Nombre del modelo del producto",
+            example: "SAT PL5005C"
         ),
         new OA\Property(
-            property: "product_status",
+            property: "product_model_status",
             type: "boolean",
-            description: "Estado del producto (true = activo, false = inactivo)",
+            description: "Estado del modelo (true = activo, false = inactivo)",
             example: true
         ),
         new OA\Property(
@@ -47,35 +47,30 @@ use OpenApi\Attributes as OA;
         )
     ]
 )]
-class Products extends Model
+class ProductModel extends Model
 {
     use HasFactory;
 
-    protected $table = 'products';
-    protected $primaryKey = 'product_id';
+    protected $table = 'products_models';
+    protected $primaryKey = 'product_model_id';
     protected $keyType = 'int';
     public $incrementing = true;
     public $timestamps = true;
 
     protected $fillable = [
-        'category_id',
-        'product_name',
-        'product_status',
+        'product_id',
+        'product_model_name',
+        'product_model_status',
     ];
 
     protected $casts = [
-        'product_status' => 'boolean',
+        'product_model_status' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
-    public function category()
+    public function product()
     {
-        return $this->belongsTo(Categories::class, 'category_id', 'category_id');
-    }
-
-    public function productModels()
-    {
-        return $this->hasMany(Products_models::class, 'product_id', 'product_id');
+        return $this->belongsTo(Products::class, 'product_id', 'product_id');
     }
 }

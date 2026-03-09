@@ -20,7 +20,7 @@ return new class extends Migration
             )->onDelete('cascade');
 
             $table->string('ticket_evidence_path', 255);
-            $table->timestamp('ticket_evidence_uploadedAt')->useCurrent();
+            $table->timestamps();
         });
     }
 

@@ -18,13 +18,18 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained(
                 'categories', 'category_id'
             );
-            $table->foreignId('user_id')->constrained(
-                'users', 'user_id'
-            )->onDelete('cascade');
+            $table->foreignId('product_id')->constrained(
+                'products', 'product_id'
+            );
+             $table->foreignId('product_model_id')->constrained(
+                'products_models', 'product_model_id'
+            );
 
             $table->string('faq_question', 255);
             $table->text('faq_answer');
+            $table->string('faq_video_url', 255); 
             $table->boolean('faq_status')->default(true);
+            $table->timestamps();
         });
     }
 

@@ -17,15 +17,16 @@ return new class extends Migration
             //Relaciones
             $table->foreignId('rol_id')->constrained(
                 'roles', 'rol_id'
-            );
+            )->onDelete('cascade');
             $table->foreignId('module_id')->constrained(
                 'modules', 'module_id'
-            );
+            )->onDelete('cascade');
 
-            $table->boolean('module_permission_view')->default(true);
+            $table->boolean('module_permission_view')->default(false);
             $table->boolean('module_permission_create')->default(false);
             $table->boolean('module_permission_edit')->default(false);
             $table->boolean('module_permission_delete')->default(false);
+            $table->unique(['rol_id', 'module_id'], 'unique_rol_module_permission');
         });
     }
 

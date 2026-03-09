@@ -18,11 +18,11 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained(
                 'customers', 'customer_id'
             );
-            $table->foreignId('product_id')->constrained(
-                'products', 'product_id'
-            );
             $table->foreignId('category_id')->constrained(
                 'categories', 'category_id'
+            );
+            $table->foreignId('product_model_id')->nullable()->constrained(
+                'products_models', 'product_model_id'
             );
             $table->foreignId('ticket_status_id')->constrained(
                'tickets_statuses', 'ticket_status_id'
@@ -36,8 +36,9 @@ return new class extends Migration
 
             $table->string('ticket_subject', 255);
             $table->text('ticket_description');
-            $table->timestamp('ticket_createdAt')->useCurrent();
-            $table->boolean('ticket_status')->default(true);
+            $table->string('ticket_invoice_number', 50);
+            $table->string('ticket_serial_number', 50)->nullable();
+            $table->timestamps();
         });
     }
 
