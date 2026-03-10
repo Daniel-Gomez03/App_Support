@@ -1,0 +1,184 @@
+@import "../../../less/variables.less";
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+
+    .modalContent {
+        background-color: @background-color;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease;
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: #breaks[tablet]) {
+            max-height: 95vh;
+            border-radius: 8px;
+        }
+
+        .modalHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid #f0f0f0;
+            position: sticky;
+            top: 0;
+            background-color: @background-color;
+
+            .modalTitle {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+                color: #1a1a1a;
+            }
+
+            .closeBtn {
+                background: none;
+                border: none;
+                font-size: 24px;
+                color: #666666;
+                cursor: pointer;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: color 0.3s ease;
+
+                &:hover {
+                    color: #1a1a1a;
+                }
+            }
+
+            .errorMessage {
+                padding: 12px 24px;
+                background-color: #fee;
+                color: #c33;
+                border-bottom: 1px solid #fcc;
+                font-size: 13px;
+            }
+        }
+
+        .form {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+
+            .formGroup {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+
+                label {
+                    font-size: 13px;
+                    font-weight: 500;
+                    color: #1a1a1a;
+                }
+
+                select,
+                input,
+                textarea {
+                    padding: 10px 12px;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 8px;
+                    font-family: @font-family;
+                    font-size: 14px;
+                    color: #333333;
+                    transition: border-color 0.3s ease;
+
+                    &:focus {
+                        outline: none;
+                        border-color: @primary-color;
+                        box-shadow: 0 0 0 3px rgba(108, 135, 102, 0.1);
+                    }
+
+                    &::placeholder {
+                        color: #999999;
+                    }
+
+                    &:disabled {
+                        background-color: #f5f5f5;
+                        cursor: not-allowed;
+                        color: #999999;
+                    }
+                }
+
+                textarea {
+                    resize: vertical;
+                    font-size: 13px;
+                    line-height: 1.5;
+                }
+            }
+
+            .formActions {
+                display: flex;
+                gap: 12px;
+                justify-content: flex-end;
+                padding-top: 12px;
+                border-top: 1px solid #f0f0f0;
+
+                .button {
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    border: none;
+                    transition: all 0.3s ease;
+
+                    &:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                    }
+                }
+
+                .cancelBtn {
+                    background-color: #f0f0f0;
+                    color: #666666;
+
+                    &:hover {
+                        background-color: #e0e0e0;
+                    }
+                }
+
+                .submitBtn {
+                    background-color: @primary-color;
+                    color: @background-color;
+
+                    &:hover {
+                        background-color: @tertiary-color;
+                    }
+
+                    &:active {
+                        transform: scale(0.98);
+                    }
+                }
+            }
+        }
+    }
+}

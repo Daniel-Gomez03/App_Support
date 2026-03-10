@@ -885,13 +885,22 @@ class FaqsModelController extends Controller
             $faq->faq_status = !$faq->faq_status;
             $faq->save();
 
+            // Recargar las relaciones
+            $faq->load(['category', 'product', 'productModel']);
+
+            // Broadcast el evento
+            \App\Events\FaqStatusToggled::dispatch($faq);
+
             return response()->json([
                 'message' => 'Estado de la FAQ actualizado',
                 'faq_question' => $faq->faq_question,
                 'new_status' => $faq->faq_status
             ], 200);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'No se pudo actualizar el estado'], 404);
+            return response()->json([
+                'error' => 'No se pudo actualizar el estado',
+                'details' => $e->getMessage()
+            ], 500);
         }
     }
 }

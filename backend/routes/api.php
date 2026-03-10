@@ -72,13 +72,14 @@ Route::prefix('products')->group(function () {
 // PREGUNTAS FRECUENTES (FAQs)
 // ============================================
 Route::prefix('faqs')->group(function () {
-    Route::get('/', [FaqsModelController::class, 'index']);
     Route::get('/inactives', [FaqsModelController::class, 'getInactives']);
+    Route::patch('/{id}/toggle', [FaqsModelController::class, 'toggleStatus']);
+    
+    Route::get('/', [FaqsModelController::class, 'index']);
     Route::post('/', [FaqsModelController::class, 'store']);
     Route::get('/{id}', [FaqsModelController::class, 'show']);
     Route::put('/{id}', [FaqsModelController::class, 'update']);
     Route::delete('/{id}', [FaqsModelController::class, 'destroy']);
-    Route::patch('/{id}/toggle', [FaqsModelController::class, 'toggleStatus']);
 });
 
 
