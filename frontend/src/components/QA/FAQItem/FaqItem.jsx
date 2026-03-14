@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import styles from "./FAQItem.module.less";
-import { MdEdit, } from "react-icons/md";
 import qaIcon from "../../../assets/icons/QA-icon.svg";
 import editIcon from "../../../assets/icons/Edit-icon.svg";
 import { TbPointFilled } from "react-icons/tb";

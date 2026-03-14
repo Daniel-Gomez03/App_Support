@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import styles from "./FAQForm.module.less";
 import { MdClose } from "react-icons/md";
 import { getCategories } from "../../../services/Categoryservice";
-import { getProducts } from "../../../services/productService";
-import { getProductModelsByProduct } from "../../../services/productModelService";
+import { getProducts } from "../../../services/Productservice";
+import { getProductModelsByProduct } from "../../../services/Productmodelservice";
 
 const FAQForm = ({ faq, onSubmit, onClose }) => {
     const [formData, setFormData] = useState({
@@ -20,10 +20,14 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
     const [productModels, setProductModels] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [isSolution, setIsSolution] = useState(false);
 
     useEffect(() => {
-        loadCategories();
-        if (faq) {
+        loadCategories();  
+    }, []);  
+
+    useEffect(() => {
+        if (faq && categories.length > 0) {  
             setFormData({
                 category_id: faq.category_id || "",
                 product_id: faq.product_id || "",
@@ -32,12 +36,19 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
                 faq_answer: faq.faq_answer || "",
                 faq_video_url: faq.faq_video_url || "",
             });
+
+            const selectedCategory = categories.find(cat => cat.category_id == faq.category_id);
+            const isSol = selectedCategory?.category_name.toLowerCase() === "soluciones";
+            setIsSolution(isSol);
+
             if (faq.product_id) {
                 loadProducts(faq.category_id);
-                loadProductModels(faq.product_id);
+                if (!isSol) {
+                    loadProductModels(faq.product_id);
+                }
             }
         }
-    }, [faq]);
+    }, [faq, categories]);
 
     const loadCategories = async () => {
         try {
@@ -80,12 +91,15 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
 
     const handleCategoryChange = (e) => {
         const categoryId = e.target.value;
+        const selectedCategory = categories.find(cat => cat.category_id == categoryId);
+        const isSol = selectedCategory?.category_name.toLowerCase() === "soluciones";
         setFormData({
             ...formData,
             category_id: categoryId,
             product_id: "",
-            product_model_id: "",
+            product_model_id: isSol ? "" : "",
         });
+        setIsSolution(isSol);
         loadProducts(categoryId);
         setProductModels([]);
     };
@@ -95,9 +109,11 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
         setFormData({
             ...formData,
             product_id: productId,
-            product_model_id: "",
+            product_model_id: isSolution ? "" : "",
         });
-        loadProductModels(productId);
+        if (!isSolution) {
+            loadProductModels(productId);
+        }
     };
 
     const handleInputChange = (e) => {
@@ -108,15 +124,48 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
         });
     };
 
+    const validateVideoUrl = (url) => {
+        if (!url) return true;
+
+        const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\//;
+        const vimeoRegex = /^(https?:\/\/)?(www\.)?vimeo\.com\//;
+
+        return youtubeRegex.test(url) || vimeoRegex.test(url);
+    };
+
+    const handleCloseForm = () => {
+        setFormData({
+            category_id: "",
+            product_id: "",
+            product_model_id: "",
+            faq_question: "",
+            faq_answer: "",
+            faq_video_url: "",
+        });
+        setIsSolution(false);
+        setError(null);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            // Validar campos requeridos
-            if (!formData.category_id || !formData.product_id || !formData.product_model_id || !formData.faq_question || !formData.faq_answer) {
+            if (!formData.category_id || !formData.product_id || !formData.faq_question || !formData.faq_answer) {
                 setError("Por favor completa todos los campos requeridos");
+                setLoading(false);
+                return;
+            }
+
+            if (!isSolution && !formData.product_model_id) {
+                setError("Por favor selecciona un modelo");
+                setLoading(false);
+                return;
+            }
+
+            if (formData.faq_video_url && !validateVideoUrl(formData.faq_video_url)) {
+                setError("Solo se aceptan enlaces de YouTube o Vimeo");
                 setLoading(false);
                 return;
             }
@@ -129,7 +178,7 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
     };
 
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalOverlay}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.modalHeader}>
                     <h2 className={styles.modalTitle}>
@@ -143,6 +192,7 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
                 {error && <div className={styles.errorMessage}>{error}</div>}
 
                 <form onSubmit={handleSubmit} className={styles.form}>
+                    {/* Categoría */}
                     <div className={styles.formGroup}>
                         <label htmlFor="category">Categoría *</label>
                         <select
@@ -161,44 +211,52 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
                         </select>
                     </div>
 
-                    <div className={styles.formGroup}>
-                        <label htmlFor="product">Tipo de Dispositivo *</label>
-                        <select
-                            id="product"
-                            name="product_id"
-                            value={formData.product_id}
-                            onChange={handleProductChange}
-                            required
-                            disabled={!formData.category_id}
-                        >
-                            <option value="">Seleccione un Modelo</option>
-                            {products.map((prod) => (
-                                <option key={prod.product_id} value={prod.product_id}>
-                                    {prod.product_name}
-                                </option>
-                            ))}
-                        </select>
+                    {/* Producto y Modelo en dos columnas */}
+                    <div className={styles.twoColumnsGroup}>
+                        {/* Tipo de Dispositivo/Solución */}
+                        <div className={styles.formGroup}>
+                            <label htmlFor="product">Tipo de Dispositivo/Solución *</label>
+                            <select
+                                id="product"
+                                name="product_id"
+                                value={formData.product_id}
+                                onChange={handleProductChange}
+                                required
+                                disabled={!formData.category_id}
+                            >
+                                <option value="">Seleccione un Producto</option>
+                                {products.map((prod) => (
+                                    <option key={prod.product_id} value={prod.product_id}>
+                                        {prod.product_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Modelo - Solo si no es solución */}
+                        {!isSolution && (
+                            <div className={styles.formGroup}>
+                                <label htmlFor="productModel">Modelo *</label>
+                                <select
+                                    id="productModel"
+                                    name="product_model_id"
+                                    value={formData.product_model_id}
+                                    onChange={handleInputChange}
+                                    required={!isSolution}
+                                    disabled={!formData.product_id || isSolution}
+                                >
+                                    <option value="">Seleccione un Modelo</option>
+                                    {productModels.map((model) => (
+                                        <option key={model.product_model_id} value={model.product_model_id}>
+                                            {model.product_model_name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
 
-                    <div className={styles.formGroup}>
-                        <label htmlFor="productModel">Modelo *</label>
-                        <select
-                            id="productModel"
-                            name="product_model_id"
-                            value={formData.product_model_id}
-                            onChange={handleInputChange}
-                            required
-                            disabled={!formData.product_id}
-                        >
-                            <option value="">Seleccione un Modelo</option>
-                            {productModels.map((model) => (
-                                <option key={model.product_model_id} value={model.product_model_id}>
-                                    {model.product_model_name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
+                    {/* Pregunta */}
                     <div className={styles.formGroup}>
                         <label htmlFor="question">Pregunta / Problema Frecuente *</label>
                         <input
@@ -213,6 +271,7 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
                         />
                     </div>
 
+                    {/* Respuesta */}
                     <div className={styles.formGroup}>
                         <label htmlFor="answer">Instrucciones / Solución *</label>
                         <textarea
@@ -226,6 +285,7 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
                         />
                     </div>
 
+                    {/* Video URL */}
                     <div className={styles.formGroup}>
                         <label htmlFor="videoUrl">Link Video Tutorial (YouTube/Vimeo)</label>
                         <input
@@ -235,14 +295,16 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
                             placeholder="Ej. https://www.youtube.com/"
                             value={formData.faq_video_url}
                             onChange={handleInputChange}
+                            required
                         />
                     </div>
 
+                    {/* Botones de acción */}
                     <div className={styles.formActions}>
                         <button
                             type="button"
                             className={styles.cancelBtn}
-                            onClick={onClose}
+                            onClick={handleCloseForm}
                         >
                             Cancelar
                         </button>

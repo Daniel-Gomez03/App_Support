@@ -5,9 +5,8 @@
     flex-direction: column;
     gap: 24px;
     padding: 24px;
-    background-color: #f5f5f5;
+    background-color: @background-color;
     min-height: calc(100vh - 100px);
-    font-family: @font-family;
     border-radius: 30px;
 
     .header {
@@ -15,13 +14,21 @@
         flex-direction: column;
         gap: 24px;
 
+        @media(max-width: #breaks[tablet]) {
+            gap: 16px;
+        }
+
         .titleSection {
             .title {
                 margin: 0;
-                font-size: 28px;
+                font-size: 24px;
                 font-weight: 600;
                 color: #1a1a1a;
                 line-height: 1.2;
+
+                @media(max-width: #breaks[tablet]) {
+                    font-size: 20px;
+                }
             }
 
             .subtitle {
@@ -29,6 +36,10 @@
                 font-size: 16px;
                 color: #666666;
                 font-weight: 400;
+
+                @media(max-width: #breaks[tablet]) {
+                    font-size: 14px;
+                }
             }
         }
 
@@ -41,6 +52,7 @@
             @media(max-width: #breaks[tablet]) {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 12px;
             }
 
             .searchBar {
@@ -50,12 +62,31 @@
                 padding: 16px 16px;
                 background-color: #F9FAFB;
                 border: 1px solid #e0e0e0;
-                border-radius: 8px;
-                flex: 1;
+                border-radius: 14px;
+                flex: 0.5;
                 min-width: 200px;
+
+                @media(max-width: #breaks[tablet]) {
+                    flex: 1;
+                    min-width: unset;
+                }
+
+                &:focus-within {
+                    border-color: @primary-color;
+                    background-color: #ffffff;
+                    box-shadow: 0 0 0 3px rgba(108, 135, 102, 0.1);
+                }
 
                 .searchIcon {
                     opacity: 0.5;
+                    width: 18px;
+                    height: 18px;
+                    flex-shrink: 0;
+
+                    @media(max-width: #breaks[tablet]) {
+                        width: 16px;
+                        height: 16px;
+                    }
                 }
 
                 .searchInput {
@@ -65,7 +96,11 @@
                     font-size: 14px;
                     color: #333333;
                     outline: none;
-                    font-family: @font-family;
+                    font-family: inherit;
+
+                    @media (max-width: #breaks[tablet]) {
+                        font-size: 13px;
+                    }
 
                     &::placeholder {
                         color: #999999;
@@ -81,6 +116,7 @@
                 @media (max-width: #breaks[tablet]) {
                     width: 100%;
                     justify-content: space-between;
+                    gap: 10px;
                 }
 
                 .createBtn {
@@ -91,13 +127,13 @@
                     background-color: @quaternary-color;
                     color: @background-color;
                     border: none;
-                    border-radius: 8px;
+                    border-radius: 14px;
                     font-size: 14px;
                     font-weight: 500;
                     cursor: pointer;
                     transition: background-color 0.3s ease;
                     white-space: nowrap;
-                    font-family: @font-family;
+                    font-family: inherit;
 
                     &:hover {
                         background-color: @tertiary-color;
@@ -110,6 +146,7 @@
                     @media (max-width: #breaks[tablet]) {
                         flex: 1;
                         justify-content: center;
+                        font-size: 13px;
                     }
                 }
 
@@ -121,11 +158,17 @@
                     height: 40px;
                     background-color: @background-color;
                     border: 1px solid #e0e0e0;
-                    border-radius: 8px;
+                    border-radius: 14px;
                     cursor: pointer;
                     color: #666666;
                     font-size: 20px;
                     transition: all 0.3s ease;
+
+                    @media (max-width: #breaks[tablet]) {
+                        width: 36px;
+                        height: 36px;
+                        font-size: 18px;
+                    }
 
                     &:hover {
                         background-color: #f5f5f5;
@@ -148,6 +191,23 @@
         border: 1px solid #fcc;
         border-radius: 8px;
         font-size: 14px;
+
+        @media (max-width: #breaks[tablet]) {
+            font-size: 13px;
+            padding: 10px 12px;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     }
 
     .loadingMessage {
@@ -155,6 +215,11 @@
         padding: 40px;
         color: #666666;
         font-size: 16px;
+
+        @media (max-width: #breaks[tablet]) {
+            padding: 40px 16px;
+            font-size: 15px;
+        }
     }
 
     .emptyState {
@@ -167,11 +232,136 @@
         border-radius: 12px;
         border: 1px dashed #e0e0e0;
 
+        @media (max-width: #breaks[tablet]) {
+            padding: 60px 20px;
+        }
+
         .emptyText {
             margin: 0;
             font-size: 16px;
             color: #999999;
             font-weight: 400;
+
+            @media (max-width: #breaks[tablet]) {
+                font-size: 14px;
+            }
+        }
+    }
+
+    .successToast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 2000;
+        background-color: #F0FDF4;
+        border: 1px solid #DCFCE7;
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        max-width: 400px;
+        animation: slideInRight 0.3s ease-out;
+
+        @media (max-width: #breaks[tablet]) {
+            top: auto;
+            bottom: 24px;
+            right: 16px;
+            left: 16px;
+            width: auto;
+            max-width: none;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toastIcon {
+            background-color: #16A34A;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+
+            @media (max-width: #breaks[tablet]) {
+                width: 20px;
+                height: 20px;
+            }
+
+            .checkIcon {
+                font-size: 16px;
+                stroke-width: 3px;
+            }
+        }
+
+        .toastContent {
+            flex: 1;
+
+            h4 {
+                margin: 0 0 4px 0;
+                font-size: 14px;
+                font-weight: 700;
+                color: #15803D;
+            }
+
+            p {
+                margin: 0;
+                font-size: 13px;
+                color: #166534;
+                line-height: 1.4;
+            }
+        }
+
+        .toastClose {
+            background: transparent;
+            border: none;
+            color: #166534;
+            cursor: pointer;
+            padding: 0;
+            font-size: 18px;
+            display: flex;
+            opacity: 0.7;
+
+            &:hover {
+                opacity: 1;
+            }
+        }
+    }
+
+    @media (max-width: #breaks[tablet]) {
+        .successToast {
+            top: auto;
+            bottom: 24px;
+            right: 16px;
+            left: 16px;
+            width: auto;
+            max-width: none;
+        }
+    }
+
+    .faqListContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 95%;
+        margin: 0 auto;
+
+        @media (max-width: #breaks[tablet]) {
+            gap: 12px;
         }
     }
 }

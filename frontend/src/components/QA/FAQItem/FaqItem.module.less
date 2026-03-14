@@ -12,6 +12,12 @@
     transition: all 0.3s ease;
     cursor: pointer;
 
+    @media (max-width: #breaks[tablet]) {
+        padding: 16px;
+        gap: 12px;
+        border-radius: 10px;
+    }
+
     &:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         border-color: @primary-color;
@@ -50,24 +56,38 @@
             gap: 16px;
             flex: 1;
 
+            @media (max-width: #breaks[tablet]) {
+                gap: 12px;
+            }
+
             .faqIcon {
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 width: 40px;
                 height: 40px;
-                background-color: #f0f0f0;
+                background-color: #c3c3c5;
                 border-radius: 50%;
                 flex-shrink: 0;
                 transition: background-color 0.3s ease;
 
+                @media (max-width: #breaks[tablet]) {
+                    width: 36px;
+                    height: 36px;
+                }
+
                 .qaIconImg {
                     width: 24px;
                     height: 24px;
+
+                    @media (max-width: #breaks[tablet]) {
+                        width: 20px;
+                        height: 20px;
+                    }
                 }
 
                 &.active {
-                    background-color: @primary-color;
+                    background-color: #105030;
 
                     .qaIconImg {
                         filter: brightness(0) invert(1);
@@ -85,14 +105,22 @@
                     margin: 0;
                     font-size: 16px;
                     font-weight: 600;
-                    color: #1a1a1a;
+                    color: @quaternary-color;
                     line-height: 1.4;
+
+                    @media (max-width: #breaks[tablet]) {
+                        font-size: 15px;
+                    }
                 }
 
                 .faqTags {
                     display: flex;
                     flex-wrap: wrap;
                     gap: 8px;
+
+                    @media (max-width: #breaks[tablet]) {
+                        gap: 6px;
+                    }
 
                     .tag {
                         display: inline-flex;
@@ -104,27 +132,37 @@
                         font-weight: 500;
                         border: 1px solid;
 
+                        @media (max-width: #breaks[tablet]) {
+                            padding: 3px 8px;
+                            font-size: 11px;
+                        }
+
                         .tagIcon {
                             width: 14px;
                             height: 14px;
+
+                            @media (max-width: #breaks[tablet]) {
+                                width: 12px;
+                                height: 12px;
+                            }
                         }
 
                         &.categoryTag {
-                            background-color: #fce4ec;
-                            color: #c2185b;
-                            border-color: #f8bbd0;
+                            background-color: #FAF5FF;
+                            color: #8200DB;
+                            border-color: #FAF5FF;
                         }
 
                         &.productTag {
-                            background-color: #e8f5e9;
-                            color: @primary-color;
-                            border-color: #c8e6c9;
+                            background-color: #F1FFED;
+                            color: #54896A;
+                            border-color: #F1FFED;
                         }
 
                         &.modelTag {
-                            background-color: #fff3e0;
-                            color: #e65100;
-                            border-color: #ffe0b2;
+                            background-color: #FFF7ED;
+                            color: #CA3500;
+                            border-color: #FFF7ED;
                         }
                     }
                 }
@@ -140,7 +178,10 @@
 
             @media (max-width: #breaks[tablet]) {
                 width: 100%;
-                align-items: flex-end;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 10px;
             }
 
             .actionsTop {
@@ -148,21 +189,36 @@
                 align-items: center;
                 gap: 12px;
 
+                @media (max-width: #breaks[tablet]) {
+                    gap: 8px;
+                }
+
                 .statusActive {
                     display: flex;
                     align-items: center;
                     gap: 4px;
                     padding: 4px 10px;
-                    background-color: #e8f5e9;
-                    color: @primary-color;
-                    border-radius: 4px;
+                    background-color: #F0FDF4;
+                    color: #008236;
+                    border-color: #B9F8CF;
+                    border-radius: 20px;
                     font-size: 12px;
                     font-weight: 600;
+
+                    @media (max-width: #breaks[tablet]) {
+                        font-size: 11px;
+                        padding: 3px 8px;
+                    }
 
                     .statusDot {
                         width: 8px;
                         height: 8px;
                         flex-shrink: 0;
+
+                        @media (max-width: #breaks[tablet]) {
+                            width: 6px;
+                            height: 6px;
+                        }
                     }
                 }
 
@@ -171,16 +227,26 @@
                     align-items: center;
                     gap: 4px;
                     padding: 4px 10px;
-                    background-color: #ffebee;
-                    color: #c62828;
-                    border-radius: 4px;
+                    background-color: #FFC9C9;
+                    color: #C10007;
+                    border-radius: 20px;
                     font-size: 12px;
                     font-weight: 600;
+
+                    @media (max-width: #breaks[tablet]) {
+                        font-size: 11px;
+                        padding: 3px 8px;
+                    }
 
                     .statusDot {
                         width: 8px;
                         height: 8px;
                         flex-shrink: 0;
+
+                        @media (max-width: #breaks[tablet]) {
+                            width: 6px;
+                            height: 6px;
+                        }
                     }
                 }
 
@@ -197,14 +263,25 @@
                     transition: all 0.3s ease;
                     padding: 0;
 
+                    @media (max-width: #breaks[tablet]) {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 4px;
+                    }
+
                     .editIconImg {
                         width: 18px;
                         height: 18px;
+
+                        @media (max-width: #breaks[tablet]) {
+                            width: 16px;
+                            height: 16px;
+                        }
                     }
 
                     &:hover {
-                        background-color: @primary-color;
-                        border-color: @primary-color;
+                        background-color: @quaternary-color;
+                        border-color: @quaternary-color;
 
                         .editIconImg {
                             filter: brightness(0) invert(1);
@@ -219,21 +296,30 @@
                 width: 48px;
                 height: 28px;
 
+                @media (max-width: #breaks[tablet]) {
+                    width: 44px;
+                    height: 26px;
+                }
+
                 .toggle {
                     opacity: 0;
                     width: 0;
                     height: 0;
 
-                    &:checked + .toggleLabel {
-                        background-color: @primary-color;
+                    &:checked+.toggleLabel {
+                        background-color: @quaternary-color;
 
                         &::after {
                             transform: translateX(20px);
+
+                            @media (max-width: #breaks[tablet]) {
+                                transform: translateX(18px);
+                            }
                         }
                     }
 
-                    &:not(:checked) + .toggleLabel {
-                        background-color: #d32f2f;
+                    &:not(:checked)+.toggleLabel {
+                        background-color: #9E1111;
                     }
                 }
 
@@ -258,6 +344,11 @@
                         background-color: @background-color;
                         transition: 0.4s;
                         border-radius: 50%;
+
+                        @media (max-width: #breaks[tablet]) {
+                            height: 20px;
+                            width: 20px;
+                        }
                     }
                 }
             }
@@ -271,6 +362,11 @@
         padding-top: 16px;
         border-top: 1px solid #f0f0f0;
         animation: slideDown 0.3s ease;
+
+        @media (max-width: #breaks[tablet]) {
+            gap: 12px;
+            padding-top: 12px;
+        }
 
         @keyframes slideDown {
             from {
@@ -289,6 +385,10 @@
             flex-direction: column;
             gap: 12px;
 
+            @media (max-width: #breaks[tablet]) {
+                gap: 10px;
+            }
+
             .answerHeader {
                 display: flex;
                 justify-content: space-between;
@@ -301,6 +401,11 @@
                     color: #999999;
                     letter-spacing: 0.5px;
                     text-transform: uppercase;
+
+                    @media (max-width: #breaks[tablet]) {
+                        font-size: 11px;
+                        letter-spacing: 0.3px;
+                    }
                 }
 
                 .expandIcon {
@@ -308,6 +413,11 @@
                     height: 20px;
                     color: #999999;
                     transition: transform 0.3s ease;
+
+                    @media (max-width: #breaks[tablet]) {
+                        width: 18px;
+                        height: 18px;
+                    }
 
                     &.rotated {
                         transform: rotate(180deg);
@@ -320,30 +430,52 @@
                 font-size: 14px;
                 color: #666666;
                 line-height: 1.6;
+
+                @media (max-width: #breaks[tablet]) {
+                    font-size: 13px;
+                    line-height: 1.5;
+                }
             }
         }
 
         .videoLink {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
             padding: 12px;
-            background-color: #f9fafb;
-            border-radius: 8px;
+            background-color: #E2FFE2;
+            border-radius: 14px;
+            width: fit-content;
+
+            @media (max-width: #breaks[tablet]) {
+                padding: 10px;
+                border-radius: 10px;
+                gap: 6px;
+            }
 
             .videoLinkIcon {
                 width: 16px;
                 height: 16px;
-                color: @primary-color;
+                color: @quaternary-color;
                 flex-shrink: 0;
+
+                @media (max-width: #breaks[tablet]) {
+                    width: 14px;
+                    height: 14px;
+                }
             }
 
             a {
-                color: @primary-color;
+                color: @quaternary-color;
                 text-decoration: underline;
                 font-size: 13px;
                 font-weight: 700;
                 transition: color 0.3s ease;
+                white-space: nowrap;
+
+                @media (max-width: #breaks[tablet]) {
+                    font-size: 12px;
+                }
 
                 &:hover {
                     color: @tertiary-color;

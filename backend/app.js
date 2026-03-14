@@ -1,0 +1,72 @@
+const express = require('express');
+const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
+require('dotenv').config();
+const sequelize = require('./config/database');
+
+//Rutas
+const faqRoutes = require('./routes/faqsRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
+const productModelRoutes = require('./routes/productModelRoutes');
+
+// Importar modelos
+const Faqs = require('./models/Faqs');
+const Category = require('./models/Category');
+const Product = require('./models/Product');
+const ProductModel = require('./models/ProductModel');
+
+// Asociar modelos
+const models = { Faqs, Category, Product, ProductModel };
+Object.values(models).forEach(model => {
+    if (model.associate) model.associate(models);
+});
+
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:5173",
+        methods: ["GET", "POST"]
+    }
+});
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+    console.log(' Cliente conectado:', socket.id);
+    
+    socket.on('disconnect', () => {
+        console.log(' Cliente desconectado:', socket.id);
+    });
+});
+
+
+
+// Ruta de prueba
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'Backend funcionando' });
+});
+
+//Rutas
+app.use('/api', faqRoutes);
+app.use('/api', categoryRoutes);
+app.use('/api', productRoutes);
+app.use('/api', productModelRoutes);
+
+// Conectar a BD
+sequelize.authenticate()
+    .then(() => console.log('Base de datos conectada'))
+    .catch(err => console.log('Error en BD:', err));
+
+// Iniciar servidor
+const PORT = process.env.PORT || 8000;
+server.listen(PORT, () => {
+    console.log(`Servidor corriendo en puerto ${PORT}`);
+});

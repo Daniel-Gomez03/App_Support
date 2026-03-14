@@ -13,15 +13,28 @@
     z-index: 1000;
     padding: 16px;
 
+    @media (max-width: #breaks[tablet]) {
+        padding: 12px;
+        align-items: flex-end;
+    }
+    
+
     .modalContent {
         background-color: @background-color;
-        border-radius: 12px;
+        border-radius: 16px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         width: 100%;
-        max-width: 600px;
+        max-width: 650px;
         max-height: 90vh;
         overflow-y: auto;
         animation: slideUp 0.3s ease;
+
+        @media (max-width: #breaks[tablet]) {
+            max-width: 100%;
+            border-radius: 20px 20px 0 0;
+            max-height: 85vh;
+            animation: slideUpBottom 0.3s ease;
+        }
 
         @keyframes slideUp {
             from {
@@ -35,82 +48,162 @@
             }
         }
 
-        @media (max-width: #breaks[tablet]) {
-            max-height: 95vh;
-            border-radius: 8px;
+        @keyframes slideUpBottom {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
+
 
         .modalHeader {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 24px;
+            padding: 28px 28px 20px 28px;
             border-bottom: 1px solid #f0f0f0;
             position: sticky;
             top: 0;
             background-color: @background-color;
+            z-index: 10;
+
+            @media (max-width: #breaks[tablet]) {
+                padding: 24px 24px 16px 24px;
+            }
 
             .modalTitle {
                 margin: 0;
-                font-size: 20px;
-                font-weight: 600;
-                color: #1a1a1a;
+                font-size: 22px;
+                font-weight: 700;
+                color: @quaternary-color;
+
+                @media (max-width: #breaks[tablet]) {
+                    font-size: 20px;
+                }
             }
 
             .closeBtn {
                 background: none;
                 border: none;
-                font-size: 24px;
-                color: #666666;
+                font-size: 28px;
+                color: #999999;
                 cursor: pointer;
                 padding: 0;
+                width: 32px;
+                height: 32px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                transition: color 0.3s ease;
+                transition: all 0.3s ease;
+                border-radius: 6px;
+
+                @media (max-width: #breaks[tablet]) {
+                    font-size: 24px;
+                    width: 28px;
+                    height: 28px;
+                }
+
 
                 &:hover {
-                    color: #1a1a1a;
+                    color: @quaternary-color;
+                    background-color: #f5f5f5;
                 }
             }
+        }
 
-            .errorMessage {
-                padding: 12px 24px;
-                background-color: #fee;
-                color: #c33;
-                border-bottom: 1px solid #fcc;
-                font-size: 13px;
+        .errorMessage {
+            margin: 0 28px;
+            padding: 12px 16px;
+            background-color: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+
+             @media (max-width: #breaks[tablet]) {
+                margin: 0 24px;
+                padding: 10px 14px;
+                font-size: 12px;
+            }
+
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
         }
 
         .form {
-            padding: 24px;
+            padding: 28px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 22px;
+
+            @media (max-width: #breaks[tablet]) {
+                padding: 24px;
+                gap: 18px;
+            }
+
+            .twoColumnsGroup {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+
+                @media (max-width: #breaks[tablet]) {
+                    grid-template-columns: 1fr;
+                    gap: 16px;
+                }
+            }
 
             .formGroup {
                 display: flex;
                 flex-direction: column;
-                gap: 8px;
+                gap: 10px;
+
+                 @media (max-width: #breaks[tablet]) {
+                    gap: 8px;
+                }
 
                 label {
-                    font-size: 13px;
-                    font-weight: 500;
-                    color: #1a1a1a;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: @quaternary-color;
+
+                    @media (max-width: #breaks[tablet]) {
+                        font-size: 13px;
+                    }
                 }
 
                 select,
                 input,
                 textarea {
-                    padding: 10px 12px;
-                    border: 1px solid #e0e0e0;
-                    border-radius: 8px;
-                    font-family: @font-family;
+                    padding: 12px 14px;
+                    border: 1.5px solid #e0e0e0;
+                    border-radius: 10px;
+                    font-family: inherit;
                     font-size: 14px;
                     color: #333333;
-                    transition: border-color 0.3s ease;
+                    background-color: #F9FAFB;
+                    transition: all 0.3s ease;
 
+                    @media (max-width: #breaks[tablet]) {
+                        padding: 11px 12px;
+                        font-size: 13px;
+                        border-radius: 8px;
+                    }
+    
                     &:focus {
                         outline: none;
                         border-color: @primary-color;
@@ -118,63 +211,123 @@
                     }
 
                     &::placeholder {
-                        color: #999999;
+                        color: #b0b0b0;
+                        font-style: italic;
                     }
 
                     &:disabled {
-                        background-color: #f5f5f5;
+                        background-color: #f9f9f9;
                         cursor: not-allowed;
                         color: #999999;
+                        border-color: #e8e8e8;
+                    }
+                }
+
+                select {
+                    cursor: pointer;
+
+                    option {
+                        padding: 12px;
+                        background-color: #F9FAFB;
+                        color: #333333;
+
+                        @media (max-width: #breaks[tablet]) {
+                            padding: 10px;
+                        }
                     }
                 }
 
                 textarea {
                     resize: vertical;
-                    font-size: 13px;
-                    line-height: 1.5;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    font-family: inherit;
+                    min-height: 120px;
+
+                    @media (max-width: #breaks[tablet]) {
+                        font-size: 13px;
+                        line-height: 1.5;
+                        min-height: 100px;
+                    }
+
+                    &:focus {
+                        min-height: 140px;
+
+                        @media (max-width: #breaks[tablet]) {
+                            min-height: 120px;
+                        }
+                    }
                 }
             }
 
             .formActions {
                 display: flex;
-                gap: 12px;
+                gap: 14px;
                 justify-content: flex-end;
-                padding-top: 12px;
+                padding-top: 16px;
+                margin-top: 8px;
                 border-top: 1px solid #f0f0f0;
 
-                .button {
-                    padding: 10px 20px;
-                    border-radius: 8px;
+                @media (max-width: #breaks[tablet]) {
+                    gap: 12px;
+                    padding-top: 14px;
+                }
+
+                button {
+                    padding: 12px 28px;
+                    border-radius: 10px;
                     font-size: 14px;
-                    font-weight: 500;
+                    font-weight: 600;
                     cursor: pointer;
                     border: none;
                     transition: all 0.3s ease;
 
+                    @media (max-width: #breaks[tablet]) {
+                        padding: 11px 24px;
+                        font-size: 13px;
+                        border-radius: 8px;
+                    }
+
                     &:disabled {
-                        opacity: 0.6;
+                        opacity: 0.5;
                         cursor: not-allowed;
+                    }
+
+                     &:active:not(:disabled) {
+                        transform: scale(0.98);
                     }
                 }
 
                 .cancelBtn {
-                    background-color: #f0f0f0;
+                    background-color: #f5f5f5;
                     color: #666666;
+                    font-family: inherit;
 
-                    &:hover {
-                        background-color: #e0e0e0;
+                    &:hover:not(:disabled) {
+                        background-color: #e8e8e8;
+                    }
+
+                    &:active:not(:disabled) {
+                        transform: scale(0.98);
                     }
                 }
 
                 .submitBtn {
-                    background-color: @primary-color;
+                    background-color: @quaternary-color;
                     color: @background-color;
+                    min-width: 140px;
+                    font-family: inherit;
 
-                    &:hover {
-                        background-color: @tertiary-color;
+                    @media (max-width: #breaks[tablet]) {
+                        min-width: 120px;
                     }
 
-                    &:active {
+                    &:hover:not(:disabled) {
+                        background-color: @tertiary-color;
+                        box-shadow: 0 4px 12px rgba(108, 135, 102, 0.3);
+                    }
+
+                    &:active:not(:disabled) {
                         transform: scale(0.98);
                     }
                 }

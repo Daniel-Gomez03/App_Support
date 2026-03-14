@@ -17,6 +17,7 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.13.0",
     "recharts": "^3.7.0",
+    "socket.io-client": "^4.8.3",
     "styled-components": "^6.3.10"
   },
   "devDependencies": {
@@ -28,9 +29,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "laravel-echo": "^2.3.1",
     "less": "^4.5.1",
-    "pusher-js": "^8.4.0",
     "vite": "^7.2.4"
   },
   "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971"
