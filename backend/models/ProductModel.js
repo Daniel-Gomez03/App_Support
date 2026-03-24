@@ -7,9 +7,21 @@ const ProductModel = sequelize.define('ProductModel', {
         primaryKey: true,
         autoIncrement: true
     },
-    product_id: DataTypes.INTEGER,
-    product_model_name: DataTypes.STRING,
-    product_model_status: DataTypes.BOOLEAN
+    product_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    product_model_name: {
+        type: DataTypes.STRING(100),
+        unique: true,
+        allowNull: false
+
+    },
+    product_model_status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: 1,
+        allowNull: false
+    }
 }, {
     tableName: 'products_models',
     timestamps: true,

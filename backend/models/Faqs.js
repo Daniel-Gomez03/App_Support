@@ -7,16 +7,35 @@ const Faq = sequelize.define('Faq', {
         primaryKey: true,
         autoIncrement: true
     },
-    category_id: DataTypes.INTEGER,
-    product_id: DataTypes.INTEGER,
-    product_model_id: {
+    category_id:{
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: false
     },
-    faq_question: DataTypes.STRING,
-    faq_answer: DataTypes.TEXT,
-    faq_video_url: DataTypes.STRING,
-    faq_status: DataTypes.BOOLEAN
+    product_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    product_model_id: {
+        type: DataTypes.INTEGER
+    },
+    faq_question: {
+        type: DataTypes.STRING(255),
+        allowNull: false
+    },
+    faq_answer:{
+        type: DataTypes.TEXT,
+        allowNull:false
+    }, 
+    faq_video_url: {
+        type: DataTypes.STRING(255),
+        allowNull: false
+
+    },
+    faq_status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: 1,
+        allowNull: false
+    },
 }, {
     tableName: 'faqs',
     timestamps: true,

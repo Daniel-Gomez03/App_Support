@@ -7,9 +7,18 @@ const Category = sequelize.define('Category', {
         primaryKey: true,
         autoIncrement: true
     },
-    category_name: DataTypes.STRING,
-    category_description: DataTypes.TEXT,
-    category_status: DataTypes.BOOLEAN
+    category_name: {
+        type: DataTypes.STRING(50),
+        allowNull: false
+    },
+    category_description: {
+        type: DataTypes.STRING(50),
+        allowNull: false
+    },
+    category_status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: 1
+    }
 }, {
     tableName: 'categories',
     timestamps: true,

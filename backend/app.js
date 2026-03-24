@@ -10,6 +10,7 @@ const faqRoutes = require('./routes/faqsRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const productModelRoutes = require('./routes/productModelRoutes');
+const customerRoutes = require('./routes/customerRoutes');
 
 // Importar modelos
 const Faqs = require('./models/Faqs');
@@ -28,7 +29,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: ["http://localhost:5173", "http://localhost:8000", "*"],
         methods: ["GET", "POST"]
     }
 });
@@ -59,6 +60,7 @@ app.use('/api', faqRoutes);
 app.use('/api', categoryRoutes);
 app.use('/api', productRoutes);
 app.use('/api', productModelRoutes);
+app.use('/api', customerRoutes);
 
 // Conectar a BD
 sequelize.authenticate()
@@ -67,6 +69,6 @@ sequelize.authenticate()
 
 // Iniciar servidor
 const PORT = process.env.PORT || 8000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
 });

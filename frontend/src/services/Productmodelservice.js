@@ -22,7 +22,7 @@ export const getProductModels = async () => {
 
 export const getProductModelsByProduct = async (productId) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/products/${productId}/models`, {  // ✅ CORRECTO
+        const response = await fetch(`${API_BASE_URL}/product/${productId}/models`, {  
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
