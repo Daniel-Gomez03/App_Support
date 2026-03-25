@@ -11,6 +11,7 @@ interface AuthState {
     customer_name: string;
     customer_email: string;
     customer_company: string;
+    customer_image: string | null;
   } | null;
   error: string | null;
 }
@@ -100,8 +101,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const bootstrapAsync = async () => {
       try {
         //para limpiar el token en desarrollo
-        await SecureStore.deleteItemAsync('userToken');
-        await SecureStore.deleteItemAsync('user');
+        //await SecureStore.deleteItemAsync('userToken');
+        //await SecureStore.deleteItemAsync('user');
 
         const token = await SecureStore.getItemAsync('userToken');
         const user = await SecureStore.getItemAsync('user');
@@ -154,6 +155,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           customer_name: response.customer_name,
           customer_email: response.customer_email,
           customer_company: response.customer_company,
+          customer_image: response.customer_image,
         })
       );
 
@@ -166,6 +168,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             customer_name: response.customer_name,
             customer_email: response.customer_email,
             customer_company: response.customer_company,
+            customer_image: response.customer_image,
           },
         },
       });

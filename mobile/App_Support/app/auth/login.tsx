@@ -9,6 +9,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { countries } from '@/data/countries';
 import CountryPickerModal from '@/components/CountryPickerModal';
 import { useAuth } from '@/hooks/useAuth';
+import * as SecureStore from 'expo-secure-store';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,12 +19,14 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const authContext = useAuth();
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Estados de validación LOGIN
   const [loginTouched, setLoginTouched] = useState({
     email: false,
     password: false,
   });
+
   const [loginFormValid, setLoginFormValid] = useState(false);
 
   // Formulario de Registro
@@ -285,6 +288,12 @@ export default function LoginScreen() {
     try {
       await authContext.login(email, password);
 
+      if (rememberMe) {
+        await SecureStore.setItemAsync('remembered_email', email);
+      } else {
+        await SecureStore.deleteItemAsync('remembered_email');
+      }
+
       setEmail('');
       setPassword('');
 
@@ -292,6 +301,21 @@ export default function LoginScreen() {
       alert('Error: ' + (error.error || error.message || 'Error desconocido'));
     }
   };
+
+  useEffect(() => {
+    const loadRememberedEmail = async () => {
+      try {
+        const savedEmail = await SecureStore.getItemAsync('remembered_email');
+        if (savedEmail) {
+          setEmail(savedEmail);
+          setRememberMe(true);
+        }
+      } catch (e) {
+        console.error("Error cargando el email recordado", e);
+      }
+    };
+    loadRememberedEmail();
+  }, []);
 
   useEffect(() => {
     if (authContext.state.userToken && !isRegistering) {
@@ -427,7 +451,7 @@ export default function LoginScreen() {
                           borderColor: getLoginBorderColor('email', email)
                         }
                       ]}
-                      placeholder="Correo electrónico o Teléfono"
+                      placeholder="Correo electrónico"
                       placeholderTextColor="#99A1AF"
                       value={email}
                       onBlur={() => setLoginTouched({ ...loginTouched, email: true })}
@@ -476,8 +500,18 @@ export default function LoginScreen() {
 
                   {/* Recordarme */}
                   <View style={styles.checkboxContainer}>
-                    <View style={styles.checkbox} />
+                    <TouchableOpacity
+                      style={[
+                        styles.checkbox,
+                        { backgroundColor: rememberMe ? '#3C6034' : 'transparent', borderColor: rememberMe ? '#3C6034' : '#C7C3C3' }
+                      ]}
+                      onPress={() => setRememberMe(!rememberMe)}
+                    >
+                      {rememberMe && <Ionicons name="checkmark" size={12} color="white" />}
+                    </TouchableOpacity>
+
                     <Text style={styles.checkboxText}>Recuérdame</Text>
+
                     <TouchableOpacity style={styles.forgotPasswordLink}>
                       <Text style={styles.forgotPasswordText}>¿Olvidaste la Contraseña?</Text>
                     </TouchableOpacity>
@@ -888,6 +922,8 @@ const styles = StyleSheet.create({
     borderColor: '#C7C3C3',
     borderRadius: width * 0.015,
     marginRight: width * 0.024,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   checkboxText: {
     fontSize: width * 0.0313,

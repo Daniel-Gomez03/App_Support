@@ -1,4 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import CustomHeader from '@/components/CustomHeader';
 import TabBar from '@/components/TabBar';
 import Inicio from './index';
 import QA from './qa';
@@ -11,6 +12,7 @@ export default function TabLayout() {
     return (
         <Tab.Navigator
             screenOptions={{
+                header: (props) => <CustomHeader {...props} />,
                 headerShown: true,
                 tabBarActiveTintColor: '#3C6034',
                 tabBarInactiveTintColor: '#999999',
