@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-//const API_URL = 'http://192.168.1.19:8000/api'; 
-const API_URL = 'http://10.10.0.37:8000/api';
+const API_URL = 'http://192.168.1.25:8000/api'; 
+//const API_URL = 'http://10.10.0.32:8000/api'; 
 
 const authService = {
     // ============================================
@@ -18,7 +18,7 @@ const authService = {
             throw error.response?.data || { error: 'Error en login' };
         }
     },
-    
+
     // ============================================
     // REGISTRO
     // ============================================
@@ -47,6 +47,32 @@ const authService = {
             return response.data;
         } catch (error: any) {
             throw error.response?.data || { error: 'Error al obtener cliente' };
+        }
+    },
+
+    // ============================================
+    // ACTUALIZAR CLIENTE
+    // ============================================
+    updateCustomer: async (customerId: number | string, formData: any) => {
+        try {
+            const response = await fetch(`${API_URL}/customers/${customerId}`, {
+                method: 'PUT',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw data;
+            }
+
+            return data;
+        } catch (error: any) {
+            if (error.error) throw error;
+            throw { error: 'Error de conexión al actualizar el perfil' };
         }
     },
 };

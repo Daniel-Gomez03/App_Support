@@ -1008,6 +1008,7 @@ const styles = StyleSheet.create({
   validationText: {
     fontSize: width * 0.025,
     fontWeight: '500',
+    fontFamily: 'Poppins-Regular'
   },
   errorMessage: {
     color: '#D9534F',

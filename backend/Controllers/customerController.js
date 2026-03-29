@@ -1,6 +1,14 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto')
+const fs = require('fs');
+const { Op } = require('sequelize');
 const Customer = require('../models/Customer');
+const { uploadToFTP, deleteFromFTP } = require('../Utils/ftpClient');
+
+
+const cleanupFile = (path) => {
+    if (path && fs.existsSync(path)) fs.unlinkSync(path);
+};
 
 // ============================================
 // VALIDAR CONTRASEÑA
@@ -50,12 +58,22 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: 'Email inválido' });
         }
 
+        const existingPhone = await Customer.findOne({ where: { customer_phone } });
+        if (existingPhone) {
+            return res.status(400).json({ error: 'Este número de teléfono ya está registrado' });
+        }
+
         if (customer_name.length < 3) {
             return res.status(400).json({ error: 'El nombre debe tener mínimo 3 caracteres' });
         }
 
         if (customer_company.length < 3) {
             return res.status(400).json({ error: 'La empresa debe tener mínimo 3 caracteres' });
+        }
+
+        const phoneRegex = /^[0-9]+$/;
+        if (!phoneRegex.test(customer_phone)) {
+            return res.status(400).json({ error: 'El teléfono solo debe contener números' });
         }
 
         const passwordValidation = validatePassword(customer_password);
@@ -155,19 +173,18 @@ exports.verifyEmail = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { customer_email, customer_password } = req.body;
+        const customer = await Customer.findOne({ where: { customer_email } });
 
         if (!customer_email || !customer_password) {
             return res.status(400).json({ error: 'Email y contraseña son requeridos' });
         }
-
-        const customer = await Customer.findOne({ where: { customer_email } });
 
         if (!customer) {
             return res.status(401).json({ error: 'Email o contraseña incorrectos' });
         }
 
         if (!customer.email_verified) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 error: 'Por favor, verifica tu email antes de iniciar sesión',
                 message: 'Se envió un enlace de verificación a tu correo'
             });
@@ -184,7 +201,10 @@ exports.login = async (req, res) => {
             customer_id: customer.customer_id,
             customer_name: customer.customer_name,
             customer_email: customer.customer_email,
-            customer_company: customer.customer_company
+            customer_country_code: customer.customer_country_code,
+            customer_phone: customer.customer_phone,
+            customer_company: customer.customer_company,
+            customer_image: customer.customer_image
         });
 
     } catch (error) {
@@ -229,29 +249,71 @@ exports.getCustomerById = async (req, res) => {
 // ACTUALIZAR CLIENTE
 // ============================================
 exports.updateCustomer = async (req, res) => {
+    const tempFilePath = req.file?.path;
     try {
-        const customer = await Customer.findByPk(req.params.id);
+        const { id } = req.params;
+        const customer = await Customer.findByPk(id);
 
         if (!customer) {
+            cleanupFile(tempFilePath);
             return res.status(404).json({ error: 'Cliente no encontrado' });
         }
 
-        const { customer_name, customer_phone, customer_company, customer_image } = req.body;
+        const { customer_name, customer_phone, customer_company, customer_password, customer_country_code } = req.body;
+        let updateData = {};
 
-        // Actualizar solo los campos permitidos
-        await customer.update({
-            customer_name: customer_name || customer.customer_name,
-            customer_phone: customer_phone || customer.customer_phone,
-            customer_company: customer_company || customer.customer_company,
-            customer_image: customer_image !== undefined ? customer_image : customer.customer_image
-        });
+        // Procesar Imagen 
+        if (req.file) {
+            const cleanRemotePath = (process.env.FTP_REMOTE_PATH || '').replace(/^\/+|\/+$/g, '');
 
-        const io = req.app.get('io');
-        io.emit('customer_updated', customer);
+            if (customer.customer_image) {
+                const oldFileName = customer.customer_image.split('/').pop();
+                const remoteOldPath = `/${cleanRemotePath}/${oldFileName}`.replace(/\/+/g, '/');
+                deleteFromFTP(remoteOldPath).catch(() => { });
+            }
 
-        res.json(customer);
+            const remoteUrl = await uploadToFTP(tempFilePath, req.file.filename);
+            updateData.customer_image = remoteUrl.replace(/([^:]\/)\/+/g, "$1");
+            cleanupFile(tempFilePath);
+        }
+
+        // Validaciones de Texto Selectivas
+        if (customer_name) {
+            if (customer_name.length < 3) throw new Error('Nombre demasiado corto');
+            updateData.customer_name = customer_name;
+        }
+
+        if (customer_phone) {
+            const phoneExists = await Customer.findOne({ where: { customer_phone, customer_id: { [Op.ne]: id } } });
+            if (phoneExists) throw new Error('El teléfono ya está en uso');
+            updateData.customer_phone = customer_phone;
+        }
+
+        if (customer_password && customer_password.trim() !== "") {
+            const isSamePassword = await bcrypt.compare(customer_password, customer.customer_password);
+
+            if (isSamePassword) {
+                return res.status(400).json({
+                    error: 'La nueva contraseña no puede ser igual a la anterior'
+                });
+            }
+            updateData.customer_password = await bcrypt.hash(customer_password, 15);
+        }
+
+        if (customer_company) updateData.customer_company = customer_company;
+        if (customer_country_code) updateData.customer_country_code = customer_country_code;
+
+        // Guardar y Responder
+        await customer.update(updateData);
+        const updatedCustomer = customer.toJSON();
+        delete updatedCustomer.customer_password;
+
+        req.app.get('io')?.emit('customer_updated', updatedCustomer);
+        res.json({ message: "Perfil actualizado", customer: updatedCustomer });
+
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        cleanupFile(tempFilePath);
+        res.status(400).json({ error: error.message });
     }
 };
 
@@ -269,7 +331,6 @@ exports.deleteCustomer = async (req, res) => {
         const customerId = customer.customer_id;
         await customer.destroy();
 
-        // ✅ Emitir evento con Socket.io
         const io = req.app.get('io');
         io.emit('customer_deleted', {
             customer_id: customerId

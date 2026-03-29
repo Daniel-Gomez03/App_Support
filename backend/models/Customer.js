@@ -22,7 +22,8 @@ const Customer = sequelize.define('Customer', {
     },
     customer_phone: {
         type: DataTypes.STRING(20),
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     customer_company: {
         type: DataTypes.STRING(100),
@@ -40,17 +41,17 @@ const Customer = sequelize.define('Customer', {
         type: DataTypes.TINYINT,
         defaultValue: 1
     },
-    email_verified: { 
-        type: DataTypes.BOOLEAN, 
-        defaultValue: false 
+    email_verified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
-    verification_token: { 
-        type: DataTypes.STRING(255), 
-        allowNull: true 
+    verification_token: {
+        type: DataTypes.STRING(255),
+        allowNull: true
     },
-    verification_token_expires: { 
-        type: DataTypes.DATE, 
-        allowNull: true 
+    verification_token_expires: {
+        type: DataTypes.DATE,
+        allowNull: true
     },
 }, {
     tableName: 'customers',

@@ -10,12 +10,11 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// ✅ Probar conexión al iniciar
 transporter.verify((error, success) => {
     if (error) {
-        console.error('❌ Error en configuración de email:', error);
+        console.error('Error en configuración de email:', error);
     } else {
-        console.log('✅ Email configurado correctamente');
+        console.log('Email configurado correctamente');
     }
 });
 
@@ -26,7 +25,7 @@ const sendVerificationEmail = async (email, verificationToken) => {
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
-            subject: '✅ Verificar tu email - TBOXSA',
+            subject: 'Verificar tu email - TBOXSA',
             html: `
         <h2>¡Bienvenido a TBOXSA!</h2>
         <p>Haz clic en el siguiente enlace para verificar tu email:</p>
@@ -38,10 +37,10 @@ const sendVerificationEmail = async (email, verificationToken) => {
         };
 
         await transporter.sendMail(mailOptions);
-        console.log(`✅ Email de verificación enviado a ${email}`);
+        console.log(`mail de verificación enviado a ${email}`);
         return true;
     } catch (error) {
-        console.error('❌ Error enviando email:', error.message);
+        console.error('Error enviando email:', error.message);
         return false;
     }
 };

@@ -15,7 +15,6 @@ function RootLayoutNav() {
     const router = useRouter();
 
     useEffect(() => {
-
         if (!state.isLoading) {
             if (state.userToken) {
                 router.replace('/(tabs)');
