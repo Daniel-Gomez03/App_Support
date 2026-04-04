@@ -1,0 +1,118 @@
+@import "../../../less/variables.less";
+
+.card {
+    background-color: @background-color;
+    border-radius: 24px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+
+    .cardHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+
+        .title {
+            font-size: 14px;
+            color: #6B7280;
+            font-weight: 500;
+        }
+
+        .iconContainer {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #F9FAFB;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            .icon {
+                color: #6B7280;
+            }
+        }
+    }
+
+    .body {
+        .value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 8px 0;
+        }
+
+        .footer {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+
+            .percentage {
+                color: #10B981;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 2px;
+            }
+
+            .label {
+                color: #9CA3AF;
+            }
+
+            .trendPositive {
+                color: #10B981;
+            }
+
+            .trendNegative {
+                color: #EF4444;
+            }
+
+            .trendNeutral {
+                color: #9CA3AF;
+            }
+        }
+    }
+
+    &.dark {
+        background-color: #105030;
+
+        .cardHeader {
+            .title {
+                color: rgba(255, 255, 255, 0.8);
+            }
+
+            .iconContainer {
+                background-color: rgba(255, 255, 255, 0.1);
+
+                .icon {
+                    color: @background-color;
+                }
+            }
+        }
+
+        .body {
+            .value {
+                color: @background-color;
+            }
+
+            .footer {
+                .percentage {
+                    color: #4ADE80;
+                }
+
+                .label {
+                    color: rgba(255, 255, 255, 0.6);
+                }
+            }
+        }
+    }
+}

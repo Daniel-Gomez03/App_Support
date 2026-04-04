@@ -1,5 +1,8 @@
-# Logs
-logs
+# === GENERAL ===
+.DS_Store
+.env
+.env.local
+.env.*.local
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,18 +10,67 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# === NODE ===
+node_modules/
+dist/
+dist-ssr/
 *.local
 
-# Editor directories and files
+# === EDITOR ===
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
+.vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# === FRONTEND (React + Vite) ===
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+
+# === BACKEND (Express) ===
+backend/node_modules/
+backend/dist/
+backend/.env
+backend/.env.local
+backend/uploads/
+backend/logs/
+
+# === MOBILE (React Native / Expo) ===
+mobile/node_modules/
+mobile/.expo/
+mobile/.expo-shared/
+mobile/dist/
+mobile/.env
+mobile/.env.local
+mobile/android/
+mobile/ios/
+*.jks
+*.p8
+*.p12
+*.pem
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === IDEs ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# === MISC ===
+*.pem
+*.key
+*.crt
+.firebase/

@@ -1,0 +1,233 @@
+@import "../less/variables.less";
+
+.assignedTicketContainer {
+    width: 100%;
+    height: 100%;
+}
+
+.pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+
+    .headerLeft {
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 8px 0;
+        }
+        .subtitle {
+            color: #6B7280;
+            margin: 0;
+            font-size: 14px;
+        }
+    }
+
+    .createBtn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #105030;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover {
+            background-color: #0d3f26;
+        }
+    }
+}
+
+.mainGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr; 
+    }
+}
+
+.leftColumn, .columnWrapper {
+    background-color: white; 
+    border-radius: 24px;     
+    min-height: 500px;       
+    display: flex;
+    flex-direction: column;
+
+    &.grayColumn {
+        background-color: #EFF1F3; 
+        padding: 24px;
+    }
+    
+}
+
+.leftColumn {
+    padding-right: 16px;
+}
+
+
+.columnTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .greenDot {
+        width: 8px;
+        height: 8px;
+        background-color: #105030;
+        border-radius: 50%;
+    }
+}
+
+.ticketsList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+}
+
+.ticketCard {
+    background-color: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+    transition: all 0.2s ease;
+
+    &:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .cardTopRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+
+        .ticketId {
+            background-color: #ECFDF5;
+            color: #047857;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .timeWrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #9CA3AF;
+            font-size: 12px;
+        }
+    }
+
+    .cardContent {
+        margin-bottom: 20px;
+
+        .clientName {
+            font-size: 18px; 
+            font-weight: 800;
+            color: #111827;
+            margin: 0 0 6px 0;
+        }
+
+        .ticketIssue {
+            font-size: 14px;
+            color: #4B5563;
+            margin: 0;
+        }
+    }
+
+    .tagRow {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+
+        .tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            
+            svg { font-size: 12px; }
+
+          
+            &.tagBlue { 
+                background-color: #F3E8FF;
+                color: #7E22CE;
+            }
+
+            &.tagOrange {
+                background-color: #FFEDD5;
+                color: #C2410C;
+            }
+        }
+    }
+
+    .btnDetails {
+        width: 100%;
+        background-color: white;
+        border: 1px solid #E5E7EB;
+        color: #374151;
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+
+        &:hover {
+            background-color: #F9FAFB;
+            border-color: #D1D5DB;
+        }
+    }
+}
+
+
+.emptyState {
+   
+    height: 100%;
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    background-color: #F9FAFB; 
+    border-radius: 24px;
+    color: #9CA3AF;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.emptyBacklogHint {
+    height: 100%;
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #9CA3AF;
+    font-size: 14px;
+    font-style: italic;
+}
