@@ -1,34 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react'
+import './less/main.less'
+import MainLayout from './layouts/MainLayout';
+import { BrowserRouter, Routes, Route } from 'react-router';
+import Dashboard from './pages/Dashboard';
+import CreateTicket from './pages/CreateTicket';
+import AssignedTicket from './pages/AssignedTicket';
+import ActiveTicket from './pages/ActiveTicket';
+import History from './pages/Historial';
+import Users from './pages/Usuarios';
+import Departures from './pages/Salidas';
+import QA from './pages/QA';
+import { TicketProvider } from './context/TicketContext';
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <TicketProvider>
+      <BrowserRouter>
+        <MainLayout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/tickets/createTicket" element={<CreateTicket title="Crear Ticket" />} />
+            <Route path="/tickets/assignedTicket" element={<AssignedTicket title="Asignar Tickets" />} />
+            <Route path="/tickets/activeTicket" element={<ActiveTicket title="Tickets Activos" />} />
+            <Route path='/history' element={<History />} />
+            <Route path='/users' element={<Users />} />
+            <Route path='/departures' element={<Departures />} />
+            <Route path='/qa' element={<QA />} />
+          </Routes>
+        </MainLayout>
+      </BrowserRouter>
+    </TicketProvider>
   )
 }
 

@@ -1,0 +1,92 @@
+@import "../less/variables.less";
+
+.dashboardContainer {
+    width: 100%;
+
+    .pageHeader {
+        margin-bottom: 32px;
+
+        @media(max-width: #breaks[tablet]) {
+            margin-bottom: 24px;
+        }
+
+        .title {
+            font-size: 30px;
+            font-weight: 700;
+            color: #101828;
+            margin: 0 0 6px 0;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #6A7282;
+            margin: 0;
+        }
+    }
+
+    .statsGrid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+        margin-bottom: 32px;
+
+        @media (max-width: #breaks[desktop]) {
+            grid-template-columns: repeat(2, 1fr);
+            justify-items: center;
+        }
+
+        @media (max-width: #breaks[tablet]) {
+            gap: 16px;
+            justify-items: center;
+        }
+
+        @media (max-width: 767px) {
+            grid-template-columns: (1fr);
+        }
+    }
+
+    .contentGrid {
+        display: grid;
+        grid-template-columns: 3fr 1.3fr;
+        gap: 24px;
+        padding-bottom: 32px;
+
+        @media (max-width: #breaks[desktop]) {
+            grid-template-columns: 1fr;
+        }
+
+        @media (max-width: #breaks[tablet]) {
+            gap: 16px;
+        }
+    }
+
+    .leftColumn {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        gap: 24px;
+
+        @media(max-width: #breaks[desktop]) {
+            justify-content: center;
+        }
+
+        @media(max-width: #breaks[tablet]) {
+            gap: 16px;
+        }
+    }
+
+    .rightColumn {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        gap: 24px;
+
+        @media(max-width: #breaks[desktop]) {
+            justify-content: center;
+        }
+
+        @media(max-width: #breaks[tablet]) {
+            gap: 16px;
+        }
+    }
+}

@@ -1,0 +1,40 @@
+@import "../less/variables.less";
+
+.layoutContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: @secondary-color;
+  position: relative;
+  overflow-x: hidden;
+  width: 100%;
+
+  .mainContent {
+    margin-left: 256px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: calc(100% - 256px);
+    transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
+
+    &.expanded {
+      margin-left: 0;
+      width: 100%;
+    }
+
+    @media (max-width: #breaks[tablet]) {
+      margin-left: 0;
+      width: 100%;
+    }
+
+    .pageContent {
+      padding: 24px 30px 30px 30px;
+      width: 100%;
+      margin: 0 auto;
+      flex: 1;
+
+      @media (max-width: #breaks[tablet]) {
+        padding: 16px;
+      }
+    }
+  }
+}

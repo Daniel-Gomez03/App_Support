@@ -1,0 +1,232 @@
+@import "../../../less/variables.less";
+
+.filterOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+
+    @media (max-width: #breaks[tablet]) {
+        padding: 12px;
+        align-items: flex-end;
+    }
+}
+
+.filterModal {
+    background-color: @background-color;
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    animation: slideUp 0.3s ease;
+
+    @media(max-width: #breaks[tablet]) {
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+        padding: 24px;
+        max-height: 80vh;
+        overflow-y: auto;
+        animation: slideUpBottom 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideUpBottom {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    h2 {
+        margin: 0 0 24px 0;
+        color: @quaternary-color;
+        font-size: 22px;
+        font-weight: 700;
+
+        @media (max-width: #breaks[tablet]) {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+    }
+}
+
+.filterGroup {
+    margin-bottom: 22px;
+
+
+    @media (max-width: #breaks[tablet]) {
+        margin-bottom: 18px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 10px;
+        color: @quaternary-color;
+        font-weight: 600;
+        font-size: 14px;
+
+        @media (max-width: #breaks[tablet]) {
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+    }
+
+    select,
+    input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 14px;
+        font-family: inherit;
+        background-color: #F9FAFB;
+        color: #333333;
+        transition: all 0.3s ease;
+
+        @media (max-width: #breaks[tablet]) {
+            padding: 11px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+        }
+
+        &:focus {
+            outline: none;
+            border-color: @primary-color;
+            box-shadow: 0 0 0 3px rgba(108, 135, 102, 0.1);
+        }
+
+        &::placeholder {
+            color: #b0b0b0;
+        }
+
+        &:disabled {
+            background-color: #f9f9f9;
+            cursor: not-allowed;
+            color: #999999;
+            border-color: #e8e8e8;
+        }
+    }
+}
+
+.filterActions {
+    display: flex;
+    gap: 14px;
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+
+    @media (max-width: #breaks[tablet]) {
+        margin-top: 24px;
+        padding-top: 14px;
+        gap: 12px;
+    }
+}
+
+.resetBtn,
+.applyBtn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    @media (max-width: #breaks[tablet]) {
+        padding: 11px 16px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+     &:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+}
+
+.resetBtn {
+    background-color: #f5f5f5;
+    color: @quaternary-color;
+    border: 1px solid #e0e0e0;
+
+    &:hover:not(:disabled) {
+        background-color: #e8e8e8;
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+}
+
+.applyBtn {
+    background-color: @quaternary-color;
+    color: white;
+
+    &:hover:not(:disabled) {
+        background-color: @tertiary-color;
+        box-shadow: 0 4px 12px rgba(108, 135, 102, 0.3);
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+}
+
+.closeBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #999999;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+
+    @media (max-width: #breaks[tablet]) {
+        top: 16px;
+        right: 16px;
+        font-size: 24px;
+        width: 28px;
+        height: 28px;
+    }
+
+    &:hover {
+        color: @quaternary-color;
+        background-color: #f5f5f5;
+    }
+}
