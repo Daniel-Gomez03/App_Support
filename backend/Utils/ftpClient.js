@@ -12,15 +12,16 @@ exports.uploadToFTP = async (localPath, remoteName) => {
         });
 
         const cleanPath = process.env.FTP_REMOTE_PATH.replace(/^\/+|\/+$/g, '');
-        
+        const cleanFileName = remoteName.replace(/^\/+/, '');
         const remoteFolder = `/${cleanPath}`;   
-        const remoteFile = `${remoteFolder}/${remoteName}`;
+        const remoteFile = `${remoteFolder}/${cleanFileName}`;
 
         await client.ensureDir(remoteFolder);
-
         await client.uploadFrom(localPath, remoteFile);
 
-        return `${process.env.FTP_BASE_URL}/${remoteName}`;
+        const cleanBaseUrl = process.env.FTP_BASE_URL.replace(/\/+$/, '');
+        
+        return `${cleanBaseUrl}/${cleanFileName}`;
         
     } catch (err) {
         console.error("Error en subida FTP:", err.message);
@@ -37,7 +38,7 @@ exports.deleteFromFTP = async (remotePath) => {
             host: process.env.FTP_HOST,
             user: process.env.FTP_USER,
             password: process.env.FTP_PASSWORD,
-            secure: false 
+            secure: false
         });
 
         const finalDeletePath = `/${remotePath.replace(/^\/+/, '')}`;

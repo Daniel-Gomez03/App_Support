@@ -11,15 +11,33 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const productModelRoutes = require('./routes/productModelRoutes');
 const customerRoutes = require('./routes/customerRoutes');
+const warrantyRoutes = require('./routes/warrantyRoutes');
+const ticketStatusRoutes = require('./routes/ticketStatusRoutes');
+const ticketRoutes = require('./routes/ticketRoutes');
 
 // Importar modelos
 const Faqs = require('./models/Faqs');
 const Category = require('./models/Category');
 const Product = require('./models/Product');
 const ProductModel = require('./models/ProductModel');
+const Ticket = require('./models/Ticket');
+const TicketStatus = require('./models/TicketStatus');
+const TicketEvidence = require('./models/TicketEvidence');
+const Customer = require('./models/Customer');
+const Warranty = require('./models/Warranty');
 
 // Asociar modelos
-const models = { Faqs, Category, Product, ProductModel };
+const models = { 
+    Faqs, 
+    Category, 
+    Product, 
+    ProductModel,
+    Ticket,
+    TicketStatus,
+    TicketEvidence,
+    Customer,
+    Warranty
+};
 Object.values(models).forEach(model => {
     if (model.associate) model.associate(models);
 });
@@ -43,9 +61,13 @@ const path = require('path');
 const fs = require('fs');
 
 const uploadsPath = path.join(__dirname, 'uploads/profiles');
-if (!fs.existsSync(uploadsPath)) {
-    fs.mkdirSync(uploadsPath, { recursive: true });
-}
+const evidencesPath = path.join(__dirname, 'uploads/evidences');
+
+[uploadsPath, evidencesPath].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.set('io', io);
@@ -58,8 +80,6 @@ io.on('connection', (socket) => {
     });
 });
 
-
-
 // Ruta de prueba
 app.get('/api/test', (req, res) => {
     res.json({ message: 'Backend funcionando' });
@@ -71,6 +91,9 @@ app.use('/api', categoryRoutes);
 app.use('/api', productRoutes);
 app.use('/api', productModelRoutes);
 app.use('/api', customerRoutes);
+app.use('/api', warrantyRoutes);
+app.use('/api', ticketStatusRoutes);
+app.use('/api', ticketRoutes);
 
 // Conectar a BD
 sequelize.authenticate()

@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
   },
   logo: {
     alignItems: 'center',
