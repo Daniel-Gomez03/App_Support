@@ -88,6 +88,11 @@ Ticket.associate = (models) => {
         as: 'warranty'
     });
 
+    Ticket.belongsTo(models.User, {
+        foreignKey: 'user_id',
+        as: 'technician'
+    });
+
     Ticket.hasMany(models.TicketEvidence, {
         foreignKey: 'ticket_id',
         as: 'evidences'

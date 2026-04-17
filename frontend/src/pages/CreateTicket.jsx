@@ -3,7 +3,6 @@ import styles from './CreateTicket.module.less';
 import { LuUpload, LuCheck, LuX, LuLoaderCircle } from "react-icons/lu";
 import { FaQuestion } from "react-icons/fa"
 import "flag-icons/css/flag-icons.min.css";
-import { useTicketContext } from '../context/TicketContext';
 
 const CreateTicket = () => {
 
@@ -91,7 +90,6 @@ const CreateTicket = () => {
     setIsModalOpen(true);
   };
 
-  const { addTicket } = useTicketContext();
 
   const handleFinalSubmit = () => {
     setIsLoading(true);

@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 
-const API_URL = 'http://192.168.1.24:8000/api';
-//const API_URL = 'http://10.10.0.32:8000/api';
+//const API_URL = 'http://192.168.1.24:8000/api';
+const API_URL = 'http://10.10.0.32:8000/api';
 
 const nuevoService = {
     //Obtener todas las categorias

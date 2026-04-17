@@ -4,6 +4,8 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const sequelize = require('./config/database');
+const cookieParse = require('cookie-parser');
+const { verificarToken } = require('./Middleware/auth');
 
 //Rutas
 const faqRoutes = require('./routes/faqsRoutes');
@@ -14,6 +16,9 @@ const customerRoutes = require('./routes/customerRoutes');
 const warrantyRoutes = require('./routes/warrantyRoutes');
 const ticketStatusRoutes = require('./routes/ticketStatusRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const seccionRoutes = require('./routes/seccionRoutes');
 
 // Importar modelos
 const Faqs = require('./models/Faqs');
@@ -25,18 +30,24 @@ const TicketStatus = require('./models/TicketStatus');
 const TicketEvidence = require('./models/TicketEvidence');
 const Customer = require('./models/Customer');
 const Warranty = require('./models/Warranty');
+const User = require('./models/User');
+const Seccion = require('./models/Seccion');
+const Permission = require('./models/Permission');
 
 // Asociar modelos
-const models = { 
-    Faqs, 
-    Category, 
-    Product, 
+const models = {
+    Faqs,
+    Category,
+    Product,
     ProductModel,
     Ticket,
     TicketStatus,
     TicketEvidence,
     Customer,
-    Warranty
+    Warranty,
+    User,
+    Seccion,
+    Permission
 };
 Object.values(models).forEach(model => {
     if (model.associate) model.associate(models);
@@ -48,14 +59,19 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: ["http://localhost:5173", "http://localhost:8000", "*"],
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParse());
 
 const path = require('path');
 const fs = require('fs');
@@ -73,10 +89,16 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.set('io', io);
 
 io.on('connection', (socket) => {
-    console.log(' Cliente conectado:', socket.id);
+    console.log('Cliente conectado:', socket.id);
+
+    socket.on('join_room', (user_id) => {
+        if (user_id) {
+            socket.join(user_id.toString());
+        }
+    });
 
     socket.on('disconnect', () => {
-        console.log(' Cliente desconectado:', socket.id);
+        console.log('Cliente desconectado:', socket.id);
     });
 });
 
@@ -86,6 +108,11 @@ app.get('/api/test', (req, res) => {
 });
 
 //Rutas
+app.use('/api', authRoutes);
+
+app.use('/api', verificarToken);
+//RUTAS PROTEGIDAS 
+
 app.use('/api', faqRoutes);
 app.use('/api', categoryRoutes);
 app.use('/api', productRoutes);
@@ -94,6 +121,8 @@ app.use('/api', customerRoutes);
 app.use('/api', warrantyRoutes);
 app.use('/api', ticketStatusRoutes);
 app.use('/api', ticketRoutes);
+app.use('/api', userRoutes);
+app.use('/api', seccionRoutes);
 
 // Conectar a BD
 sequelize.authenticate()
