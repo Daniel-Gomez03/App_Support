@@ -67,30 +67,41 @@ exports.createFaq = async (req, res) => {
     try {
         const { category_id, product_id, product_model_id, faq_question, faq_answer, faq_video_url } = req.body;
 
-        if (!category_id || !product_id || !faq_question || !faq_answer || !faq_video_url) {
-            return res.status(422).json({ error: 'Todos los campos son requeridos' });
+        const cleanQuestion = faq_question?.trim();
+        const cleanAnswer = faq_answer?.trim();
+        const cleanVideoUrl = faq_video_url?.trim();
+
+        if (!category_id || !product_id || !cleanQuestion || !cleanAnswer || !cleanVideoUrl) {
+            return res.status(422).json({
+                error: 'Todos los campos son requeridos y no pueden contener solo espacios en blanco.'
+            });
+        }
+
+        if (cleanQuestion.length < 10) {
+            return res.status(422).json({ error: 'El asunto (pregunta) debe tener al menos 10 caracteres.' });
+        }
+        if (cleanAnswer.length < 20) {
+            return res.status(422).json({ error: 'La problemática (instrucciones) debe tener al menos 20 caracteres.' });
+        }
+
+        const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\//;
+        const vimeoRegex = /^(https?:\/\/)?(www\.)?vimeo\.com\//;
+
+        if (!youtubeRegex.test(cleanVideoUrl) && !vimeoRegex.test(cleanVideoUrl)) {
+            return res.status(422).json({ error: 'Solo se aceptan enlaces válidos de YouTube o Vimeo.' });
         }
 
         const category = await Category.findByPk(category_id);
         const product = await Product.findByPk(product_id);
 
         if (!category || !product) {
-            return res.status(404).json({ error: 'Categoría o producto no encontrado' });
+            return res.status(404).json({ error: 'La categoría o el producto seleccionados no existen.' });
         }
 
         if (product_model_id) {
             const productModel = await ProductModel.findByPk(product_model_id);
             if (!productModel) {
-                return res.status(404).json({ error: 'Modelo no encontrado' });
-            }
-        }
-
-        if (faq_video_url) {
-            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\//;
-            const vimeoRegex = /^(https?:\/\/)?(www\.)?vimeo\.com\//;
-
-            if (!youtubeRegex.test(faq_video_url) && !vimeoRegex.test(faq_video_url)) {  // ✅ CORRECTO
-                return res.status(422).json({ error: 'Solo se aceptan enlaces de YouTube o Vimeo' });
+                return res.status(404).json({ error: 'El modelo seleccionado no existe.' });
             }
         }
 
@@ -98,9 +109,9 @@ exports.createFaq = async (req, res) => {
             category_id,
             product_id,
             product_model_id: product_model_id || null,
-            faq_question,
-            faq_answer,
-            faq_video_url,
+            faq_question: cleanQuestion,
+            faq_answer: cleanAnswer,
+            faq_video_url: cleanVideoUrl,
             faq_status: true
         });
 
@@ -113,11 +124,13 @@ exports.createFaq = async (req, res) => {
         });
 
         const io = req.app.get('io');
-        io.emit('faq_created', faqWithRelations);
+        if (io) io.emit('faq_created', faqWithRelations);
 
         res.status(201).json(faqWithRelations);
+
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error en createFaq:", error);
+        res.status(500).json({ error: 'Ocurrió un error interno al crear la FAQ.' });
     }
 };
 
@@ -126,48 +139,44 @@ exports.createFaq = async (req, res) => {
 // ============================================
 exports.updateFaq = async (req, res) => {
     try {
+        const { id } = req.params;
         const { category_id, product_id, product_model_id, faq_question, faq_answer, faq_video_url } = req.body;
 
-        if (!category_id || !product_id || !faq_question || !faq_answer || !faq_video_url) {
-            return res.status(422).json({ error: 'Todos los campos son requeridos' });
+        const cleanQuestion = faq_question?.trim();
+        const cleanAnswer = faq_answer?.trim();
+        const cleanVideoUrl = faq_video_url?.trim();
+
+        if (!category_id || !product_id || !cleanQuestion || !cleanAnswer || !cleanVideoUrl) {
+            return res.status(422).json({ error: 'Todos los campos son obligatorios para actualizar.' });
         }
 
-        const faq = await Faq.findByPk(req.params.id);
-        if (!faq) return res.status(404).json({ error: 'FAQ no encontrada' });
-
-        const category = await Category.findByPk(category_id);
-        const product = await Product.findByPk(product_id);
-
-        if (!category || !product) {
-            return res.status(404).json({ error: 'Categoría o producto no encontrado' });
+        if (cleanQuestion.length < 10) {
+            return res.status(422).json({ error: 'El asunto debe tener al menos 10 caracteres.' });
+        }
+        if (cleanAnswer.length < 20) {
+            return res.status(422).json({ error: 'La problemática debe tener al menos 20 caracteres.' });
         }
 
-        if (product_model_id) {
-            const productModel = await ProductModel.findByPk(product_model_id);
-            if (!productModel) {
-                return res.status(404).json({ error: 'Modelo no encontrado' });
-            }
-        }
+        const faq = await Faq.findByPk(id);
+        if (!faq) return res.status(404).json({ error: 'FAQ no encontrada.' });
 
-        if (faq_video_url) {
-            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\//;
-            const vimeoRegex = /^(https?:\/\/)?(www\.)?vimeo\.com\//;
+        const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\//;
+        const vimeoRegex = /^(https?:\/\/)?(www\.)?vimeo\.com\//;
 
-            if (!youtubeRegex.test(faq_video_url) && !vimeoRegex.test(faq_video_url)) {  // ✅ CORRECTO
-                return res.status(422).json({ error: 'Solo se aceptan enlaces de YouTube o Vimeo' });
-            }
+        if (!youtubeRegex.test(cleanVideoUrl) && !vimeoRegex.test(cleanVideoUrl)) {
+            return res.status(422).json({ error: 'El enlace de video no es válido (use YouTube o Vimeo).' });
         }
 
         await faq.update({
             category_id,
             product_id,
             product_model_id: product_model_id || null,
-            faq_question,
-            faq_answer,
-            faq_video_url
+            faq_question: cleanQuestion,
+            faq_answer: cleanAnswer,
+            faq_video_url: cleanVideoUrl
         });
 
-        const faqWithRelations = await Faq.findByPk(faq.faq_id, {
+        const faqWithRelations = await Faq.findByPk(id, {
             include: [
                 { model: Category, as: 'category' },
                 { model: Product, as: 'product' },
@@ -176,11 +185,13 @@ exports.updateFaq = async (req, res) => {
         });
 
         const io = req.app.get('io');
-        io.emit('faq_updated', faqWithRelations);
+        if (io) io.emit('faq_updated', faqWithRelations);
 
         res.json(faqWithRelations);
+
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error en updateFaq:", error);
+        res.status(500).json({ error: 'Ocurrió un error interno al actualizar la FAQ.' });
     }
 };
 

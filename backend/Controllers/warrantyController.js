@@ -2,10 +2,6 @@ const Warranty = require('../models/Warranty');
 const XLSX = require('xlsx');
 const Papa = require('papaparse');
 
-/**
- * Formatea la fecha para MySQL asegurando que no haya saltos de día.
- * Forzamos las 12:00:00 para evitar que el timezone reste horas y cambie el día.
- */
 const formatToMySQLDate = (dateStr) => {
     if (!dateStr) return null;
 
@@ -182,7 +178,6 @@ exports.bulkUploadWarranties = async (req, res) => {
                 const serial = String(warranty_serial_number || '').trim();
                 const invoice = String(warranty_invoice_number || '').trim();
 
-                // --- VALIDACIONES MASIVAS ---
                 if (serial.length < 16) throw new Error(`S/N insuficiente (Mín. 16).`);
                 if (invoice.length < 4) throw new Error(`Factura insuficiente (Mín. 4).`);
 
@@ -193,9 +188,9 @@ exports.bulkUploadWarranties = async (req, res) => {
                 } else {
                     const dateParts = String(warranty_purchase_date).split(/[-/]/);
                     if (dateParts.length === 3) {
-                        if (dateParts[0].length === 4) { // YYYY-MM-DD
+                        if (dateParts[0].length === 4) {
                             finalDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 12, 0, 0);
-                        } else { // DD-MM-YYYY
+                        } else {
                             finalDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], 12, 0, 0);
                         }
                     } else {

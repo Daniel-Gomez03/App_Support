@@ -3,6 +3,10 @@ import styles from "./FAQList.module.less";
 import FAQItem from "../FAQItem/FaqItem";
 
 const FAQList = ({ faqs, onEdit, onToggleStatus }) => {
+    if (!faqs || faqs.length === 0) {
+        return null; 
+    }
+
     return (
         <div className={styles.faqList}>
             {faqs.map((faq) => (

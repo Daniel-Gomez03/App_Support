@@ -149,7 +149,6 @@ const Garantias = () => {
                     </div>
 
                     <div className={styles.actionButtons}>
-                        {/* PERMISO WRITE: Carga Masiva y Nuevo Registro */}
                         {canWrite && (
                             <>
                                 <button className={styles.bulkBtn} onClick={() => setIsBulkModalOpen(true)}>
