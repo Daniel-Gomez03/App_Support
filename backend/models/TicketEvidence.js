@@ -1,9 +1,9 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); 
+const sequelize = require('../config/database');
 
 const TicketEvidence = sequelize.define('TicketEvidence', {
     ticket_evidence_id: {
-        type: DataTypes.BIGINT(20).UNSIGNED, 
+        type: DataTypes.BIGINT(20).UNSIGNED,
         primaryKey: true,
         autoIncrement: true
     },
@@ -13,7 +13,7 @@ const TicketEvidence = sequelize.define('TicketEvidence', {
     },
     ticket_evidence_path: {
         type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
     }
 }, {
     tableName: 'tickets_evidences',
@@ -24,7 +24,10 @@ const TicketEvidence = sequelize.define('TicketEvidence', {
 
 //Asociacion
 TicketEvidence.associate = (models) => {
-    TicketEvidence.belongsTo(models.Ticket, { foreignKey: 'ticket_id', as: 'ticket' });
+    TicketEvidence.belongsTo(models.Ticket, {
+        foreignKey: 'ticket_id',
+        as: 'ticket'
+    });
 };
 
 module.exports = TicketEvidence;

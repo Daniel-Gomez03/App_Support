@@ -28,6 +28,10 @@ const Ticket = sequelize.define('Ticket', {
         type: DataTypes.BIGINT(20).UNSIGNED,
         allowNull: false
     },
+    user_id: {
+        type: DataTypes.BIGINT(20).UNSIGNED,
+        allowNull: true
+    },
     ticket_priority: {
         type: DataTypes.STRING(45),
         allowNull: true
@@ -46,7 +50,8 @@ const Ticket = sequelize.define('Ticket', {
     },
     ticket_status: {
         type: DataTypes.BOOLEAN,
-        allowNull: false
+        allowNull: false,
+        defaultValue: 1
     }
 }, {
     tableName: 'tickets',

@@ -8,6 +8,12 @@ router.get('/warranty',
     authorize('Garantias', 'permissions_read'),
     warrantyController.getAllWarranties
 );
+
+router.get('/warranty/check/:serial',
+    authorize('Crear Ticket', 'permissions_read'),
+    warrantyController.checkWarrantyBySerial
+);
+
 router.post('/warranty',
     authorize('Garantias', 'permissions_write'),
     warrantyController.createWarranty

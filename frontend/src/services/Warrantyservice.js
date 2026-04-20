@@ -33,6 +33,22 @@ const fetchConfig = (method, body = null, isFormData = false) => {
 };
 
 // ============================================
+// VALIDAR GARANTÍA POR SERIAL (Nueva Función)
+// ============================================
+export const checkWarrantySerial = async (serial) => {
+    try {
+        const response = await fetch(
+            `${API_URL}/warranty/check/${encodeURIComponent(serial)}`, 
+            fetchConfig('GET')
+        );
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en checkWarrantySerial:", error);
+        throw error;
+    }
+};
+
+// ============================================
 // OBTENER TODAS LAS GARANTÍAS
 // ============================================
 export const getWarranties = async () => {

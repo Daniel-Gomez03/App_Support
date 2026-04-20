@@ -1,194 +1,389 @@
-import React, { useEffect, useState, useMemo } from "react";
-import styles from "./QA.module.less";
-import FAQList from "../components/QA/FAQList/FaqList";
-import FAQForm from "../components/QA/FAQForm/FaqForm";
-import FilterModal from "../components/QA/FilterModal/FilterModal";
-import lensIcon from "../assets/icons/Lens-icon.svg";
-import { getFaqs, getInactiveFaqs, createFaq, updateFaq, toggleFaqStatus, socket } from "../services/Faqservice";
-import { MdFilterListAlt } from "react-icons/md";
-import { LuCheck, LuX, LuCircleAlert } from "react-icons/lu";
+import React, { useEffect, useState, useRef } from 'react';
+import styles from './CreateTicket.module.less';
+import { LuUpload, LuCheck, LuX, LuLoaderCircle, LuSearch, LuShieldCheck, LuShieldAlert, LuShieldX, LuCircleAlert } from "react-icons/lu";
+import { FaQuestion } from "react-icons/fa";
+import "flag-icons/css/flag-icons.min.css";
+
+// Servicios
+import { getCustomers } from "../services/Customerservice";
+import { getCategories } from "../services/Categoryservice";
+import { getProducts } from "../services/Productservice";
+import { getProductModelsByProduct } from "../services/Productmodelservice";
+import { createTicketAdmin } from "../services/Ticketservice";
+import { checkWarrantySerial } from "../services/Warrantyservice";
+
+// Contexto de Autenticación
 import { useAuth } from "../context/AuthContext";
 
-const QA = () => {
+const countryRules = {
+    '+504': { iso: 'hn' },
+    '+505': { iso: 'ni' },
+    '+503': { iso: 'sv' },
+    '+502': { iso: 'gt' },
+};
+
+const CreateTicket = () => {
+    // --- SEGURIDAD Y PERMISOS ---
     const { user } = useAuth();
 
-    const canRead = user?.Permissions?.some(p => p.Seccion?.module_name === "Q&A" && p.permissions_read === 1);
-    const canEdit = user?.Permissions?.some(p => p.Seccion?.module_name === "Q&A" && p.permissions_edit === 1);
-    const canWrite = user?.Permissions?.some(p => p.Seccion?.module_name === "Q&A" && p.permissions_write === 1);
+    // Validamos contra el nombre del módulo en tu BD (ej. "Crear Ticket")
+    const canRead = user?.Permissions?.some(p => p.Seccion?.module_name === "Crear Ticket" && p.permissions_read === 1);
+    const canWrite = user?.Permissions?.some(p => p.Seccion?.module_name === "Crear Ticket" && p.permissions_write === 1);
 
-    const [faqs, setFaqs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [showForm, setShowForm] = useState(false);
-    const [editingFaq, setEditingFaq] = useState(null);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [showFilter, setShowFilter] = useState(false);
-    const [appliedFilters, setAppliedFilters] = useState(null);
+    const [customers, setCustomers] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [models, setModels] = useState([]);
 
-    const [toastConfig, setToastConfig] = useState({ show: false, title: "", message: "", type: "success" });
+    // Estados de búsqueda y UI
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [toastConfig, setToastConfig] = useState({ show: false, title: "", message: "", type: "success" })
+    const dropdownRef = useRef(null);
 
     const showToast = (title, message, type = "success") => {
         setToastConfig({ show: true, title, message, type });
         setTimeout(() => setToastConfig(prev => ({ ...prev, show: false })), 5000);
     };
 
-    const filterOptions = useMemo(() => {
-        return {
-            categories: [...new Set(faqs.map(faq => faq.category?.category_name))].filter(Boolean),
-            products: [...new Set(faqs.map(faq => faq.product?.product_name))].filter(Boolean),
-            productModels: [...new Set(faqs.map(faq => faq.product_model?.product_model_name))].filter(Boolean)
-        };
-    }, [faqs]);
+    // Estado de validación de garantía
+    const [warrantyStatus, setWarrantyStatus] = useState({ loading: false, data: null, error: null });
 
-    const loadFaqs = async () => {
-        if (!canRead) return;
-        try {
-            setLoading(true);
-            const [activeFaqs, inactiveFaqs] = await Promise.all([
-                getFaqs(),
-                getInactiveFaqs()
-            ]);
-            setFaqs([...activeFaqs, ...inactiveFaqs]);
-            setError(null);
-        } catch (err) {
-            setError("No tienes permiso o hubo un error al cargar los datos.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        loadFaqs();
-        document.title = "Soporte | Q&A";
-        socket.connect();
-        socket.on('faq_created', () => loadFaqs());
-        socket.on('faq_updated', () => loadFaqs());
-        socket.on('faq_deleted', () => loadFaqs());
-        socket.on('faq_toggled', () => loadFaqs());
-
-        return () => {
-            socket.off('faq_created');
-            socket.off('faq_updated');
-            socket.off('faq_deleted');
-            socket.off('faq_toggled');
-        };
-    }, [canRead]);
-
-    const handleCreateFaq = async (faqData) => {
-        try {
-            await createFaq(faqData);
-            setShowForm(false);
-            showToast("Éxito", "La pregunta ha sido agregada correctamente.");
-        } catch (err) {
-            showToast("Error de validación", err.message, "error");
-        }
-    };
-
-    const handleUpdateFaq = async (id, faqData) => {
-        try {
-            await updateFaq(id, faqData);
-            setEditingFaq(null);
-            setShowForm(false);
-            showToast("Actualizado", "La información se ha actualizado con éxito.");
-        } catch (err) {
-            showToast("Error al actualizar", err.message, "error");
-        }
-    };
-
-    const handleToggleStatus = async (id) => {
-        if (!canEdit) return showToast("Permiso denegado", "No tienes permisos para cambiar el estado.", "error");
-        try {
-            await toggleFaqStatus(id);
-            loadFaqs();
-        } catch (err) {
-            showToast("Error", "No se pudo cambiar el estado.", "error");
-        }
-    };
-
-    const filteredFaqs = faqs.filter(faq => {
-        const searchLower = searchTerm.toLowerCase();
-        const matchesSearch = faq.faq_question.toLowerCase().includes(searchLower) ||
-            faq.category?.category_name.toLowerCase().includes(searchLower) ||
-            faq.product?.product_name.toLowerCase().includes(searchLower);
-
-        if (!matchesSearch) return false;
-
-        if (appliedFilters) {
-            if (appliedFilters.category && faq.category?.category_name !== appliedFilters.category) return false;
-            if (appliedFilters.product && faq.product?.product_name !== appliedFilters.product) return false;
-            if (appliedFilters.productModel && faq.product_model?.product_model_name !== appliedFilters.productModel) return false;
-        }
-        return true;
-    }).sort((a, b) => {
-        if (appliedFilters?.sortBy === 'recent') return new Date(b.created_at) - new Date(a.created_at);
-        if (appliedFilters?.sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
-        return a.faq_status === b.faq_status ? 0 : a.faq_status ? -1 : 1;
+    const [formData, setFormData] = useState({
+        customer_id: '',
+        customer_company: '',
+        customer_email: '',
+        customer_phone: '',
+        customer_country_code: '',
+        customer_registration_type: '',
+        customer_registration_value: '',
+        category_id: '',
+        product_id: '',
+        product_model_id: '',
+        ticket_serial_number: '',
+        ticket_subject: '',
+        ticket_description: '',
+        evidences: []
     });
 
+    useEffect(() => {
+        document.title = "Soporte | Crear Ticket";
+
+        // Solo cargamos los datos si tiene permisos de lectura
+        if (!canRead) return;
+
+        const loadInitialData = async () => {
+            try {
+                const [cData, catData] = await Promise.all([getCustomers(), getCategories()]);
+                setCustomers(cData);
+                setCategories(catData);
+            } catch (err) { console.error(err); }
+        };
+        loadInitialData();
+
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [canRead]); // Añadimos canRead como dependencia
+
+    // --- SECCIÓN 1: LÓGICA DE CLIENTE ---
+    const handleSelectCustomer = (c) => {
+        setFormData({
+            ...formData,
+            customer_id: c.customer_id,
+            customer_company: c.customer_company,
+            customer_email: c.customer_email,
+            customer_phone: c.customer_phone,
+            customer_country_code: c.customer_country_code,
+            customer_registration_type: c.customer_registration_type,
+            customer_registration_value: c.customer_registration_value,
+        });
+        setSearchTerm(`${c.customer_first_name} ${c.customer_last_name}`);
+        setShowDropdown(false);
+    };
+
+    const filteredCustomers = customers.filter(c =>
+        `${c.customer_first_name} ${c.customer_last_name} ${c.customer_company}`
+            .toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // --- SECCIÓN 2: LÓGICA CASCADA EQUIPO ---
+    const handleCategorySelect = async (e) => {
+        const id = e.target.value;
+        setFormData({ ...formData, category_id: id, product_id: '', product_model_id: '' });
+        setProducts([]); setModels([]);
+        if (id) {
+            const allProducts = await getProducts();
+            const filtered = allProducts.filter(p => p.category_id == id);
+            setProducts(filtered);
+        }
+    };
+
+    const handleProductSelect = async (e) => {
+        const id = e.target.value;
+        setFormData({ ...formData, product_id: id, product_model_id: '' });
+        setModels([]);
+        if (id) {
+            const data = await getProductModelsByProduct(id);
+            setModels(data);
+        }
+    };
+
+    // --- VALIDACIÓN DE GARANTÍA EN TIEMPO REAL ---
+    const handleVerifyWarranty = async (serial) => {
+        if (!serial || serial.trim().length < 5) return;
+        setWarrantyStatus({ loading: true, data: null, error: null });
+        try {
+            const result = await checkWarrantySerial(serial);
+            setWarrantyStatus({ loading: false, data: result, error: null });
+        } catch (err) {
+            setWarrantyStatus({ loading: false, data: null, error: err.message });
+        }
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        if (value.startsWith(' ')) return;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setFormData(prev => ({ ...prev, evidences: files }));
+    };
+
+    const resetForm = () => {
+        setFormData({ customer_id: '', customer_company: '', customer_email: '', customer_phone: '', customer_country_code: '', customer_registration_type: '', customer_registration_value: '', category_id: '', product_id: '', product_model_id: '', ticket_serial_number: '', ticket_subject: '', ticket_description: '', evidences: [] });
+        setSearchTerm(''); setProducts([]); setModels([]); setWarrantyStatus({ loading: false, data: null, error: null });
+    };
+
+    const handleFinalSubmit = async () => {
+        if (!canWrite) {
+            showToast("Permiso denegado", "No tienes permisos para crear tickets.", "error");
+            return;
+        }
+
+        setIsLoading(true);
+        const data = new FormData();
+        const fieldsToSend = ['customer_id', 'category_id', 'product_id', 'product_model_id', 'ticket_subject', 'ticket_description', 'ticket_serial_number'];
+        fieldsToSend.forEach(key => { if (formData[key]) data.append(key, formData[key]); });
+        formData.evidences.forEach(file => data.append('evidences', file));
+
+        try {
+            const response = await createTicketAdmin(data);
+            setIsLoading(false);
+            setIsModalOpen(false);
+            showToast("¡Ticket Creado!", response.message, "success");
+            resetForm();
+        } catch (error) {
+            setIsLoading(false);
+            showToast("Error al registrar", error.message, "error");
+        }
+    };
+
+    const currentFlagIso = countryRules[formData.customer_country_code]?.iso || 'hn';
+
     return (
-        <div className={styles.qaContainer}>
-            <div className={styles.header}>
-                <div className={styles.titleSection}>
-                    <h1 className={styles.title}>Preguntas Frecuentes (Q&A)</h1>
-                    <p className={styles.subtitle}>Gestión de problemas frecuentes y soluciones.</p>
-                </div>
-
-                <div className={styles.topBar}>
-                    <div className={styles.searchBar}>
-                        <img src={lensIcon} alt="Buscar" className={styles.searchIcon} />
-                        <input
-                            type="text"
-                            placeholder="Buscar por problema, modelo o categoría..."
-                            className={styles.searchInput}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-
-                    <div className={styles.actionButtons}>
-                        {canWrite && (
-                            <button className={styles.createBtn} onClick={() => setShowForm(true)}>
-                                + Nueva Pregunta
-                            </button>
-                        )}
-                        <button className={styles.filterBtn} onClick={() => setShowFilter(true)}>
-                            <MdFilterListAlt />
-                        </button>
-                    </div>
-                </div>
+        <div className={styles.createTicketContainer}>
+            <div className={styles.pageHeader}>
+                <h1 className={styles.title}>Crear Nuevo Ticket</h1>
+                <p className={styles.subtitle}>Panel Administrativo - Registro de Casos</p>
             </div>
 
-            {loading ? (
-                <div className={styles.loadingMessage}>Cargando preguntas frecuentes...</div>
-            ) : !canRead ? (
-                <div className={styles.errorInfo}>No tienes permisos para ver esta sección.</div>
-            ) : (
-                <div className={styles.faqListContainer}>
-                    <FAQList
-                        faqs={filteredFaqs}
-                        onEdit={canEdit ? (faq) => { setEditingFaq(faq); setShowForm(true); } : null}
-                        onToggleStatus={handleToggleStatus}
-                    />
+            {/* RENDERIZADO CONDICIONAL BASADO EN PERMISOS */}
+            {!canRead || !canWrite ? (
+                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#777', backgroundColor: '#F9FAFB', borderRadius: '24px', border: '1px dashed #E5E7EB' }}>
+                    <LuShieldAlert style={{ fontSize: '48px', color: '#EF4444', marginBottom: '16px' }} />
+                    <h3 style={{ fontSize: '20px', color: '#111827', margin: '0 0 8px 0' }}>Acceso Restringido</h3>
+                    <p style={{ margin: 0 }}>No tienes los permisos necesarios para acceder a esta sección.</p>
                 </div>
+            ) : (
+                <>
+                    <form onSubmit={(e) => { e.preventDefault(); setIsModalOpen(true); }} className={styles.formCard}>
+                        {/* SECCIÓN 1: INFORMACIÓN DEL CLIENTE */}
+                        <div className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.stepNumber}>1</div>
+                                <h3 className={styles.stepTitle}>Información del Cliente</h3>
+                            </div>
+                            <div className={styles.formGridTwo}>
+                                <div className={styles.inputGroup} ref={dropdownRef}>
+                                    <label>Nombre del Cliente <span className={styles.required}>*</span></label>
+                                    <div className={styles.searchWrapper}>
+                                        <input
+                                            type="text"
+                                            placeholder="Escriba para buscar cliente..."
+                                            value={searchTerm}
+                                            onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true); }}
+                                            onFocus={() => setShowDropdown(true)}
+                                            required
+                                        />
+                                        <LuSearch className={styles.searchIcon} />
+                                        {showDropdown && filteredCustomers.length > 0 && (
+                                            <ul className={styles.dropdownList}>
+                                                {filteredCustomers.map(c => (
+                                                    <li key={c.customer_id} onClick={() => handleSelectCustomer(c)}>
+                                                        {c.customer_first_name} {c.customer_last_name} <span>({c.customer_company})</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Empresa</label>
+                                    <input type="text" value={formData.customer_company} readOnly className={styles.readOnlyInput} placeholder="..." />
+                                </div>
+                            </div>
+                            <div className={styles.formGridTwo}>
+                                <div className={styles.inputGroup}>
+                                    <label>Email de Contacto</label>
+                                    <input type="text" value={formData.customer_email} readOnly className={styles.readOnlyInput} placeholder="..." />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Teléfono</label>
+                                    <div className={styles.phoneDisplay}>
+                                        <div className={styles.flagWrapper}>
+                                            <span className={`fi fi-${currentFlagIso}`}></span>
+                                        </div>
+                                        <input type="text" value={formData.customer_country_code ? `${formData.customer_country_code} ${formData.customer_phone}` : ''} readOnly className={styles.readOnlyInput} placeholder="..." />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={styles.formGridTwo}>
+                                <div className={styles.inputGroup}>
+                                    <label>Tipo de Registro</label>
+                                    <input type="text" value={formData.customer_registration_type?.toUpperCase() || ''} readOnly className={styles.readOnlyInput} />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>No. de Registro</label>
+                                    <input type="text" value={formData.customer_registration_value} readOnly className={styles.readOnlyInput} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SECCIÓN 2: DETALLES DEL EQUIPO */}
+                        <div className={styles.section}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.stepNumber}>2</div>
+                                <h3 className={styles.stepTitle}>Detalles del Equipo</h3>
+                            </div>
+                            <div className={styles.formGridTwo}>
+                                <div className={styles.formGroup}>
+                                    <label>Categoría *</label>
+                                    <select name="category_id" value={formData.category_id} onChange={handleCategorySelect} required>
+                                        <option value="">Selecciona una categoría</option>
+                                        {categories.map(cat => <option key={cat.category_id} value={cat.category_id}>{cat.category_name}</option>)}
+                                    </select>
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Producto *</label>
+                                    <select name="product_id" value={formData.product_id} onChange={handleProductSelect} required disabled={!formData.category_id}>
+                                        <option value="">Seleccione un Producto</option>
+                                        {products.map(prod => <option key={prod.product_id} value={prod.product_id}>{prod.product_name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className={styles.formGridTwo}>
+                                <div className={styles.formGroup}>
+                                    <label>Modelo {models.length > 0 && '*'}</label>
+                                    <select
+                                        name="product_model_id"
+                                        value={formData.product_model_id}
+                                        onChange={handleChange}
+                                        required={models.length > 0}
+                                        disabled={!formData.product_id || models.length === 0}
+                                    >
+                                        <option value="">{models.length > 0 ? "Seleccione un Modelo" : "Sin modelos disponibles"}</option>
+                                        {models.map(model => <option key={model.product_model_id} value={model.product_model_id}>{model.product_model_name}</option>)}
+                                    </select>
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>No. de Serie / Service Tag *</label>
+                                    <div className={styles.serialInputWrapper}>
+                                        <input
+                                            type="text"
+                                            name="ticket_serial_number"
+                                            value={formData.ticket_serial_number}
+                                            onChange={handleChange}
+                                            onBlur={(e) => handleVerifyWarranty(e.target.value)}
+                                            required
+                                            placeholder="Ingrese serie para validar"
+                                        />
+                                        {warrantyStatus.loading && <LuLoaderCircle className={styles.spinIcon} />}
+                                    </div>
+
+                                    {/* FEEDBACK DE GARANTÍA */}
+                                    {warrantyStatus.data && (
+                                        <div className={`${styles.warrantyInfo} ${warrantyStatus.data.is_expired ? styles.expired : styles.valid}`}>
+                                            {warrantyStatus.data.is_expired ? <LuShieldAlert /> : <LuShieldCheck />}
+                                            <span>{warrantyStatus.data.message} {warrantyStatus.data.is_expired && `(Venció: ${warrantyStatus.data.expiry_date})`}</span>
+                                        </div>
+                                    )}
+                                    {warrantyStatus.error && (
+                                        <div className={`${styles.warrantyInfo} ${styles.notFound}`}>
+                                            <LuShieldX />
+                                            <span>{warrantyStatus.error} (Ticket pasará a revisión manual)</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SECCIÓN 3: PROBLEMÁTICA */}
+                        <div className={styles.section}>
+                            <div className={styles.sectionHeader}><div className={styles.stepNumber}>3</div><h3 className={styles.stepTitle}>Problemática</h3></div>
+                            <div className={styles.formGroup}>
+                                <label>Asunto del Ticket *</label>
+                                <input type="text" name="ticket_subject" value={formData.ticket_subject} onChange={handleChange} required placeholder="Mínimo 10 caracteres" />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label>Descripción detallada del problema *</label>
+                                <textarea name="ticket_description" value={formData.ticket_description} onChange={handleChange} required rows="4" placeholder="Mínimo 20 caracteres..."></textarea>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label>Adjuntar Evidencias (Fotos/Videos) <span className={styles.optional}>(Opcional)</span></label>
+                                <div className={styles.uploadArea}>
+                                    <input type="file" id="evidences" multiple onChange={handleFileChange} accept=".jpg,.png,.pdf,.mp4" style={{ display: 'none' }} />
+                                    <label htmlFor="evidences" className={styles.uploadLabel}>
+                                        <LuUpload className={styles.uploadIcon} />
+                                        <span>{formData.evidences.length > 0 ? `${formData.evidences.length} archivos seleccionados` : "Cargar archivos (Máx 15MB)"}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.formActions}>
+                            <button type="button" className={styles.btnCancel} onClick={resetForm}>Limpiar Formulario</button>
+                            <button type="submit" className={styles.btnSubmit}>Registrar Ticket</button>
+                        </div>
+                    </form>
+
+                    {/* MODAL DE CONFIRMACIÓN */}
+                    {isModalOpen && (
+                        <div className={styles.modalOverlay}>
+                            <div className={styles.confirmationCard}>
+                                <div className={styles.iconWrapper}><FaQuestion className={styles.faIcon} /></div>
+                                <h2 className={styles.modalTitle}>¿Deseas registrar este ticket?</h2>
+                                <p className={styles.modalText}>Se validará la garantía y se notificará al área técnica.</p>
+                                <div className={styles.modalButtons}>
+                                    <button onClick={() => setIsModalOpen(false)} className={styles.btnCancelModal} disabled={isLoading}>Regresar</button>
+                                    <button onClick={handleFinalSubmit} className={styles.btnAcceptModal} disabled={isLoading}>
+                                        {isLoading ? <LuLoaderCircle className={styles.spin} /> : "Confirmar Registro"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
 
-            {showForm && (
-                <FAQForm
-                    faq={editingFaq}
-                    onSubmit={editingFaq ? (data) => handleUpdateFaq(editingFaq.faq_id, data) : handleCreateFaq}
-                    onClose={() => { setShowForm(false); setEditingFaq(null); }}
-                />
-            )}
-
-            {showFilter && (
-                <FilterModal
-                    faqs={faqs} 
-                    onApplyFilter={setAppliedFilters}
-                    onClose={() => setShowFilter(false)}
-                    filterOptions={filterOptions}
-                />
-            )}
-
+            {/* TOASTS DINÁMICOS (Estilo QA) */}
             {toastConfig.show && (
                 <div className={`${styles.successToast} ${toastConfig.type === 'error' ? styles.errorToast : ''}`}>
                     <div className={styles.toastIcon}>
@@ -207,4 +402,4 @@ const QA = () => {
     );
 };
 
-export default QA;
+export default CreateTicket;

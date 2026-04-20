@@ -39,13 +39,51 @@ exports.getAllWarranties = async (req, res) => {
 };
 
 // ============================================
+// BUSCAR Y VALIDAR GARANTÍA POR SERIAL
+// ============================================
+exports.checkWarrantyBySerial = async (req, res) => {
+    try {
+        const { serial } = req.params;
+
+        if (!serial) {
+            return res.status(400).json({ error: 'El número de serie es requerido.' });
+        }
+
+        const warranty = await Warranty.findOne({
+            where: {
+                warranty_serial_number: serial.trim(),
+                warranty_status: 1 
+            }
+        });
+
+        if (!warranty) {
+            return res.status(404).json({
+                exists: false,
+                message: 'El serial no existe en el sistema de garantías.'
+            });
+        }
+
+        res.json({
+            exists: true,
+            is_expired: warranty.is_expired, 
+            expiry_date: warranty.warranty_expiry_date, 
+            message: warranty.is_expired
+                ? 'El serial existe pero la garantía ha expirado.'
+                : 'Garantía vigente y validada.'
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// ============================================
 // CREAR UNA NUEVA GARANTÍA 
 // ============================================
 exports.createWarranty = async (req, res) => {
     try {
         let { warranty_serial_number, warranty_invoice_number, warranty_purchase_date } = req.body;
 
-        // --- VALIDACIONES DE SEGURIDAD ---
         if (!warranty_serial_number || warranty_serial_number.trim().length < 16) {
             return res.status(400).json({ error: 'El número de serie debe tener al menos 16 caracteres' });
         }
@@ -106,7 +144,6 @@ exports.updateWarranty = async (req, res) => {
         const warranty = await Warranty.findByPk(id);
         if (!warranty) return res.status(404).json({ error: 'Garantía no encontrada' });
 
-        // Validaciones si se intentan actualizar estos campos
         if (warranty_serial_number && warranty_serial_number.trim().length < 16) {
             return res.status(400).json({ error: 'El serial debe tener al menos 16 caracteres' });
         }
