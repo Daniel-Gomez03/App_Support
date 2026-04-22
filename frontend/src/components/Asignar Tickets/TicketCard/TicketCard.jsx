@@ -1,31 +1,31 @@
 import React from 'react';
 import styles from './TicketCard.module.less';
-import { FiEye, FiUserPlus, FiClock, FiFileText } from "react-icons/fi";
+import { FiEye, FiUserPlus, FiClock } from "react-icons/fi";
 import { LuTag, LuBox } from "react-icons/lu";
 
-const TicketCard = ({ ticket, onViewDetail, onAssign, activeTab }) => {
+const TicketCard = ({ ticket, onViewDetail, onAssign, showAssignButton }) => {
 
-    // Formatear ID: T-0014
     const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
 
-    // Formatear fecha simple
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: '2-digit',
+            day: 'numeric',
+            month: 'short',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            hour12: true
         });
     };
+
+    const customerName = `${ticket.customer?.customer_first_name || ''} ${ticket.customer?.customer_last_name || ''}`.trim()
+        || ticket.customer?.customer_company
+        || 'Cliente Desconocido';
 
     return (
         <div className={styles.card}>
             <div className={styles.cardHeader}>
-                <div className={styles.idBadge}>
-                    <span>{formatID(ticket.ticket_id)}</span>
-                </div>
+                <span className={styles.ticketId}>{formatID(ticket.ticket_id)}</span>
                 <div className={styles.dateInfo}>
                     <FiClock />
                     <span>{formatDate(ticket.created_at)}</span>
@@ -33,49 +33,39 @@ const TicketCard = ({ ticket, onViewDetail, onAssign, activeTab }) => {
             </div>
 
             <div className={styles.cardBody}>
-                {/* 1. Nombre de la empresa / cliente como título principal */}
-                <h3 className={styles.clientName}>{ticket.customer?.customer_company}</h3>
+                <h3 className={styles.clientName}>{customerName}</h3>
 
-                {/* 2. Asunto del ticket como subtítulo destacado */}
-                <div className={styles.subjectBox}>
-                    <FiFileText className={styles.subjectIcon} />
-                    <p className={styles.subjectText}>{ticket.ticket_subject}</p>
-                </div>
-
-                {/* 3. Rejilla de información (sin el cliente) */}
-                <div className={styles.infoGrid}>
-                    <div className={styles.infoItem}>
-                        <LuTag className={styles.icon} />
-                        <span className={styles.label}>Categoría:</span>
-                        <span className={styles.value}>{ticket.category?.category_name}</span>
-                    </div>
-                    <div className={styles.infoItem}>
-                        <LuBox className={styles.icon} />
-                        <span className={styles.label}>Producto:</span>
-                        <span className={styles.value}>
-                            {ticket.product?.product_name}
-                            {ticket.productModel ? ` (${ticket.productModel.product_model_name})` : ''}
+                <div className={styles.tagsRow}>
+                    <span className={`${styles.tagBadge} ${styles.cat}`}>
+                        <LuTag /> {ticket.category?.category_name}
+                    </span>
+                    <span className={`${styles.tagBadge} ${styles.prod}`}>
+                        <LuBox /> {ticket.product?.product_name}
+                    </span>
+                    {ticket.productModel && (
+                        <span className={`${styles.tagBadge} ${styles.mod}`}>
+                            {ticket.productModel.product_model_name}
                         </span>
-                    </div>
+                    )}
                 </div>
+
+                <p className={styles.subjectText}>{ticket.ticket_subject}</p>
             </div>
 
             <div className={styles.cardFooter}>
-                {activeTab === 1 ? (
-                    // Botones para pestaña ENTRANTES
-                    <button
-                        className={styles.detailBtn}
-                        onClick={() => onViewDetail(ticket)}
-                    >
-                        <FiEye /> Ver Detalles
-                    </button>
-                ) : (
-                    // Botón para pestaña BACKLOG
+                {showAssignButton ? (
                     <button
                         className={styles.assignBtn}
                         onClick={() => onAssign(ticket)}
                     >
                         <FiUserPlus /> Asignar Ticket
+                    </button>
+                ) : (
+                    <button
+                        className={styles.detailBtn}
+                        onClick={() => onViewDetail(ticket)}
+                    >
+                        <FiEye /> Ver Detalles
                     </button>
                 )}
             </div>

@@ -1,8 +1,5 @@
 @import "../../../less/main.less";
 
-/* =========================================
-   OVERLAY Y CONTENEDOR PRINCIPAL
-   ========================================= */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -30,7 +27,7 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: hidden;
-    position: relative; // Importante para el visor
+    position: relative;
 
     @media(max-width: #breaks[tablet]) {
         max-height: 98vh;
@@ -38,9 +35,6 @@
     }
 }
 
-/* =========================================
-   HEADER SUPERIOR
-   ========================================= */
 .topHeader {
     padding: 24px 32px;
     background: white;
@@ -95,9 +89,6 @@
     }
 }
 
-/* =========================================
-   LAYOUT DE DOS COLUMNAS
-   ========================================= */
 .mainLayout {
     display: flex;
     flex: 1;
@@ -112,7 +103,6 @@
     }
 }
 
-/* --- COLUMNA IZQUIERDA (RESUMEN) --- */
 .summaryColumn {
     flex: 0 0 380px;
     display: flex;
@@ -266,7 +256,6 @@
                 }
             }
 
-            /* GALERÍA MINIATURA */
             .evidenceSection {
                 margin-top: 20px;
 
@@ -315,7 +304,6 @@
     }
 }
 
-/* --- COLUMNA DERECHA (FORMULARIO) --- */
 .formColumn {
     flex: 1;
     background: white;
@@ -390,9 +378,6 @@
                 resize: none;
             }
 
-            /* =========================================
-               CUSTOM DROPDOWN MULTI-SELECT (CHIPS)
-               ========================================= */
             .customSelectBox {
                 width: 100%;
                 min-height: 44px;
@@ -527,9 +512,6 @@
             }
         }
 
-        /* =========================================
-           ZONA DE ACCIONES Y CONFIRMACIÓN
-           ========================================= */
         .formActions {
             margin-top: auto;
             display: flex;
@@ -586,7 +568,6 @@
             }
         }
 
-        /* ESTILOS DE BOTONES COMPARTIDOS */
         button {
             padding: 12px 24px;
             border-radius: 12px;
@@ -638,9 +619,6 @@
     }
 }
 
-/* =========================================
-   VISOR DE IMAGEN GRANDE (LIGHTBOX)
-   ========================================= */
 .imageOverlay {
     position: fixed;
     top: 0;
@@ -688,9 +666,6 @@
     }
 }
 
-/* =========================================
-   ANIMACIONES
-   ========================================= */
 @keyframes fadeIn {
     from {
         opacity: 0;

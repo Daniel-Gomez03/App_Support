@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from "react";
 import styles from "./AssignedTicket.module.less";
 import { FiPlus } from "react-icons/fi";
-import { LuCheck, LuX, LuCircleAlert } from "react-icons/lu"; // Íconos para el Toast
+import { LuCheck, LuX, LuCircleAlert } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
-
-// Componentes y Servicios
 import { getAllTickets } from "../services/Ticketservice";
 import { useAuth } from "../context/AuthContext";
-import TicketsTabs from "../components/Asignar Tickets/TicketsTabs/TicketsTabs";
 import TicketCard from "../components/Asignar Tickets/TicketCard/TicketCard";
 import AssignTicketModal from "../components/Asignar Tickets/AssignTicketModal/AssignTicketModal";
 import TicketDetailModal from "../components/Asignar Tickets/TicketDetailModal/TicketDetailModal";
@@ -22,14 +19,11 @@ const AssignedTicket = () => {
 
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState(1);
 
-    // Estados para Modales
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
-    // NUEVO: Estado para el Toast (Mensaje de éxito/error)
     const [toastConfig, setToastConfig] = useState({ show: false, title: "", message: "", type: "success" });
 
     useEffect(() => {
@@ -46,7 +40,6 @@ const AssignedTicket = () => {
         try {
             const data = await getAllTickets();
             if (Array.isArray(data)) {
-                // Ordenamos por fecha (más antiguos primero o según prefieras)
                 const sortedData = data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                 setTickets(sortedData);
             } else {
@@ -60,22 +53,18 @@ const AssignedTicket = () => {
         }
     };
 
-    // Función para mostrar el Toast
     const showToast = (title, message, type = "success") => {
         setToastConfig({ show: true, title, message, type });
         setTimeout(() => setToastConfig(prev => ({ ...prev, show: false })), 5000);
     };
 
     const handleActionSuccess = (mensaje) => {
-        // En lugar de alert, usamos nuestro nuevo showToast
-        showToast("¡El Ticket se ha movido exitosamente!", mensaje, "success");
-        loadTickets(); 
+        showToast("¡Acción Exitosa!", mensaje, "success");
+        loadTickets();
     };
 
-    // Filtrado de tickets
     const nuevosTickets = tickets.filter(t => t.ticket_status_id === 1 || t.ticket_status_id === 2);
     const backlogTickets = tickets.filter(t => t.ticket_status_id === 3);
-    const ticketsToShow = activeTab === 1 ? nuevosTickets : backlogTickets;
 
     const handleViewDetail = (ticket) => {
         if (!canEdit) {
@@ -117,34 +106,62 @@ const AssignedTicket = () => {
                 )}
             </div>
 
-            <TicketsTabs
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                nuevosCount={nuevosTickets.length}
-                backlogCount={backlogTickets.length}
-            />
+            <div className={styles.boardLayout}>
 
-            <div className={styles.ticketList}>
-                {loading ? (
-                    <div className={styles.loading}>Cargando tickets...</div>
-                ) : ticketsToShow.length === 0 ? (
-                    <div className={styles.emptyState}>No hay tickets en esta sección.</div>
-                ) : (
-                    <div className={styles.cardsGrid}>
-                        {ticketsToShow.map(ticket => (
-                            <TicketCard
-                                key={ticket.ticket_id}
-                                ticket={ticket}
-                                activeTab={activeTab}
-                                onViewDetail={handleViewDetail}
-                                onAssign={handleOpenAssignModal}
-                            />
-                        ))}
+                <div className={styles.columnContainer}>
+                    <div className={styles.columnHeader}>
+                        <span className={styles.dotNew}></span>
+                        <h3>Tickets Nuevos (Entrantes)</h3>
+                        <span className={styles.countBadge}>{nuevosTickets.length}</span>
                     </div>
-                )}
+
+                    <div className={styles.columnBody}>
+                        {loading ? (
+                            <div className={styles.loadingCol}>Cargando...</div>
+                        ) : nuevosTickets.length === 0 ? (
+                            <div className={styles.emptyState}>No hay tickets nuevos.</div>
+                        ) : (
+                            nuevosTickets.map(ticket => (
+                                <TicketCard
+                                    key={ticket.ticket_id}
+                                    ticket={ticket}
+                                    showAssignButton={false} // En esta columna no se asigna todavía
+                                    onViewDetail={handleViewDetail}
+                                    onAssign={handleOpenAssignModal}
+                                />
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                <div className={styles.columnContainer}>
+                    <div className={styles.columnHeader}>
+                        <span className={styles.dotBacklog}></span>
+                        <h3>Backlog de Asignación</h3>
+                        <span className={styles.countBadge}>{backlogTickets.length}</span>
+                    </div>
+
+                    <div className={styles.columnBody}>
+                        {loading ? (
+                            <div className={styles.loadingCol}>Cargando...</div>
+                        ) : backlogTickets.length === 0 ? (
+                            <div className={styles.emptyState}>No hay tickets pendientes de asignación.</div>
+                        ) : (
+                            backlogTickets.map(ticket => (
+                                <TicketCard
+                                    key={ticket.ticket_id}
+                                    ticket={ticket}
+                                    showAssignButton={true}
+                                    onViewDetail={handleViewDetail}
+                                    onAssign={handleOpenAssignModal}
+                                />
+                            ))
+                        )}
+                    </div>
+                </div>
+
             </div>
 
-            {/* Modales */}
             {showAssignModal && selectedTicket && (
                 <AssignTicketModal
                     ticket={selectedTicket}
@@ -161,7 +178,6 @@ const AssignedTicket = () => {
                 />
             )}
 
-            {/* TOAST NOTIFICATION (Igual al de CreateTicket) */}
             {toastConfig.show && (
                 <div className={`${styles.successToast} ${toastConfig.type === 'error' ? styles.errorToast : ''}`}>
                     <div className={styles.toastIcon}>

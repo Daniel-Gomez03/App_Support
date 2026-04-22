@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import styles from './TicketDetailModal.module.less';
-import { FiX, FiCheckCircle, FiAlertCircle, FiXCircle } from "react-icons/fi";
+import { FiX, FiCheckCircle, FiAlertCircle, FiXCircle, FiChevronLeft, FiChevronRight } from "react-icons/fi"; // <-- Añadí ChevronLeft y Right
 import { LuTag, LuBox, LuUser, LuMail, LuFileText } from "react-icons/lu";
 import { FaQuestion } from "react-icons/fa";
 import "flag-icons/css/flag-icons.min.css";
-
-// Servicio para actualizar el estado
 import { updateTicketStatus } from '../../../services/Ticketservice';
 
 const countryRules = {
@@ -17,22 +15,18 @@ const countryRules = {
 
 const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
-
-    // Estado para manejar confirmaciones: null, 'advance' (Backlog), o 'close' (Cancelado)
     const [confirmAction, setConfirmAction] = useState(null);
+    const [selectedImg, setSelectedImg] = useState(null);
 
-    // Helpers de datos
     const customerName = `${ticket.customer?.customer_first_name || ''} ${ticket.customer?.customer_last_name || ''}`.trim();
     const documentType = ticket.customer?.customer_registration_type || 'Documento';
     const documentValue = ticket.customer?.customer_registration_value || 'N/A';
     const currentFlagIso = countryRules[ticket.customer?.customer_country_code]?.iso || 'hn';
 
-    // 1. Avanzar al Backlog (Estado 3)
     const handleAdvance = async () => {
         setLoading(true);
         try {
             await updateTicketStatus(ticket.ticket_id, 3);
-            // El mensaje que pasamos aquí es el que recibirá el Toast en AssignedTicket
             onSuccess("¡Excelente! El ticket ha sido movido al Backlog para su asignación.");
             onClose();
         } catch (error) {
@@ -42,7 +36,6 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
         }
     };
 
-    // 2. Forzar Cierre / Cancelar (Estado 11)
     const handleForceClose = async () => {
         setLoading(true);
         try {
@@ -60,7 +53,6 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
         <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
 
-                {/* CABECERA */}
                 <div className={styles.modalHeader}>
                     <div className={styles.headerLeft}>
                         <h2>RESUMEN DEL CASO <LuBox className={styles.headerIcon} /></h2>
@@ -70,10 +62,8 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
                     </button>
                 </div>
 
-                {/* CUERPO DEL MODAL */}
                 <div className={styles.modalBody}>
 
-                    {/* SECCIÓN 1: CLIENTE */}
                     <div className={styles.section}>
                         <h4 className={styles.sectionTitle}>INFORMACIÓN DEL CLIENTE</h4>
                         <div className={styles.infoGrid}>
@@ -103,7 +93,6 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* SECCIÓN 2: EQUIPO Y GARANTÍA */}
                     <div className={styles.section}>
                         <h4 className={styles.sectionTitle}>DETALLES DEL EQUIPO</h4>
                         <div className={styles.infoGrid}>
@@ -129,7 +118,6 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
                                 <span className={styles.label}>No. de Serie / Garantía</span>
                                 <div className={styles.serialGroup}>
                                     <span className={styles.value}>{ticket.ticket_serial_number || 'Sin Serie'}</span>
-
                                     {!ticket.warranty ? (
                                         <span className={`${styles.badge} ${styles.warrantyWarnBadge}`}>
                                             <FiXCircle /> No Encontrada
@@ -148,7 +136,6 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* SECCIÓN 3: PROBLEMÁTICA */}
                     <div className={styles.section}>
                         <h4 className={styles.sectionTitle}>PROBLEMÁTICA</h4>
                         <div className={styles.problemBox}>
@@ -157,29 +144,29 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* SECCIÓN 4: EVIDENCIAS */}
-                    {ticket.evidences && ticket.evidences.length > 0 && (
+                    {ticket.evidences?.length > 0 && (
                         <div className={styles.section}>
                             <h4 className={styles.sectionTitle}>EVIDENCIA ADJUNTA</h4>
-                            <div className={styles.evidenceGallery}>
-                                {ticket.evidences.map((ev) => (
-                                    <div key={ev.ticket_evidence_id} className={styles.evidenceWrapper}>
+                            <div className={styles.miniGallery}>
+                                <FiChevronLeft className={styles.navIcon} />
+                                <div className={styles.imgWrapper}>
+                                    {ticket.evidences.slice(0, 3).map(ev => (
                                         <img
+                                            key={ev.ticket_evidence_id}
                                             src={ev.ticket_evidence_path}
-                                            alt="Evidencia"
+                                            alt="Evidence"
                                             className={styles.evidenceImage}
-                                            onClick={() => window.open(ev.ticket_evidence_path, '_blank')}
+                                            onClick={() => setSelectedImg(ev.ticket_evidence_path)} // <-- Abre el visor en grande
                                         />
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
+                                <FiChevronRight className={styles.navIcon} />
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* PIE DEL MODAL */}
                 <div className={styles.modalFooter}>
-
                     {confirmAction === 'advance' && (
                         <div className={styles.confirmZone}>
                             <FaQuestion className={styles.questionIcon} />
@@ -217,6 +204,13 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
                         </div>
                     )}
                 </div>
+
+                {selectedImg && (
+                    <div className={styles.imageOverlay} onClick={() => setSelectedImg(null)}>
+                        <button className={styles.closeLightbox} onClick={() => setSelectedImg(null)}><FiX /></button>
+                        <img src={selectedImg} alt="Enlarged" className={styles.largeImage} />
+                    </div>
+                )}
             </div>
         </div>
     );
