@@ -24,6 +24,7 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
     });
 
     const today = new Date().toISOString().split('T')[0];
+    const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -115,7 +116,8 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
 
                 <div className={styles.topHeader}>
                     <div className={styles.ticketBadge}>
-                        <h2>Asignar Ticket <span>T-{ticket.ticket_id}</span></h2>
+                        {/* --- CAMBIO AQUÍ PARA USAR formatID --- */}
+                        <h2>Asignar Ticket <span>{formatID(ticket.ticket_id)}</span></h2>
                     </div>
                     <p>Seleccione el personal y la prioridad del caso.</p>
                     <button className={styles.closeBtn} onClick={onClose} disabled={loading}><FiX /></button>
@@ -198,7 +200,7 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
                     <div className={styles.formColumn}>
                         <form onSubmit={handlePreSubmit}>
                             <div className={styles.formHeader}>
-                                <h3>Asignar Personal</h3>
+                                <h3>Asignar Devsupport</h3>
                                 <p>Seleccione el personal necesario para este ticket</p>
                             </div>
 
@@ -211,7 +213,7 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
                                 >
                                     <div className={styles.tagsContainer}>
                                         {formData.assignedUsers.length === 0 && (
-                                            <span className={styles.placeholder}>Selecciona el personal...</span>
+                                            <span className={styles.placeholder}>Selecciona a los Devsupport...</span>
                                         )}
                                         {formData.assignedUsers.map(id => {
                                             const tech = technicians.find(t => t.user_id === id);
@@ -249,7 +251,7 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
                                 <div className={styles.inputGroup}>
                                     <label>Prioridad <span className={styles.required}>*</span></label>
                                     <select name="ticket_priority" value={formData.ticket_priority} onChange={handleChange} required disabled={confirmAction}>
-                                        <option value="" disabled hidden>Seleccione...</option>
+                                        <option value="" disabled hidden>Seleccione la prioridad</option>
                                         <option value="Baja">Baja</option>
                                         <option value="Media">Media</option>
                                         <option value="Alta">Alta</option>
@@ -273,7 +275,7 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
                                 <label>Observaciones</label>
                                 <textarea
                                     name="assignment_remarks"
-                                    placeholder="Agrega instrucciones..."
+                                    placeholder="Agrega instrucciones para el Devsupport"
                                     value={formData.assignment_remarks}
                                     onChange={handleChange}
                                     disabled={confirmAction}
