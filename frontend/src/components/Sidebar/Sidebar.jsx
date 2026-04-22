@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import logoImg from '../../assets/imgs/v199_29.png';
 import { CiUser } from "react-icons/ci";
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -17,11 +17,13 @@ import qaIcon from '../../assets/icons/QA-icon.svg';
 import arrorIcon from '../../assets/icons/Arrow-icon.svg';
 import commentsIcon from '../../assets/icons/comments-icon.svg';
 import { useAuth } from '../../context/AuthContext';
+import { useTickets } from '../../context/TicketContext';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
+    const { unassignedCount } = useTickets();
 
     const [isTicketsOpen, setIsTicketsOpen] = useState(false);
     const isActive = (path) => location.pathname === path;
@@ -42,7 +44,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         }
     }, [location.pathname]);
 
-    const assignedCount = 0;
 
     return (
         <>
@@ -103,7 +104,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                                     <img src={assignedTicketIcon} alt="Assigned" className={styles.icon} />
                                                     <span className={styles.subText}>Asignar Tickets</span>
                                                 </div>
-                                                <span className={styles.badge}>{assignedCount}</span>
+                                                {unassignedCount > 0 && (
+                                                    <span className={styles.badge}>{unassignedCount}</span>
+                                                )}
                                             </div>
                                         </li>
                                     )}

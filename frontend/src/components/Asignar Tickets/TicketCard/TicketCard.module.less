@@ -1,0 +1,199 @@
+@import "../../../less/main.less";
+
+.card {
+    background-color: #ffffff;
+    border: 1px solid fade(darken(@secondary-color, 20%), 20%);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+
+    /* Responsividad en Tablet/Móvil */
+    @media(max-width: #breaks[tablet]) {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    /* Efecto Hover moderno */
+    &:hover {
+        box-shadow: 0 10px 20px fade(darken(@secondary-color, 40%), 8%);
+        transform: translateY(-4px);
+        border-color: fade(@quaternary-color, 30%);
+    }
+
+    .cardHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+
+        @media(max-width: #breaks[tablet]) {
+            margin-bottom: 16px;
+        }
+
+        .idBadge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            /* Usamos tu color cuaternario con transparencia para el fondo del ID */
+            background-color: fade(@quaternary-color, 10%);
+            color: @quaternary-color;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 8px;
+
+            .clockIcon {
+                width: 14px;
+                height: 14px;
+            }
+        }
+
+        .dateInfo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: darken(@secondary-color, 30%);
+            font-size: 13px;
+            font-weight: 500;
+
+            svg {
+                font-size: 14px;
+            }
+        }
+    }
+
+    .cardBody {
+        flex-grow: 1;
+        margin-bottom: 24px;
+
+        /* 1. Nuevo estilo para el Cliente (Título principal) */
+        .clientName {
+            font-size: 20px;
+            font-weight: 800;
+            color: @quaternary-color;
+            margin: 0 0 8px 0;
+            line-height: 1.3;
+
+            @media(max-width: #breaks[tablet]) {
+                font-size: 18px;
+            }
+        }
+
+        /* 2. Nuevo estilo para el Asunto (Caja sutil) */
+        .subjectBox {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 16px;
+            background-color: fade(@secondary-color, 10%);
+            padding: 10px 12px;
+            border-radius: 10px;
+
+            .subjectIcon {
+                color: darken(@secondary-color, 30%);
+                font-size: 16px;
+                margin-top: 2px;
+                flex-shrink: 0;
+            }
+
+            .subjectText {
+                margin: 0;
+                font-size: 14px;
+                color: #4b5563;
+                font-weight: 500;
+                line-height: 1.4;
+            }
+        }
+
+        /* 3. Rejilla de información */
+        .infoGrid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            .infoItem {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 14px;
+
+                @media(max-width: #breaks[tablet]) {
+                    font-size: 13px;
+                }
+
+                .icon {
+                    color: darken(@secondary-color, 20%);
+                    font-size: 16px;
+                    flex-shrink: 0;
+                }
+
+                .label {
+                    color: darken(@secondary-color, 40%);
+                    font-weight: 500;
+                }
+
+                .value {
+                    color: #111827; // Un gris oscuro neutro para máxima legibilidad
+                    font-weight: 600;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+            }
+        }
+    }
+
+    .cardFooter {
+
+        .detailBtn,
+        .assignBtn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+
+            svg {
+                font-size: 16px;
+            }
+        }
+
+        /* Botón para Entrantes (Ver Detalles) - Más sutil y secundario */
+        .detailBtn {
+            background-color: fade(@secondary-color, 15%);
+            border: 1px solid fade(@secondary-color, 30%);
+            color: darken(@secondary-color, 50%);
+
+            &:hover {
+                background-color: fade(@secondary-color, 25%);
+                color: @quaternary-color;
+                border-color: fade(@quaternary-color, 30%);
+            }
+        }
+
+        /* Botón para Backlog (Asignar) - Destacado y Primario */
+        .assignBtn {
+            background-color: @quaternary-color;
+            border: 1px solid @quaternary-color;
+            color: white;
+            box-shadow: 0 4px 10px fade(@quaternary-color, 20%);
+
+            &:hover {
+                background-color: darken(@quaternary-color, 5%);
+                transform: translateY(-1px);
+                box-shadow: 0 6px 14px fade(@quaternary-color, 30%);
+            }
+        }
+    }
+}

@@ -28,13 +28,19 @@ const Ticket = sequelize.define('Ticket', {
         type: DataTypes.BIGINT(20).UNSIGNED,
         allowNull: false
     },
-    user_id: {
-        type: DataTypes.BIGINT(20).UNSIGNED,
-        allowNull: true
-    },
     ticket_priority: {
         type: DataTypes.STRING(45),
         allowNull: true
+    },
+    ticket_due_date: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null
+    },
+    assignment_remarks: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null
     },
     ticket_subject: {
         type: DataTypes.STRING(255),
@@ -93,9 +99,11 @@ Ticket.associate = (models) => {
         as: 'warranty'
     });
 
-    Ticket.belongsTo(models.User, {
-        foreignKey: 'user_id',
-        as: 'technician'
+    Ticket.belongsToMany(models.User, {
+        through: models.TicketAssignment,
+        foreignKey: 'ticket_id',
+        otherKey: 'user_id',
+        as: 'assignedUsers' 
     });
 
     Ticket.hasMany(models.TicketEvidence, {

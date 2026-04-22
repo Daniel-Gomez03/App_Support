@@ -40,6 +40,32 @@ const fetchFormDataConfig = (method, formData) => {
 };
 
 // ============================================
+// OBTENER CONTEO DE TICKETS NO ASIGNADOS
+// ============================================
+export const getUnassignedTicketCount = async () => {
+    try {
+        const response = await fetch(`${API_URL}/tickets/unassigned`, fetchConfig('GET'));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en getUnassignedTicketCount:", error);
+        return { count: 0 };
+    }
+};
+
+// ============================================
+// ASIGNAR TICKET A TÉCNICO(S)
+// ============================================
+export const assignTicket = async (id, assignmentData) => {
+    try {
+        const response = await fetch(`${API_URL}/tickets/${id}/assign`, fetchConfig('PUT', assignmentData));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en assignTicket:", error);
+        throw error;
+    }
+};
+
+// ============================================
 // OBTENER TODOS LOS TICKETS 
 // ============================================
 export const getAllTickets = async () => {
@@ -79,7 +105,7 @@ export const createTicketAdmin = async (formData) => {
 };
 
 // ============================================
-// ACTUALIZAR TICKET
+// ACTUALIZAR TICKET (GENERAL)
 // ============================================
 export const updateTicket = async (id, data) => {
     try {
@@ -92,7 +118,21 @@ export const updateTicket = async (id, data) => {
 };
 
 // ============================================
-// CAMBIAR ESTADO 
+// ACTUALIZAR SOLO ESTADO (Avanzar/Cancelar)
+// ============================================
+export const updateTicketStatus = async (id, statusId) => {
+    try {
+        // Usamos PATCH y la ruta /status que configuramos en el backend
+        const response = await fetch(`${API_URL}/tickets/${id}/status`, fetchConfig('PATCH', { ticket_status_id: statusId }));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en updateTicketStatus:", error);
+        throw error;
+    }
+};
+
+// ============================================
+// CAMBIAR ESTADO (Borrado Lógico Activo/Inactivo)
 // ============================================
 export const toggleTicketStatus = async (id) => {
     try {

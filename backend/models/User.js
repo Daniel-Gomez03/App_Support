@@ -62,10 +62,13 @@ const User = sequelize.define('User', {
 
 // Asociación
 User.associate = (models) => {
-    User.hasMany(models.Ticket, {
+    User.belongsToMany(models.Ticket, {
+        through: models.TicketAssignment,
         foreignKey: 'user_id',
+        otherKey: 'ticket_id',
         as: 'assignedTickets'
     });
+
     User.hasMany(models.Permission, {
         foreignKey: 'user_id',
         as: 'Permissions'

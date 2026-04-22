@@ -33,6 +33,7 @@ const Warranty = require('./models/Warranty');
 const User = require('./models/User');
 const Seccion = require('./models/Seccion');
 const Permission = require('./models/Permission');
+const TicketAssignment = require('./models/TicketAssignment');
 
 // Asociar modelos
 const models = {
@@ -47,7 +48,8 @@ const models = {
     Warranty,
     User,
     Seccion,
-    Permission
+    Permission,
+    TicketAssignment
 };
 Object.values(models).forEach(model => {
     if (model.associate) model.associate(models);

@@ -50,7 +50,7 @@ exports.createTicketAdmin = async (req, res) => {
             category_id,
             product_id,
             product_model_id: product_model_id || null,
-            ticket_status_id: finalStatus, 
+            ticket_status_id: finalStatus,
             ticket_subject,
             ticket_description,
             ticket_serial_number: ticket_serial_number || null,
@@ -80,7 +80,7 @@ exports.createTicketAdmin = async (req, res) => {
 
         res.status(201).json({
             message: finalStatus === 2
-                ? 'equiere revisión manual de garantía.'
+                ? 'Requiere revisión manual de garantía.'
                 : 'Ve a Asignar Ticket para poder gestionarlo y asignar colaboradores',
             ticket: newTicket
         });
@@ -93,12 +93,120 @@ exports.createTicketAdmin = async (req, res) => {
 };
 
 // ============================================
+// ACTUALIZAR ESTADO DEL TICKET (Avanzar/Cancelar)
+// ============================================
+exports.updateTicketStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { ticket_status_id } = req.body;
+
+        if (!ticket_status_id) {
+            return res.status(400).json({ error: 'El ID del estado es obligatorio.' });
+        }
+
+        const ticket = await Ticket.findByPk(id);
+        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
+
+        // Actualizamos solo el estado
+        await ticket.update({ ticket_status_id });
+
+        // Notificamos por WebSockets para que React mueva la tarjeta de pestaña
+        const io = req.app.get('io');
+        if (io) io.emit('ticket_updated', ticket);
+
+        res.json({
+            message: `Ticket movido al estado ${ticket_status_id} correctamente.`,
+            ticket
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// ============================================
+// OBTENER CONTEO DE TICKETS NO ASIGNADOS 
+// ============================================
+exports.getUnassignedTicketCount = async (req, res) => {
+    try {
+        const count = await Ticket.count({
+            where: {
+                ticket_status: 1,
+                ticket_status_id: {
+                    [Op.in]: [1, 2, 3]
+                }
+            }
+        });
+
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// ============================================
+// ASIGNAR TICKET A TÉCNICO(S)
+// ============================================
+exports.assignTicket = async (req, res) => {
+    const t = await sequelize.transaction();
+
+    try {
+        const { id } = req.params;
+        const {      
+            user_id,
+            assignedUsers,  
+            ticket_priority,
+            ticket_due_date,
+            assignment_remarks
+        } = req.body;
+
+        const ticket = await Ticket.findByPk(id);
+        if (!ticket) {
+            await t.rollback();
+            return res.status(404).json({ error: 'Ticket no encontrado.' });
+        }
+
+        await ticket.update({
+            ticket_priority,
+            ticket_due_date: ticket_due_date || null,
+            assignment_remarks: assignment_remarks || null,
+            ticket_status_id: 3
+        }, { transaction: t });
+
+        const allStaff = [parseInt(user_id)];
+        if (Array.isArray(assignedUsers)) {
+            assignedUsers.forEach(cId => {
+                if (!allStaff.includes(parseInt(cId))) allStaff.push(parseInt(cId));
+            });
+        }
+
+        await ticket.setAssignedUsers(allStaff, { transaction: t });
+
+        await t.commit();
+
+        const updatedTicket = await Ticket.findByPk(id, {
+            include: [
+                { model: User, as: 'assignedUsers'}
+            ]
+        });
+
+        const io = req.app.get('io');
+        if (io) io.emit('ticket_updated', updatedTicket);
+
+        res.json({ message: 'Equipo asignado correctamente', ticket: updatedTicket });
+
+    } catch (error) {
+        await t.rollback();
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// ============================================
 // OBTENER TODOS LOS TICKETS 
 // ============================================
 exports.getAllTickets = async (req, res) => {
     try {
         const tickets = await Ticket.findAll({
-            where: { ticket_status: 1 }, 
+            where: { ticket_status: 1 },
             include: [
                 { model: Customer, as: 'customer' },
                 { model: TicketStatus, as: 'status' },
@@ -106,7 +214,8 @@ exports.getAllTickets = async (req, res) => {
                 { model: Product, as: 'product' },
                 { model: ProductModel, as: 'productModel', required: false },
                 { model: TicketEvidence, as: 'evidences' },
-                { model: User, as: 'technician', attributes: ['user_id', 'user_name'] }
+                { model: Warranty, as: 'warranty' }, 
+                { model: User, as: 'assignedUsers' }
             ],
             order: [['created_at', 'DESC']]
         });
@@ -129,7 +238,8 @@ exports.getTicketById = async (req, res) => {
                 { model: Product, as: 'product' },
                 { model: ProductModel, as: 'productModel', required: false },
                 { model: TicketEvidence, as: 'evidences' },
-                { model: User, as: 'technician' }
+                { model: Warranty, as: 'warranty' }, // <-- AGREGAR ESTO
+                { model: User, as: 'assignedUsers' }
             ]
         });
 

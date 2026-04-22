@@ -3,6 +3,7 @@ import './less/main.less';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { TicketProvider } from './context/TicketContext';
 import Dashboard from './pages/Dashboard';
 import CreateTicket from './pages/CreateTicket';
 import AssignedTicket from './pages/AssignedTicket';
@@ -49,6 +50,7 @@ const ProtectedRoute = ({ children, moduleName }) => {
 function App() {
   return (
     <AuthProvider>
+      <TicketProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/*" element={
@@ -118,6 +120,7 @@ function App() {
           } />
         </Routes>
       </BrowserRouter>
+      </TicketProvider>
     </AuthProvider>
   );
 }

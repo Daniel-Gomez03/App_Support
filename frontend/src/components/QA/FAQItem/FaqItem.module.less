@@ -30,26 +30,26 @@
     }
 
     &.inactive {
-        background-color: #FFF5F5;
-        border-color: #FEB2B2;
+        background-color: #f6f6f6;
+        border-color: #f6f6f6;
 
         .faqHeader {
             .faqContent {
                 .faqTextContent {
                     .faqQuestion {
-                        color: #C53030;
+                        color: @quaternary-color;
                     }
                 }
 
                 .faqIcon {
-                    background-color: #FED7D7;
+                    background-color: fade(@secondary-color, 40%);
                 }
             }
         }
 
         &:hover {
-            border-color: #FC8181;
-            background-color: #FFF0F0;
+            border-color: #f6f6f6;
+            background-color: #f6f6f6;
         }
     }
 
@@ -183,7 +183,7 @@
                 .statusInactive {
                     background-color: #FFF5F5;
                     color: #C53030;
-                    border: 1px solid #FEB2B2;
+                    border: 1px solid #a61515;
                 }
 
                 .editBtn {
