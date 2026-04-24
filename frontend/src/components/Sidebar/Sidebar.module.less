@@ -272,34 +272,59 @@
             .avatarPlaceholder {
                 width: 40px;
                 height: 40px;
-                background-color: #E5E7EB;
                 border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
                 border: 2px solid rgba(255, 255, 255, 0.1);
+                flex-shrink: 0;
+                overflow: hidden;
+                position: relative;
 
-                .userIcon {
-                    font-size: 24px;
-                    color: #374151;
+                .avatarImg {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block;
+                    border-radius: 50%;
+                }
+
+                .avatarFallback {
+                    width: 100%;
+                    height: 100%;
+                    background-color: @secondary-color;
+                    color: darken(@secondary-color, 40%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 600;
+                    font-size: 14px;
+                    text-transform: uppercase;
+                    border-radius: 50%;
                 }
             }
 
             .userInfo {
                 display: flex;
                 flex-direction: column;
+                min-width: 0;
+                flex: 1;
+                overflow: hidden;
 
                 .userName {
                     margin: 0;
                     color: @background-color;
                     font-weight: 600;
                     font-size: 14px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
 
                 .userEmail {
                     display: block;
                     color: #aaa;
                     font-size: 11px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
             }
         }

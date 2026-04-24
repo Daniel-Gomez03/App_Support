@@ -1,12 +1,8 @@
-import { io } from 'socket.io-client';
+import { socket } from './Userservice';
+
+export { socket };
 
 const API_URL = 'http://localhost:8000/api';
-const SOCKET_BASE_URL = 'http://localhost:8000';
-
-export const socket = io(SOCKET_BASE_URL, {
-    autoConnect: false,
-    withCredentials: true
-});
 
 const handleResponse = async (response) => {
     if (!response.ok) {
@@ -49,6 +45,69 @@ export const getUnassignedTicketCount = async () => {
     } catch (error) {
         console.error("Error en getUnassignedTicketCount:", error);
         return { count: 0 };
+    }
+};
+
+// ============================================
+// OBTENER CONTEO DE TICKETS ACTIVO
+// ============================================
+export const getActiveTicketCount = async () => {
+    try {
+        const response = await fetch(`${API_URL}/tickets/active/count`, fetchConfig('GET'));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en getActiveTicketCount:", error);
+        return { count: 0 };
+    }
+};
+
+// ============================================
+// OBTENER LISTA DE TICKETS ACTIVOS
+// ============================================
+export const getActiveTicketsList = async () => {
+    try {
+        const response = await fetch(`${API_URL}/tickets/active/list`, fetchConfig('GET'));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en getActiveTicketsList:", error);
+        return [];
+    }
+};
+
+// ============================================
+// COMENTARIOS DE UN TICKET
+// ============================================
+export const getTicketComments = async (ticketId) => {
+    try {
+        const response = await fetch(`${API_URL}/tickets/${ticketId}/comments`, fetchConfig('GET'));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en getTicketComments:", error);
+        return [];
+    }
+};
+
+export const addTicketComment = async (ticketId, formData) => {
+    try {
+        const response = await fetch(`${API_URL}/tickets/${ticketId}/comments`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en addTicketComment:", error);
+        throw error;
+    }
+};
+
+export const deleteTicketComment = async (ticketId, commentId) => {
+    try {
+        const response = await fetch(`${API_URL}/tickets/${ticketId}/comments/${commentId}`, fetchConfig('DELETE'));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en deleteTicketComment:", error);
+        throw error;
     }
 };
 
@@ -122,7 +181,6 @@ export const updateTicket = async (id, data) => {
 // ============================================
 export const updateTicketStatus = async (id, statusId) => {
     try {
-        // Usamos PATCH y la ruta /status que configuramos en el backend
         const response = await fetch(`${API_URL}/tickets/${id}/status`, fetchConfig('PATCH', { ticket_status_id: statusId }));
         return await handleResponse(response);
     } catch (error) {

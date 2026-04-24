@@ -14,6 +14,16 @@ router.get('/tickets/unassigned',
     ticketController.getUnassignedTicketCount
 );
 
+router.get('/tickets/active/count',
+    authorize('Tickets Activos', 'permissions_read'),
+    ticketController.getActiveTicketCount
+);
+
+router.get('/tickets/active/list',
+    authorize('Tickets Activos', 'permissions_read'),
+    ticketController.getActiveTickets
+);
+
 router.get('/tickets/:id',
     authorize('Asignar Tickets', 'permissions_read'),
     ticketController.getTicketById
@@ -36,7 +46,7 @@ router.put('/tickets/:id/assign',
 );
 
 router.patch('/tickets/:id/status',
-    authorize('Asignar Tickets', 'permissions_edit'),
+    authorize('Tickets Activos', 'permissions_edit'),
     ticketController.updateTicketStatus
 );
 

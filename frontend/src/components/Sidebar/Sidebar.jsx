@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import logoImg from '../../assets/imgs/v199_29.png';
-import { CiUser } from "react-icons/ci";
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './Sidebar.module.less';
 import { MdClose } from "react-icons/md";
@@ -23,7 +22,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
-    const { unassignedCount } = useTickets();
+    const { unassignedCount, activeCount } = useTickets();
 
     const [isTicketsOpen, setIsTicketsOpen] = useState(false);
     const isActive = (path) => location.pathname === path;
@@ -119,7 +118,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                                     <img src={activeTicketIcon} alt="Active" className={styles.icon} />
                                                     <span className={styles.subText}>Tickets Activos</span>
                                                 </div>
-                                                <span className={styles.badge}>0</span>
+                                                <span className={styles.badge}>{activeCount}</span>
                                             </div>
                                         </li>
                                     )}
@@ -174,18 +173,25 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
                 <div className={styles.profileSection}>
                     <div className={styles.profileCard}>
-                        {user?.foto ? (
-                            <img
-                                src={user.foto}
-                                alt="Perfil"
-                                className={styles.avatarPlaceholder}
-                                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-                            />
-                        ) : (
-                            <div className={styles.avatarPlaceholder}>
-                                <CiUser className={styles.userIcon} />
+                        <div className={styles.avatarPlaceholder}>
+                            {user?.foto ? (
+                                <img
+                                    src={user.foto}
+                                    alt="Perfil"
+                                    className={styles.avatarImg}
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'flex';
+                                    }}
+                                />
+                            ) : null}
+                            <div
+                                className={styles.avatarFallback}
+                                style={{ display: !user?.foto ? 'flex' : 'none' }}
+                            >
+                                {user?.nombre_completo?.charAt(0)?.toUpperCase()}
                             </div>
-                        )}
+                        </div>
 
                         <div className={styles.userInfo}>
                             <p className={styles.userName}>{user?.nombre_completo || 'Usuario'}</p>

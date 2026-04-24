@@ -102,4 +102,11 @@ const Customer = sequelize.define('Customer', {
     updatedAt: 'updated_at'
 });
 
+Customer.associate = (models) => {
+    Customer.hasMany(models.TicketComment, {
+        foreignKey: 'customer_id',
+        as: 'comments'
+    });
+};
+
 module.exports = Customer;

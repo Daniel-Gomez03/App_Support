@@ -3,7 +3,7 @@ import styles from './TicketCard.module.less';
 import { FiEye, FiUserPlus, FiClock } from "react-icons/fi";
 import { LuTag, LuBox } from "react-icons/lu";
 
-const TicketCard = ({ ticket, onViewDetail, onAssign, showAssignButton }) => {
+const TicketCard = ({ ticket, onViewDetail, onAssign, showAssignButton, highlighted = false }) => {
 
     const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
 
@@ -23,7 +23,7 @@ const TicketCard = ({ ticket, onViewDetail, onAssign, showAssignButton }) => {
         || 'Cliente Desconocido';
 
     return (
-        <div className={styles.card}>
+        <div className={`${styles.card} ${highlighted ? styles.highlighted : ''}`}>
             <div className={styles.cardHeader}>
                 <span className={styles.ticketId}>{formatID(ticket.ticket_id)}</span>
                 <div className={styles.dateInfo}>

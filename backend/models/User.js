@@ -73,6 +73,11 @@ User.associate = (models) => {
         foreignKey: 'user_id',
         as: 'Permissions'
     });
+
+    User.hasMany(models.TicketComment, {
+        foreignKey: 'user_id',
+        as: 'comments'
+    });
 };
 
 module.exports = User;

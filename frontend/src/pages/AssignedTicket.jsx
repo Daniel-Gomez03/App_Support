@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import styles from "./AssignedTicket.module.less";
 import { FiPlus } from "react-icons/fi";
 import { LuCheck, LuX, LuCircleAlert } from "react-icons/lu";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getAllTickets } from "../services/Ticketservice";
 import { useAuth } from "../context/AuthContext";
 import TicketCard from "../components/Asignar Tickets/TicketCard/TicketCard";
@@ -11,7 +11,15 @@ import TicketDetailModal from "../components/Asignar Tickets/TicketDetailModal/T
 
 const AssignedTicket = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
+    const highlightTicketId = location.state?.highlightTicketId ?? null;
+
+    const highlightRef = useCallback((node) => {
+        if (node) {
+            setTimeout(() => node.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
+        }
+    }, []);
 
     const canRead = user?.Permissions?.some(p => p.Seccion?.module_name === "Asignar Tickets" && p.permissions_read === 1);
     const canEdit = user?.Permissions?.some(p => p.Seccion?.module_name === "Asignar Tickets" && p.permissions_edit === 1);
@@ -122,13 +130,15 @@ const AssignedTicket = () => {
                             <div className={styles.emptyState}>No hay tickets nuevos.</div>
                         ) : (
                             nuevosTickets.map(ticket => (
-                                <TicketCard
-                                    key={ticket.ticket_id}
-                                    ticket={ticket}
-                                    showAssignButton={false} // En esta columna no se asigna todavía
-                                    onViewDetail={handleViewDetail}
-                                    onAssign={handleOpenAssignModal}
-                                />
+                                <div key={ticket.ticket_id} ref={ticket.ticket_id === highlightTicketId ? highlightRef : null}>
+                                    <TicketCard
+                                        ticket={ticket}
+                                        highlighted={ticket.ticket_id === highlightTicketId}
+                                        showAssignButton={false}
+                                        onViewDetail={handleViewDetail}
+                                        onAssign={handleOpenAssignModal}
+                                    />
+                                </div>
                             ))
                         )}
                     </div>
@@ -148,13 +158,15 @@ const AssignedTicket = () => {
                             <div className={styles.emptyState}>No hay tickets pendientes de asignación.</div>
                         ) : (
                             backlogTickets.map(ticket => (
-                                <TicketCard
-                                    key={ticket.ticket_id}
-                                    ticket={ticket}
-                                    showAssignButton={true}
-                                    onViewDetail={handleViewDetail}
-                                    onAssign={handleOpenAssignModal}
-                                />
+                                <div key={ticket.ticket_id} ref={ticket.ticket_id === highlightTicketId ? highlightRef : null}>
+                                    <TicketCard
+                                        ticket={ticket}
+                                        highlighted={ticket.ticket_id === highlightTicketId}
+                                        showAssignButton={true}
+                                        onViewDetail={handleViewDetail}
+                                        onAssign={handleOpenAssignModal}
+                                    />
+                                </div>
                             ))
                         )}
                     </div>

@@ -24,6 +24,12 @@
         border-color: fade(@quaternary-color, 30%);
     }
 
+    &.highlighted {
+        border-color: @quaternary-color;
+        box-shadow: 0 0 0 3px fade(@quaternary-color, 25%), 0 4px 12px rgba(0, 0, 0, 0.05);
+        animation: highlightPulse 1.8s ease-out forwards;
+    }
+
     .cardHeader {
         display: flex;
         justify-content: space-between;
@@ -167,5 +173,15 @@
                 box-shadow: 0 6px 14px fade(#064e3b, 30%);
             }
         }
+    }
+}
+
+@keyframes highlightPulse {
+    0% {
+        box-shadow: 0 0 0 6px fade(@quaternary-color, 35%), 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    100% {
+        box-shadow: 0 0 0 3px fade(@quaternary-color, 15%), 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 }

@@ -324,7 +324,7 @@ exports.updateCustomer = async (req, res) => {
                 cleanupFile(tempFilePath);
                 return res.status(400).json({ error: 'El nuevo correo ya está en uso.' });
             }
-            customer.email_verified = 0; 
+            customer.email_verified = 0;
         }
 
         let customer_image = customer.customer_image;
@@ -339,7 +339,7 @@ exports.updateCustomer = async (req, res) => {
             } catch (ftpErr) {
                 console.error("Error al subir a FTP:", ftpErr);
             } finally {
-                cleanupFile(tempFilePath); 
+                cleanupFile(tempFilePath);
             }
         }
 

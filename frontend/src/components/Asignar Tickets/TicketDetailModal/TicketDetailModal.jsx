@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './TicketDetailModal.module.less';
-import { FiX, FiCheckCircle, FiAlertCircle, FiXCircle, FiChevronLeft, FiChevronRight } from "react-icons/fi"; // <-- Añadí ChevronLeft y Right
+import { FiX, FiCheckCircle, FiAlertCircle, FiXCircle, FiChevronLeft, FiChevronRight, FiArrowRight } from "react-icons/fi";
 import { LuTag, LuBox, LuUser, LuMail, LuFileText } from "react-icons/lu";
 import { FaQuestion } from "react-icons/fa";
 import "flag-icons/css/flag-icons.min.css";
@@ -13,7 +13,7 @@ const countryRules = {
     '+502': { iso: 'gt' },
 };
 
-const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
+const TicketDetailModal = ({ ticket, onClose, onSuccess, readOnly = false, onManage }) => {
     const [loading, setLoading] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
     const [selectedImg, setSelectedImg] = useState(null);
@@ -39,7 +39,7 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
     const handleForceClose = async () => {
         setLoading(true);
         try {
-            await updateTicketStatus(ticket.ticket_id, 11);
+            await updateTicketStatus(ticket.ticket_id, 10);
             onSuccess("El ticket ha sido cancelado y cerrado correctamente.");
             onClose();
         } catch (error) {
@@ -167,41 +167,52 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess }) => {
                 </div>
 
                 <div className={styles.modalFooter}>
-                    {confirmAction === 'advance' && (
-                        <div className={styles.confirmZone}>
-                            <FaQuestion className={styles.questionIcon} />
-                            <span className={styles.warningText}>¿Enviar este ticket al Backlog para asignación?</span>
-                            <div className={styles.confirmBtns}>
-                                <button className={styles.cancelBtn} onClick={() => setConfirmAction(null)} disabled={loading}>No, regresar</button>
-                                <button className={styles.successBtn} onClick={handleAdvance} disabled={loading}>
-                                    {loading ? "Procesando..." : "Sí, Avanzar"}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {confirmAction === 'close' && (
-                        <div className={styles.confirmZone}>
-                            <FiAlertCircle className={styles.dangerIcon} />
-                            <span className={styles.warningText}>¿Seguro que deseas cancelar y cerrar este ticket?</span>
-                            <div className={styles.confirmBtns}>
-                                <button className={styles.cancelBtn} onClick={() => setConfirmAction(null)} disabled={loading}>No, regresar</button>
-                                <button className={styles.dangerBtn} onClick={handleForceClose} disabled={loading}>
-                                    {loading ? "Cerrando..." : "Sí, Cancelar Ticket"}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {!confirmAction && (
+                    {readOnly ? (
                         <div className={styles.actionZone}>
-                            <button className={styles.dangerOutlineBtn} onClick={() => setConfirmAction('close')} disabled={loading}>
-                                Forzar Cierre
-                            </button>
-                            <button className={styles.successBtn} onClick={() => setConfirmAction('advance')} disabled={loading}>
-                                Avanzar a Backlog
+                            <button className={styles.cancelBtn} onClick={onClose}>Cerrar</button>
+                            <button className={styles.manageBtn} onClick={onManage}>
+                                Gestionar Ticket <FiArrowRight />
                             </button>
                         </div>
+                    ) : (
+                        <>
+                            {confirmAction === 'advance' && (
+                                <div className={styles.confirmZone}>
+                                    <FaQuestion className={styles.questionIcon} />
+                                    <span className={styles.warningText}>¿Enviar este ticket al Backlog para asignación?</span>
+                                    <div className={styles.confirmBtns}>
+                                        <button className={styles.cancelBtn} onClick={() => setConfirmAction(null)} disabled={loading}>No, regresar</button>
+                                        <button className={styles.successBtn} onClick={handleAdvance} disabled={loading}>
+                                            {loading ? "Procesando..." : "Sí, Avanzar"}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {confirmAction === 'close' && (
+                                <div className={styles.confirmZone}>
+                                    <FiAlertCircle className={styles.dangerIcon} />
+                                    <span className={styles.warningText}>¿Seguro que deseas cancelar y cerrar este ticket?</span>
+                                    <div className={styles.confirmBtns}>
+                                        <button className={styles.cancelBtn} onClick={() => setConfirmAction(null)} disabled={loading}>No, regresar</button>
+                                        <button className={styles.dangerBtn} onClick={handleForceClose} disabled={loading}>
+                                            {loading ? "Cerrando..." : "Sí, Cancelar Ticket"}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!confirmAction && (
+                                <div className={styles.actionZone}>
+                                    <button className={styles.dangerOutlineBtn} onClick={() => setConfirmAction('close')} disabled={loading}>
+                                        Forzar Cierre
+                                    </button>
+                                    <button className={styles.successBtn} onClick={() => setConfirmAction('advance')} disabled={loading}>
+                                        Avanzar a Backlog
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 

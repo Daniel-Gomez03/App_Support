@@ -107,10 +107,8 @@ exports.updateTicketStatus = async (req, res) => {
         const ticket = await Ticket.findByPk(id);
         if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
 
-        // Actualizamos solo el estado
         await ticket.update({ ticket_status_id });
 
-        // Notificamos por WebSockets para que React mueva la tarjeta de pestaña
         const io = req.app.get('io');
         if (io) io.emit('ticket_updated', ticket);
 
@@ -144,6 +142,92 @@ exports.getUnassignedTicketCount = async (req, res) => {
 };
 
 // ============================================
+// OBTENER CONTEO DE TICKETS ACTIVOS
+// ============================================
+exports.getActiveTicketCount = async (req, res) => {
+    try {
+        const { user_id, rol } = req.user;
+        const activeStatuses = [1, 2, 3, 4, 5, 6, 7, 8];
+
+        if (rol === 'Admin') {
+            const count = await Ticket.count({
+                where: {
+                    ticket_status: 1,
+                    ticket_status_id: { [Op.in]: activeStatuses }
+                }
+            });
+            return res.json({ count });
+        } else {
+            const count = await Ticket.count({
+                where: {
+                    ticket_status: 1,
+                    ticket_status_id: { [Op.in]: activeStatuses }
+                },
+                include: [{
+                    model: User,
+                    as: 'assignedUsers',
+                    where: { user_id },
+                    attributes: []
+                }]
+            });
+            return res.json({ count });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// ============================================
+// OBTENER LA LISTA DE TICKETS ACTIVOS
+// ============================================
+exports.getActiveTickets = async (req, res) => {
+    try {
+        const { user_id, rol } = req.user;
+        const activeStatuses = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+        let whereTicket = {
+            ticket_status: 1,
+            ticket_status_id: { [Op.in]: activeStatuses }
+        };
+
+        if (rol !== 'Admin') {
+            const myTickets = await Ticket.findAll({
+                where: whereTicket,
+                include: [{
+                    model: User,
+                    as: 'assignedUsers',
+                    where: { user_id },
+                    attributes: []
+                }],
+                attributes: ['ticket_id']
+            });
+
+            const ticketIds = myTickets.map(t => t.ticket_id);
+            whereTicket = { ticket_id: { [Op.in]: ticketIds } };
+        }
+
+        const tickets = await Ticket.findAll({
+            where: whereTicket,
+            include: [
+                { model: Customer, as: 'customer' },
+                { model: TicketStatus, as: 'status' },
+                { model: Category, as: 'category' },
+                { model: Product, as: 'product' },
+                { model: ProductModel, as: 'productModel', required: false },
+                { model: TicketEvidence, as: 'evidences' },
+                { model: Warranty, as: 'warranty' },
+                { model: User, as: 'assignedUsers' }
+            ],
+            order: [['created_at', 'DESC']]
+        });
+
+        res.json(tickets);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// ============================================
 // ASIGNAR TICKET A TÉCNICO(S)
 // ============================================
 exports.assignTicket = async (req, res) => {
@@ -151,9 +235,9 @@ exports.assignTicket = async (req, res) => {
 
     try {
         const { id } = req.params;
-        const {      
+        const {
             user_id,
-            assignedUsers,  
+            assignedUsers,
             ticket_priority,
             ticket_due_date,
             assignment_remarks
@@ -169,7 +253,7 @@ exports.assignTicket = async (req, res) => {
             ticket_priority,
             ticket_due_date: ticket_due_date || null,
             assignment_remarks: assignment_remarks || null,
-            ticket_status_id: 3
+            ticket_status_id: 4
         }, { transaction: t });
 
         const allStaff = [parseInt(user_id)];
@@ -185,7 +269,7 @@ exports.assignTicket = async (req, res) => {
 
         const updatedTicket = await Ticket.findByPk(id, {
             include: [
-                { model: User, as: 'assignedUsers'}
+                { model: User, as: 'assignedUsers' }
             ]
         });
 
@@ -214,7 +298,7 @@ exports.getAllTickets = async (req, res) => {
                 { model: Product, as: 'product' },
                 { model: ProductModel, as: 'productModel', required: false },
                 { model: TicketEvidence, as: 'evidences' },
-                { model: Warranty, as: 'warranty' }, 
+                { model: Warranty, as: 'warranty' },
                 { model: User, as: 'assignedUsers' }
             ],
             order: [['created_at', 'DESC']]
@@ -238,7 +322,7 @@ exports.getTicketById = async (req, res) => {
                 { model: Product, as: 'product' },
                 { model: ProductModel, as: 'productModel', required: false },
                 { model: TicketEvidence, as: 'evidences' },
-                { model: Warranty, as: 'warranty' }, // <-- AGREGAR ESTO
+                { model: Warranty, as: 'warranty' },
                 { model: User, as: 'assignedUsers' }
             ]
         });

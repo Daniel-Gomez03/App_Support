@@ -103,12 +103,17 @@ Ticket.associate = (models) => {
         through: models.TicketAssignment,
         foreignKey: 'ticket_id',
         otherKey: 'user_id',
-        as: 'assignedUsers' 
+        as: 'assignedUsers'
     });
 
     Ticket.hasMany(models.TicketEvidence, {
         foreignKey: 'ticket_id',
         as: 'evidences'
+    });
+
+    Ticket.hasMany(models.TicketComment, {
+        foreignKey: 'ticket_id',
+        as: 'comments'
     });
 };
 

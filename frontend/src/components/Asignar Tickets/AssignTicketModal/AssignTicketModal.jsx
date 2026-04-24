@@ -116,7 +116,6 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
 
                 <div className={styles.topHeader}>
                     <div className={styles.ticketBadge}>
-                        {/* --- CAMBIO AQUÍ PARA USAR formatID --- */}
                         <h2>Asignar Ticket <span>{formatID(ticket.ticket_id)}</span></h2>
                     </div>
                     <p>Seleccione el personal y la prioridad del caso.</p>

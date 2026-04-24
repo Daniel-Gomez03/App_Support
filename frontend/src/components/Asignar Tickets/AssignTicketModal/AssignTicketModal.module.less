@@ -41,12 +41,21 @@
     border-bottom: 1px solid fade(@secondary-color, 15%);
     position: relative;
 
+    @media(max-width: #breaks[tablet]) {
+        padding: 16px 20px;
+        padding-right: 52px;
+    }
+
     .ticketBadge {
         h2 {
             margin: 0;
             font-size: 22px;
             font-weight: 800;
             color: @quaternary-color;
+
+            @media(max-width: #breaks[tablet]) {
+                font-size: 18px;
+            }
 
             span {
                 background: #ecfdf5;
@@ -312,6 +321,12 @@
     display: flex;
     flex-direction: column;
     border: 1px solid fade(@secondary-color, 10%);
+    overflow-y: auto;
+
+    @media(max-width: #breaks[tablet]) {
+        padding: 20px;
+        border-radius: 16px;
+    }
 
     .formHeader {
         margin-bottom: 24px;
@@ -507,7 +522,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 16px;
 
-            @media(max-width: 600px) {
+            @media(max-width: #breaks[tablet]) {
                 grid-template-columns: 1fr;
             }
         }

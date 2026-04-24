@@ -19,6 +19,7 @@ const ticketRoutes = require('./routes/ticketRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const seccionRoutes = require('./routes/seccionRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 // Importar modelos
 const Faqs = require('./models/Faqs');
@@ -34,6 +35,8 @@ const User = require('./models/User');
 const Seccion = require('./models/Seccion');
 const Permission = require('./models/Permission');
 const TicketAssignment = require('./models/TicketAssignment');
+const TicketComment = require('./models/TicketComment');
+const TicketCommentAttachment = require('./models/TicketCommentAttachment');
 
 // Asociar modelos
 const models = {
@@ -49,7 +52,9 @@ const models = {
     User,
     Seccion,
     Permission,
-    TicketAssignment
+    TicketAssignment,
+    TicketComment,
+    TicketCommentAttachment
 };
 Object.values(models).forEach(model => {
     if (model.associate) model.associate(models);
@@ -125,6 +130,7 @@ app.use('/api', ticketStatusRoutes);
 app.use('/api', ticketRoutes);
 app.use('/api', userRoutes);
 app.use('/api', seccionRoutes);
+app.use('/api', commentRoutes);
 
 // Conectar a BD
 sequelize.authenticate()
