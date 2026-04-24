@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
@@ -20,6 +20,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const seccionRoutes = require('./routes/seccionRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const historialRoutes = require('./routes/historialRoutes');
 
 // Importar modelos
 const Faqs = require('./models/Faqs');
@@ -131,6 +132,7 @@ app.use('/api', ticketRoutes);
 app.use('/api', userRoutes);
 app.use('/api', seccionRoutes);
 app.use('/api', commentRoutes);
+app.use('/api', historialRoutes);
 
 // Conectar a BD
 sequelize.authenticate()
@@ -142,3 +144,4 @@ const PORT = process.env.PORT || 8000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+

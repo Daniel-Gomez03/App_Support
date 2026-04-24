@@ -214,3 +214,29 @@ export const deleteTicket = async (id) => {
         throw error;
     }
 };
+
+// ============================================
+// HISTORIAL - OBTENER TODOS LOS TICKETS
+// ============================================
+export const getHistorialTickets = async () => {
+    try {
+        const response = await fetch(`${API_URL}/historial`, fetchConfig('GET'));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en getHistorialTickets:", error);
+        return [];
+    }
+};
+
+// ============================================
+// HISTORIAL - ACTUALIZAR TICKET
+// ============================================
+export const updateHistorialTicket = async (id, data) => {
+    try {
+        const response = await fetch(`${API_URL}/historial/${id}`, fetchConfig('PUT', data));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en updateHistorialTicket:", error);
+        throw error;
+    }
+};
