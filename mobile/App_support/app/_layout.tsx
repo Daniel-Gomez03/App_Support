@@ -18,8 +18,6 @@ function RootLayoutNav() {
         if (!state.isLoading) {
             if (state.userToken) {
                 router.replace('/(tabs)');
-            } else {
-                router.replace('/splash');
             }
         }
     }, [state.userToken, state.isLoading]);
@@ -48,6 +46,7 @@ function RootLayoutNav() {
 
     return (
         <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
+            <Stack.Screen name="index" />
             <Stack.Screen name="splash" />
             <Stack.Screen name="auth" />
         </Stack>

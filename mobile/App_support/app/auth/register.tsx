@@ -248,7 +248,8 @@ export default function RegisterScreen() {
   return (
     <View style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
+        enabled={Platform.OS === 'ios'}
         style={{ flex: 1 }}
       >
         {/* ── Cabecera oscura (fija) ── */}
