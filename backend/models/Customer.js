@@ -65,6 +65,16 @@ const Customer = sequelize.define('Customer', {
         allowNull: true,
         defaultValue: null
     },
+        accepted_policy_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null
+    },
+    accepted_policy_version: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        defaultValue: null
+    },
     customer_status: {
         type: DataTypes.TINYINT(1),
         defaultValue: 1,
@@ -94,7 +104,7 @@ const Customer = sequelize.define('Customer', {
         type: DataTypes.DATE,
         allowNull: true,
         defaultValue: null
-    }
+    },
 }, {
     tableName: 'customers',
     timestamps: true,
