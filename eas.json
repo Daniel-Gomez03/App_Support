@@ -6,17 +6,17 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "workingDirectory": "Mobile/App_Support"
+      "workingDirectory": "mobile/App_Support"
     },
     "preview": {
       "distribution": "internal",
-      "workingDirectory": "Mobile/App_Support",
+      "workingDirectory": "mobile/App_Support",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
-      "workingDirectory": "Mobile/App_Support",
+      "workingDirectory": "mobile/App_Support",
       "android": {
         "buildType": "app-bundle"
       }
