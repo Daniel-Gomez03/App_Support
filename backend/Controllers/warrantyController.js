@@ -1,4 +1,5 @@
-const Warranty = require('../models/Warranty');
+const Warranty       = require('../models/Warranty');
+const WarrantyPolicy = require('../models/WarrantyPolicy');
 const XLSX = require('xlsx');
 const Papa = require('papaparse');
 
@@ -275,5 +276,70 @@ exports.bulkUploadWarranties = async (req, res) => {
     } catch (error) {
         console.error("Bulk Upload Error:", error);
         res.status(500).json({ error: 'Error interno en la carga masiva.' });
+    }
+};
+
+// ============================================
+// OBTENER POLÍTICA DE GARANTÍA ACTIVA
+// ============================================
+exports.getPolicy = async (req, res) => {
+    try {
+        const policy = await WarrantyPolicy.findOne({
+            where: { policy_is_active: 1 },
+            order: [['created_at', 'DESC']],
+        });
+
+        if (!policy) {
+            return res.status(404).json({ error: 'No hay política de garantía activa.' });
+        }
+
+        res.json(policy);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// ============================================
+// ACTUALIZAR POLÍTICA DE GARANTÍA
+// Desactiva la versión anterior y crea una nueva
+// ============================================
+exports.updatePolicy = async (req, res) => {
+    try {
+        const { policy_version, policy_updated_label, policy_content } = req.body;
+
+        if (!policy_version || !policy_updated_label || !policy_content) {
+            return res.status(400).json({ error: 'Versión, etiqueta y contenido son obligatorios.' });
+        }
+
+        if (!Array.isArray(policy_content) || policy_content.length === 0) {
+            return res.status(400).json({ error: 'El contenido debe ser un arreglo de secciones.' });
+        }
+
+        // Desactivar la versión actual
+        await WarrantyPolicy.update(
+            { policy_is_active: 0 },
+            { where: { policy_is_active: 1 } }
+        );
+
+        // Crear la nueva versión activa
+        const newPolicy = await WarrantyPolicy.create({
+            policy_version,
+            policy_updated_label,
+            policy_content,
+            policy_is_active: 1,
+        });
+
+        const io = req.app.get('io');
+        if (io) io.emit('warranty_policy_updated', {
+            version: newPolicy.policy_version,
+            updated_label: newPolicy.policy_updated_label,
+        });
+
+        res.status(201).json({
+            message: `Política actualizada a ${policy_version} correctamente.`,
+            policy:  newPolicy,
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };

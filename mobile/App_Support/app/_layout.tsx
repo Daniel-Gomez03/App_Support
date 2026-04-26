@@ -45,7 +45,7 @@ function RootLayoutNav() {
     }
 
     return (
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
             <Stack.Screen name="splash" />
             <Stack.Screen name="auth" />
         </Stack>

@@ -21,6 +21,8 @@ const userRoutes = require('./routes/userRoutes');
 const seccionRoutes = require('./routes/seccionRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const historialRoutes = require('./routes/historialRoutes');
+const mobileRoutes       = require('./routes/mobileRoutes');
+const customerController = require('./Controllers/customerController');
 
 // Importar modelos
 const Faqs = require('./models/Faqs');
@@ -118,6 +120,8 @@ app.get('/api/test', (req, res) => {
 //Rutas
 app.use('/api', authRoutes);
 
+app.use('/api', mobileRoutes);                     // público — antes de verificarToken
+app.get('/api/verify-email', customerController.verifyEmail); // público — confirmación de email
 app.use('/api', verificarToken);
 //RUTAS PROTEGIDAS 
 
@@ -144,4 +148,7 @@ const PORT = process.env.PORT || 8000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+
+
+
 

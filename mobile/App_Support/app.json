@@ -31,7 +31,9 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/Fonts/MICROGBE.ttf"]
+          "fonts": [
+            "./assets/Fonts/MICROGBE.ttf"
+          ]
         }
       ],
       [

@@ -2,18 +2,21 @@ import React, { useState, useEffect } from "react";
 import styles from "./Garantias.module.less"; 
 import lensIcon from "../assets/icons/Lens-icon.svg";
 import { MdFilterListAlt } from "react-icons/md";
-import { LuCheck, LuX, LuUpload } from "react-icons/lu";
+import { LuCheck, LuX, LuUpload, LuFileText } from "react-icons/lu";
 import { FiPlus } from "react-icons/fi";
 import WarrantiesTable from "../components/Garantias/WarrantiesTable/WarrantiesTable";
 import AddWarrantyModal from "../components/Garantias/AddWarrantyModal/AddWarrantyModal";
 import BulkUploadModal from "../components/Garantias/BulkUploadModal/BulkUploadModal";
 import WarrantyFilterModal from "../components/Garantias/WarrantyFilterModal/WarrantyFilterModal";
+import PolicyModal from "../components/Garantias/PolicyModal/PolicyModal";
 
-import { 
-    getWarranties, 
-    createWarranty, 
+import {
+    getWarranties,
+    createWarranty,
     updateWarranty,
-    socket 
+    getPolicy,
+    updatePolicy,
+    socket
 } from "../services/Warrantyservice";
 import { useAuth } from "../context/AuthContext";
 
@@ -41,9 +44,25 @@ const Garantias = () => {
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [selectedWarranty, setSelectedWarranty] = useState(null);
 
-    const [appliedFilters, setAppliedFilters] = useState({
-        status: 'all'
-    });
+    const [appliedFilters, setAppliedFilters] = useState({ status: 'all' });
+
+    const [policy, setPolicy]               = useState(null);
+    const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
+
+    const loadPolicy = async () => {
+        try {
+            const data = await getPolicy();
+            setPolicy(data);
+        } catch (err) {
+            console.error("Error al cargar la política:", err);
+        }
+    };
+
+    const handleSavePolicy = async (data) => {
+        await updatePolicy(data);
+        await loadPolicy();
+        showToast("Política Actualizada", `Versión ${data.policy_version} guardada correctamente.`);
+    };
 
     const loadWarranties = async () => {
         try {
@@ -62,12 +81,17 @@ const Garantias = () => {
     useEffect(() => {
         if (canRead) {
             loadWarranties();
+            loadPolicy();
             socket.connect();
-            
+
             socket.on('warranty_created', () => loadWarranties());
             socket.on('warranties_bulk_updated', (data) => {
                 loadWarranties();
                 showToast("Sincronización masiva", `Se han cargado ${data.created} registros.`);
+            });
+            socket.on('warranty_policy_updated', (data) => {
+                loadPolicy();
+                showToast("Política Actualizada", `Nueva versión ${data.version} publicada.`);
             });
         }
 
@@ -76,6 +100,7 @@ const Garantias = () => {
         return () => {
             socket.off('warranty_created');
             socket.off('warranties_bulk_updated');
+            socket.off('warranty_policy_updated');
             socket.disconnect();
         };
     }, [canRead]);
@@ -162,6 +187,13 @@ const Garantias = () => {
 
                         <div className={styles.iconGroup}>
                             <button
+                                className={styles.filterBtn}
+                                onClick={() => setIsPolicyModalOpen(true)}
+                                title="Política de Garantía"
+                            >
+                                <LuFileText />
+                            </button>
+                            <button
                                 className={`${styles.filterBtn} ${appliedFilters.status !== 'all' ? styles.activeFilter : ''}`}
                                 onClick={() => setShowFilterModal(true)}
                             >
@@ -205,6 +237,14 @@ const Garantias = () => {
                 onClose={() => setShowFilterModal(false)}
                 currentFilters={appliedFilters}
                 onApply={setAppliedFilters}
+            />
+
+            <PolicyModal
+                isOpen={isPolicyModalOpen}
+                onClose={() => setIsPolicyModalOpen(false)}
+                policy={policy}
+                onSave={handleSavePolicy}
+                canEdit={canEdit}
             />
 
             {toastConfig.show && (

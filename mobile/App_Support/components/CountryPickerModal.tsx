@@ -1,120 +1,182 @@
-import React from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Modal, FlatList, Dimensions } from 'react-native';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import React, { useState } from 'react';
+import {
+  View, StyleSheet, Text, TouchableOpacity, Modal, FlatList,
+  Dimensions, TextInput,
+} from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 const { width, height } = Dimensions.get('window');
 
 interface Country {
-  code: string;
-  name: string;
-  flag: string;
-  prefix: string;
+  code:      string;
+  name:      string;
+  flag:      string;
+  prefix:    string;
   maxDigits: number;
   minDigits: number;
 }
 
-interface CountryPickerModalProps {
-  countries: Country[];
+interface Props {
+  countries:       Country[];
   selectedCountry: Country;
-  onSelect: (country: Country) => void;
-  onClose: () => void;
+  onSelect:        (country: Country) => void;
+  onClose:         () => void;
 }
 
-export default function CountryPickerModal({
-  countries,
-  selectedCountry,
-  onSelect,
-  onClose,
-}: CountryPickerModalProps) {
+export default function CountryPickerModal({ countries, selectedCountry, onSelect, onClose }: Props) {
+  const [search, setSearch] = useState('');
+
+  const filtered = countries.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.prefix.includes(search)
+  );
+
   return (
     <Modal
       visible={true}
       animationType="slide"
-      transparent={false}
+      transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Seleccionar País</Text>
-          <TouchableOpacity onPress={onClose}>
-            <FontAwesome5 name="times" size={24} color="#000000" />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.root}>
+        {/* Semi-transparent overlay — tap to close */}
+        <TouchableOpacity style={styles.overlay} onPress={onClose} activeOpacity={1} />
 
-        {/* Lista de países */}
-        <FlatList
-          data={countries}
-          keyExtractor={(item) => item.code}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.countryItem,
-                selectedCountry.code === item.code && styles.selectedCountryItem,
-              ]}
-              onPress={() => onSelect(item)}
-            >
-              <Text style={styles.countryItemFlag}>{item.flag}</Text>
-              <View style={styles.countryItemInfo}>
-                <Text style={styles.countryItemName}>{item.name}</Text>
-              </View>
-              {selectedCountry.code === item.code && (
-                <FontAwesome5 name="check" size={20} color="#28a745" />
-              )}
-            </TouchableOpacity>
-          )}
-        />
+        {/* Bottom sheet */}
+        <View style={styles.sheet}>
+          {/* Drag handle */}
+          <View style={styles.handle} />
+
+          {/* Search bar */}
+          <View style={styles.searchRow}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar"
+              placeholderTextColor="#9ca3af"
+              value={search}
+              onChangeText={setSearch}
+              autoCorrect={false}
+            />
+            <Ionicons name="search" size={18} color="#9ca3af" />
+          </View>
+
+          {/* Countries list */}
+          <FlatList
+            data={filtered}
+            keyExtractor={item => item.code}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.item}
+                onPress={() => onSelect(item)}
+                activeOpacity={0.65}
+              >
+                <View style={styles.flagCircle}>
+                  <Text style={styles.flagEmoji}>{item.flag}</Text>
+                </View>
+                <View style={styles.itemText}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text style={styles.itemPrefix}>{item.prefix}</Text>
+                </View>
+                {selectedCountry.code === item.code && (
+                  <Ionicons name="checkmark" size={20} color="#3C6034" />
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        </View>
       </View>
     </Modal>
   );
 }
 
+const SHEET_HEIGHT = height * 0.58;
+
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    paddingTop: height * 0.05,
+    justifyContent: 'flex-end',
   },
-  header: {
+
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+
+  sheet: {
+    height:               SHEET_HEIGHT,
+    backgroundColor:      '#ffffff',
+    borderTopLeftRadius:  24,
+    borderTopRightRadius: 24,
+    paddingTop:           12,
+    paddingHorizontal:    width * 0.05,
+    paddingBottom:        height * 0.03,
+  },
+
+  handle: {
+    width:         40,
+    height:        4,
+    backgroundColor: '#d1d5db',
+    borderRadius:  2,
+    alignSelf:     'center',
+    marginBottom:  16,
+  },
+
+  searchRow: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    backgroundColor:   '#f3f4f6',
+    borderRadius:      12,
+    paddingHorizontal: 14,
+    paddingVertical:   height * 0.012,
+    marginBottom:      12,
+    gap:               8,
+  },
+
+  searchInput: {
+    flex:     1,
+    fontSize: width * 0.038,
+    color:    '#111827',
+    padding:  0,
+  },
+
+  item: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: width * 0.05,
-    paddingVertical: height * 0.02,
+    alignItems:    'center',
+    paddingVertical: height * 0.016,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#f3f4f6',
+    gap: 14,
   },
-  headerTitle: {
-    fontSize: width * 0.06,
-    fontWeight: 'bold',
-    color: '#000000',
+
+  flagCircle: {
+    width:           46,
+    height:          46,
+    borderRadius:    23,
+    backgroundColor: '#f3f4f6',
+    alignItems:      'center',
+    justifyContent:  'center',
+    overflow:        'hidden',
   },
-  countryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: width * 0.05,
-    paddingVertical: height * 0.015,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+
+  flagEmoji: {
+    fontSize: width * 0.07,
   },
-  selectedCountryItem: {
-    backgroundColor: '#F0F8F0',
-  },
-  countryItemFlag: {
-    fontSize: width * 0.08,
-    marginRight: width * 0.03,
-  },
-  countryItemInfo: {
+
+  itemText: {
     flex: 1,
   },
-  countryItemName: {
-    fontSize: width * 0.04,
+
+  itemName: {
+    fontSize:   width * 0.038,
     fontWeight: '600',
-    color: '#000000',
+    color:      '#111827',
   },
-  countryItemPrefix: {
-    fontSize: width * 0.035,
-    color: '#999999',
-    marginTop: height * 0.003,
+
+  itemPrefix: {
+    fontSize:  width * 0.032,
+    color:     '#6b7280',
+    marginTop: 2,
   },
 });

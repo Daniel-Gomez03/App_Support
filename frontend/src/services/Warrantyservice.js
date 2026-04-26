@@ -123,7 +123,30 @@ export const deleteWarranty = async (id) => {
 };
 
 // ============================================
-// CARGA MASIVA 
+// POLÍTICA DE GARANTÍA
+// ============================================
+export const getPolicy = async () => {
+    try {
+        const response = await fetch(`${API_URL}/warranty/policy`, fetchConfig('GET'));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en getPolicy:", error);
+        throw error;
+    }
+};
+
+export const updatePolicy = async (data) => {
+    try {
+        const response = await fetch(`${API_URL}/warranty/policy`, fetchConfig('PUT', data));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en updatePolicy:", error);
+        throw error;
+    }
+};
+
+// ============================================
+// CARGA MASIVA
 // ============================================
 export const bulkUploadWarranties = async (fileArchivo) => {
     try {
