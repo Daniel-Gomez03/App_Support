@@ -18,6 +18,8 @@ function RootLayoutNav() {
         if (!state.isLoading) {
             if (state.userToken) {
                 router.replace('/(tabs)');
+            } else {
+                router.replace('/splash');
             }
         }
     }, [state.userToken, state.isLoading]);
