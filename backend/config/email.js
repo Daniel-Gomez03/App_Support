@@ -26,10 +26,10 @@ const sendVerificationEmail = async (email, verificationToken, fullName, expiryT
                         <td align="center" style="background-color: #0d1a0d; padding: 40px 0;">
                             <div style="margin-top: 20px;">
                                 <div style="background-color: #ffffff; width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
-                                    <span style="color: #3C6034; font-size: 20px;">✔</span>
+                                    <span style="color: #3C6034; font-size: 20px;">✉️</span>
                                 </div>
                             </div>
-                            <h1 style="color: #ffffff; margin-top: 20px; font-size: 24px;">¡Verifica tu cuenta!</h1>
+                            <h1 style="color: #ffffff; margin-top: 20px; font-size: 24px;">Verificar Correo Electrónico</h1>
                         </td>
                     </tr>
 
@@ -39,7 +39,7 @@ const sendVerificationEmail = async (email, verificationToken, fullName, expiryT
                                 Hola <strong>${fullName}</strong>,
                             </p>
                             <p style="font-size: 15px; color: #555555; line-height: 1.6;">
-                                Para completar tu registro en el sistema de <strong>TBOXSA</strong> y activar tu acceso, por favor haz clic en el botón a continuación para verificar tu dirección de correo electrónico:
+                                Gracias por registrarte en <strong>TBOXSA</strong>. Para activar tu cuenta haz clic en el botón a continuación para verificar tu dirección de correo electrónico:
                             </p>
 
                             <div style="text-align: center; margin: 40px 0;">
@@ -47,6 +47,10 @@ const sendVerificationEmail = async (email, verificationToken, fullName, expiryT
                                     Verificar Email
                                 </a>
                             </div>
+
+                            <p style="font-size: 14px; color: #555555; line-height: 1.6;">
+                                Si no creaste esta cuenta, puedes ignorar este correo.
+                            </p>
 
                             <p style="font-size: 13px; color: #888888; text-align: center; border-top: 1px solid #eeeeee; padding-top: 20px;">
                                 Este enlace es de un solo uso y expirará en <strong>${expiryText}</strong>.

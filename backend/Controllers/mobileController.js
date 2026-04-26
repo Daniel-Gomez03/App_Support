@@ -261,10 +261,18 @@ exports.forgotPassword = async (req, res) => {
 
         const customer = await Customer.findOne({ where: { customer_email: cleanEmail } });
 
-        // Solo enviar si existe y tiene email verificado; siempre responder 200 (seguridad)
         if (customer && customer.email_verified) {
+            // Bloquear si ya hay un token activo (no expirado)
+            if (customer.reset_password_token &&
+                customer.reset_password_expires &&
+                customer.reset_password_expires > new Date()) {
+                return res.status(429).json({
+                    error: 'Ya tienes un enlace de recuperación activo. Revisa tu correo o espera 15 minutos para solicitar uno nuevo.'
+                });
+            }
+
             const resetToken   = crypto.randomBytes(32).toString('hex');
-            const resetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+            const resetExpires = new Date(Date.now() + 15 * 60 * 1000);
 
             await customer.update({
                 reset_password_token:   resetToken,
@@ -305,6 +313,14 @@ exports.resetPassword = async (req, res) => {
 
         if (!customer || !customer.reset_password_expires || customer.reset_password_expires < new Date()) {
             return res.status(400).json({ error: 'El enlace de recuperación es inválido o ha expirado.' });
+        }
+
+        // Validar que la nueva contraseña sea diferente a la actual
+        if (customer.customer_password) {
+            const isSame = await bcrypt.compare(new_password, customer.customer_password);
+            if (isSame) {
+                return res.status(400).json({ error: 'La nueva contraseña no puede ser igual a la contraseña actual.' });
+            }
         }
 
         const hashedPassword = await bcrypt.hash(new_password, 12);
