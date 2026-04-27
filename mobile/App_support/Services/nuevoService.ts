@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.1.18:8000/api';
+const API_URL = 'http://10.10.0.84:8000/api';
 
 const authHeader = async (): Promise<Record<string, string>> => {
     const token = await SecureStore.getItemAsync('userToken');
@@ -92,9 +92,9 @@ const nuevoService = {
         return result;
     },
 
-    getActiveTicketsByCustomer: async (customerId: number) => {
+    getActiveTicketsByCustomer: async () => {
         const headers = await authHeader();
-        const res = await fetch(`${API_URL}/tickets/active/${customerId}`, { headers });
+        const res = await fetch(`${API_URL}/mobile/tickets/active`, { headers });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'Error al obtener tickets activos');
         return result;

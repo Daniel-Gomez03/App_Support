@@ -29,6 +29,7 @@ function RootLayoutNav() {
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <Stack screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="ticket/[id]" />
                 </Stack>
             </GestureHandlerRootView>
         );

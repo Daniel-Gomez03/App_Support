@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://192.168.1.18:8000/api";
+const API_URL = "http://10.10.0.84:8000/api";
 
 export interface RegisterPayload {
   // Paso 1

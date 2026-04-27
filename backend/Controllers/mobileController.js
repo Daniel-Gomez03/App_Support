@@ -9,9 +9,14 @@ const Product = require("../models/Product");
 const ProductModel = require("../models/ProductModel");
 const Ticket = require("../models/Ticket");
 const TicketEvidence = require("../models/TicketEvidence");
+const TicketComment = require("../models/TicketComment");
+const TicketCommentAttachment = require("../models/TicketCommentAttachment");
+const TicketStatus = require("../models/TicketStatus");
+const User = require("../models/User");
 const sequelize = require("../config/database");
 const { processEvidence } = require("../Middleware/ticketUpload");
 const { uploadToFTP } = require("../Utils/ftpClient");
+const { encrypt, decrypt } = require("../Utils/encryption");
 const fs = require("fs");
 const {
     sendVerificationEmail,
@@ -646,5 +651,191 @@ exports.createMobileTicket = async (req, res) => {
         await t.rollback();
         localFilesToCleanup.forEach(p => { if (fs.existsSync(p)) fs.unlinkSync(p); });
         res.status(500).json({ error: error.message });
+    }
+};
+
+// ============================================
+// TICKETS ACTIVOS DEL CLIENTE (MÓVIL)
+// ============================================
+exports.getMobileActiveTickets = async (req, res) => {
+    try {
+        const customer_id = req.customer.customer_id;
+
+        const tickets = await Ticket.findAll({
+            where: { customer_id, ticket_status: 1 },
+            include: [
+                { model: Category, as: 'category', attributes: ['category_id', 'category_name'] },
+                { model: TicketStatus, as: 'status', attributes: ['ticket_status_id', 'ticket_status_name'] },
+                {
+                    model: User, as: 'assignedUsers',
+                    attributes: ['user_id', 'nombre_completo', 'foto'],
+                    through: { attributes: [] }
+                }
+            ],
+            order: [['created_at', 'DESC']]
+        });
+
+        res.json(tickets);
+    } catch (error) {
+        console.error('Error en getMobileActiveTickets:', error);
+        res.status(500).json({ error: 'Error al obtener tickets activos.' });
+    }
+};
+
+// ============================================
+// DETALLE DE UN TICKET (MÓVIL)
+// ============================================
+exports.getMobileTicketDetail = async (req, res) => {
+    try {
+        const customer_id = req.customer.customer_id;
+        const { id } = req.params;
+
+        const ticket = await Ticket.findOne({
+            where: { ticket_id: id, customer_id },
+            include: [
+                { model: Category, as: 'category', attributes: ['category_id', 'category_name'] },
+                { model: Product, as: 'product', attributes: ['product_id', 'product_name'] },
+                { model: ProductModel, as: 'productModel', attributes: ['product_model_id', 'product_model_name'] },
+                { model: TicketStatus, as: 'status', attributes: ['ticket_status_id', 'ticket_status_name'] },
+                { model: Warranty, as: 'warranty', attributes: ['warranty_serial_number', 'is_expired', 'warranty_expiry_date'] },
+                { model: User, as: 'assignedUsers', attributes: ['user_id', 'nombre_completo', 'foto', 'cargo'], through: { attributes: [] } }
+            ]
+        });
+
+        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' });
+        res.json(ticket);
+    } catch (error) {
+        console.error('Error en getMobileTicketDetail:', error);
+        res.status(500).json({ error: 'Error al obtener el ticket.' });
+    }
+};
+
+// ============================================
+// COMENTARIOS DE UN TICKET (MÓVIL)
+// ============================================
+exports.getMobileTicketComments = async (req, res) => {
+    try {
+        const customer_id = req.customer.customer_id;
+        const { id } = req.params;
+
+        const ticket = await Ticket.findOne({ where: { ticket_id: id, customer_id } });
+        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' });
+
+        const comments = await TicketComment.findAll({
+            where: { ticket_id: id },
+            include: [
+                { model: User, as: 'author', attributes: ['user_id', 'nombre_completo', 'foto'] },
+                { model: Customer, as: 'customerAuthor', attributes: ['customer_id', 'customer_first_name', 'customer_last_name', 'customer_image'] }
+            ],
+            order: [['created_at', 'ASC']]
+        });
+
+        // Desencriptar todos los mensajes (tech y cliente); mensajes de sistema no cifrados quedan intactos
+        const decrypted = comments.map(c => {
+            const plain = c.toJSON();
+            try { plain.comment_text = decrypt(plain.comment_text); } catch { /* no cifrado, mantener original */ }
+            return plain;
+        });
+
+        res.json(decrypted);
+    } catch (error) {
+        console.error('Error en getMobileTicketComments:', error);
+        res.status(500).json({ error: 'Error al obtener comentarios.' });
+    }
+};
+
+// ============================================
+// AGREGAR COMENTARIO AL TICKET (CLIENTE)
+// ============================================
+exports.addMobileTicketComment = async (req, res) => {
+    try {
+        const customer_id = req.customer.customer_id;
+        const { id } = req.params;
+        const { comment_text } = req.body;
+
+        if (!comment_text?.trim()) {
+            return res.status(400).json({ error: 'El mensaje no puede estar vacío.' });
+        }
+
+        const ticket = await Ticket.findOne({ where: { ticket_id: id, customer_id } });
+        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' });
+
+        const comment = await TicketComment.create({
+            ticket_id: id,
+            customer_id,
+            user_id: null,
+            comment_text: encrypt(comment_text.trim())
+        });
+
+        // Procesar adjuntos si los hay
+        const localFilesToCleanup = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const processed = await processEvidence(file);
+                localFilesToCleanup.push(processed.filePath);
+                const ftpUrl = await uploadToFTP(processed.filePath, processed.fileName);
+                await TicketCommentAttachment.create({
+                    comment_id: comment.comment_id,
+                    file_path: ftpUrl,
+                    file_name: file.originalname
+                });
+            }
+            localFilesToCleanup.forEach(p => { if (fs.existsSync(p)) fs.unlinkSync(p); });
+        }
+
+        const full = await TicketComment.findByPk(comment.comment_id, {
+            include: [
+                { model: Customer, as: 'customerAuthor', attributes: ['customer_id', 'customer_first_name', 'customer_last_name', 'customer_image'] },
+                { model: TicketCommentAttachment, as: 'attachments' }
+            ]
+        });
+
+        const plain = full.toJSON();
+        // Devolver texto ya desencriptado al cliente móvil
+        try { plain.comment_text = decrypt(plain.comment_text); } catch { plain.comment_text = comment_text.trim(); }
+
+        const io = req.app.get('io');
+        if (io) {
+            // Evento para el cliente móvil
+            io.emit(`ticket_comment_${id}`, plain);
+            // Evento para el admin web (mismo formato que addComment del admin)
+            io.emit('new_comment', { ticket_id: parseInt(id), comment: plain });
+        }
+
+        res.status(201).json(plain);
+    } catch (error) {
+        console.error('Error en addMobileTicketComment:', error);
+        res.status(500).json({ error: 'Error al enviar el mensaje.' });
+    }
+};
+
+// ============================================
+// SOLICITAR CANCELACIÓN DEL TICKET (CLIENTE)
+// ============================================
+exports.requestTicketCancellation = async (req, res) => {
+    try {
+        const customer_id = req.customer.customer_id;
+        const { id } = req.params;
+
+        const ticket = await Ticket.findOne({ where: { ticket_id: id, customer_id } });
+        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' });
+
+        const comment = await TicketComment.create({
+            ticket_id: id,
+            customer_id,
+            user_id: null,
+            comment_text: '🔴 El cliente ha solicitado la cancelación de este ticket.'
+        });
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit(`ticket_comment_${id}`, comment);
+            io.emit('ticket_cancel_requested', { ticket_id: id, customer_id });
+        }
+
+        res.json({ message: 'Solicitud de cancelación enviada correctamente.' });
+    } catch (error) {
+        console.error('Error en requestTicketCancellation:', error);
+        res.status(500).json({ error: 'Error al procesar la solicitud.' });
     }
 };

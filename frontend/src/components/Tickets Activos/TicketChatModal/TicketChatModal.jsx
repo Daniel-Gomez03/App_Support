@@ -96,9 +96,17 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
         };
         socket.on('new_comment', onNewComment);
         socket.on('comment_deleted', onDeleteComment);
+        // Mensajes enviados desde la app móvil por el cliente
+        socket.on(`ticket_comment_${ticket.ticket_id}`, (comment) => {
+            setComments(prev => {
+                if (prev.some(c => c.comment_id === comment.comment_id)) return prev;
+                return [...prev, comment];
+            });
+        });
         return () => {
             socket.off('new_comment', onNewComment);
             socket.off('comment_deleted', onDeleteComment);
+            socket.off(`ticket_comment_${ticket.ticket_id}`);
         };
     }, [ticket.ticket_id]);
 
@@ -334,25 +342,35 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                                 ) : (
                                     comments.map(comment => {
                                         const isMe = parseInt(comment.author?.user_id) === parseInt(user?.user_id);
-                                        const hasFoto = comment.author?.foto && comment.author.foto !== 'default.jpg';
+                                        const isCustomerMsg = !comment.user_id && !!comment.customer_id;
+                                        const hasFoto = isCustomerMsg
+                                            ? !!comment.customerAuthor?.customer_image
+                                            : !!(comment.author?.foto && comment.author.foto !== 'default.jpg');
                                         const myFoto = user?.foto && user.foto !== 'default.jpg';
                                         const authorIsAdmin = comment.author?.rol === 'Admin';
+                                        const displayName = isCustomerMsg
+                                            ? `${comment.customerAuthor?.customer_first_name ?? ''} ${comment.customerAuthor?.customer_last_name ?? ''}`.trim() || 'Cliente'
+                                            : comment.author?.nombre_completo ?? 'Usuario';
+                                        const displayFoto = isCustomerMsg
+                                            ? comment.customerAuthor?.customer_image
+                                            : comment.author?.foto;
+                                        const displayInitial = displayName.charAt(0).toUpperCase();
                                         return (
                                             <div key={comment.comment_id} className={`${styles.messageRow} ${isMe ? styles.rowRight : styles.rowLeft}`}>
                                                 {!isMe && (
                                                     <div className={styles.avatarSmall}>
                                                         {hasFoto
-                                                            ? <img src={comment.author.foto} alt={comment.author.nombre_completo} onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                                                            ? <img src={displayFoto} alt={displayName} onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
                                                             : null
                                                         }
                                                         <span style={{ display: hasFoto ? 'none' : 'flex' }}>
-                                                            {comment.author?.nombre_completo?.charAt(0)?.toUpperCase()}
+                                                            {displayInitial}
                                                         </span>
                                                     </div>
                                                 )}
                                                 <div className={`${styles.bubble} ${isMe ? styles.bubbleRight : styles.bubbleLeft}`}>
                                                     <div className={styles.bubbleMeta}>
-                                                        <span className={styles.bubbleAuthor}>{comment.author?.nombre_completo || 'Cliente'}</span>
+                                                        <span className={styles.bubbleAuthor}>{displayName}</span>
                                                         {authorIsAdmin && (
                                                             <span className={styles.adminBadge}><FiShield /> Admin</span>
                                                         )}
