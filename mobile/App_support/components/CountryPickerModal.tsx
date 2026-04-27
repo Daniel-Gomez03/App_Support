@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
-  View, StyleSheet, Text, TouchableOpacity, Modal, FlatList,
-  Dimensions, TextInput,
-} from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  Dimensions,
+  TextInput,
+} from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 interface Country {
   code: string;
@@ -23,12 +29,18 @@ interface Props {
   onClose: () => void;
 }
 
-export default function CountryPickerModal({ countries, selectedCountry, onSelect, onClose }: Props) {
-  const [search, setSearch] = useState('');
+export default function CountryPickerModal({
+  countries,
+  selectedCountry,
+  onSelect,
+  onClose,
+}: Props) {
+  const [search, setSearch] = useState("");
 
-  const filtered = countries.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.prefix.includes(search)
+  const filtered = countries.filter(
+    (c) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.prefix.includes(search),
   );
 
   return (
@@ -39,7 +51,11 @@ export default function CountryPickerModal({ countries, selectedCountry, onSelec
       onRequestClose={onClose}
     >
       <View style={styles.root}>
-        <TouchableOpacity style={styles.overlay} onPress={onClose} activeOpacity={1} />
+        <TouchableOpacity
+          style={styles.overlay}
+          onPress={onClose}
+          activeOpacity={1}
+        />
 
         <View style={styles.sheet}>
           <View style={styles.handle} />
@@ -58,7 +74,7 @@ export default function CountryPickerModal({ countries, selectedCountry, onSelec
 
           <FlatList
             data={filtered}
-            keyExtractor={item => item.code}
+            keyExtractor={(item) => item.code}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
@@ -91,17 +107,17 @@ const SHEET_HEIGHT = height * 0.58;
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
 
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: "rgba(0,0,0,0.45)",
   },
 
   sheet: {
     height: SHEET_HEIGHT,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 12,
@@ -112,16 +128,16 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: '#d1d5db',
+    backgroundColor: "#d1d5db",
     borderRadius: 2,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginBottom: 16,
   },
 
   searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f3f4f6",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: height * 0.012,
@@ -132,16 +148,16 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: width * 0.038,
-    color: '#111827',
+    color: "#111827",
     padding: 0,
   },
 
   item: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: height * 0.016,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: "#f3f4f6",
     gap: 14,
   },
 
@@ -149,10 +165,10 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
 
   flagEmoji: {
@@ -165,13 +181,13 @@ const styles = StyleSheet.create({
 
   itemName: {
     fontSize: width * 0.038,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: "600",
+    color: "#111827",
   },
 
   itemPrefix: {
     fontSize: width * 0.032,
-    color: '#6b7280',
+    color: "#6b7280",
     marginTop: 2,
   },
 });

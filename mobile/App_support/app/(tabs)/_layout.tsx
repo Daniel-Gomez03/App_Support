@@ -5,7 +5,7 @@ import Inicio from './index';
 import FAQ from './faq';
 import Nuevo from './nuevo';
 import Historial from './historial';
-import Perfil from './Perfil';
+import Perfil from './perfil';
 
 const Tab = createBottomTabNavigator();
 

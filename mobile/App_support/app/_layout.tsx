@@ -5,8 +5,6 @@ import { Stack } from 'expo-router';
 import { useAuth, AuthProvider } from '@/hooks/useAuth';
 import { useRouter } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Drawer } from 'expo-router/drawer';
-import CustomDrawerContent from '@/components/CustomDrawerContent';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,17 +27,9 @@ function RootLayoutNav() {
     if (state.userToken != null) {
         return (
             <GestureHandlerRootView style={{ flex: 1 }}>
-                <Drawer
-                    drawerContent={(props) => <CustomDrawerContent {...props} />}
-                    screenOptions={{ headerShown: false }}
-                >
-                    <Drawer.Screen
-                        name="(tabs)"
-                        options={{
-                            drawerLabel: 'Inicio',
-                        }}
-                    />
-                </Drawer>
+                <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" />
+                </Stack>
             </GestureHandlerRootView>
         );
     }

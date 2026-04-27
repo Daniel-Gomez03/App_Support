@@ -1,41 +1,41 @@
-import React, { ReactNode } from 'react';
-import { View, Dimensions } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import React, { ReactNode } from "react";
+import { View, Dimensions } from "react-native";
+import Svg, { Path } from "react-native-svg";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export default function CurvedBorder({ children }: { children: ReactNode }) {
-    return (
-        <View style={{
-            backgroundColor: '#ffffff',
-            borderTopLeftRadius: width * 0.18,
-            paddingHorizontal: width * 0.08,
-            paddingVertical: height * 0.04,
-            minHeight: height * 0.5,
-            overflow: 'visible',
-            position: 'relative',
-        }}>
-            <Svg
-                width={width}
-                height={100}
-                viewBox={`0 0 ${width} 100`}
-                style={{
-                    position: 'absolute',
-                    top: height * -0.070,
-                    left: 0,
-                    zIndex: 5,
-                }}
-            >
-                <Path
-                    // NO TOCAR AQUI QUE NI ME ACUERDO COMO LO HICE XD
-                    d={`M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`}
-                    fill="#ffffff"
-                />
-            </Svg>
+  return (
+    <View
+      style={{
+        backgroundColor: "#ffffff",
+        borderTopLeftRadius: width * 0.18,
+        paddingHorizontal: width * 0.08,
+        paddingVertical: height * 0.04,
+        minHeight: height * 0.5,
+        overflow: "visible",
+        position: "relative",
+      }}
+    >
+      <Svg
+        width={width}
+        height={100}
+        viewBox={`0 0 ${width} 100`}
+        style={{
+          position: "absolute",
+          top: height * -0.07,
+          left: 0,
+          zIndex: 5,
+        }}
+      >
+        <Path
+          // NO TOCAR AQUI QUE NI ME ACUERDO COMO LO HICE XD
+          d={`M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`}
+          fill="#ffffff"
+        />
+      </Svg>
 
-            <View>
-                {children}
-            </View>
-        </View>
-    );
+      <View>{children}</View>
+    </View>
+  );
 }

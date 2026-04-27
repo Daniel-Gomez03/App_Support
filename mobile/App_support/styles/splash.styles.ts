@@ -1,6 +1,6 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions } from "react-native";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export const S = {
   width,
@@ -15,89 +15,88 @@ export const S = {
 export const splashStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1C0D',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#0B1C0D",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   circleContainer: {
     flex: 1,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: width * 0.05,
   },
 
   circleImage: {
-    position: 'absolute',
+    position: "absolute",
     width: width * 0.78,
     height: width * 0.78,
   },
 
-
   nameContainer: {
-    marginLeft: width * 0.30,
+    marginLeft: width * 0.3,
     flex: 1,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
 
   titleRow: {
-    flexDirection: 'row',
-    overflow: 'hidden',
-    alignItems: 'center',
+    flexDirection: "row",
+    overflow: "hidden",
+    alignItems: "center",
   },
 
   subtitleRow: {
-    flexDirection: 'row',
-    overflow: 'hidden',
-    alignItems: 'center',
+    flexDirection: "row",
+    overflow: "hidden",
+    alignItems: "center",
     marginTop: height * 0.005,
   },
 
   mainTitle: {
-    fontSize: width * 0.10,
+    fontSize: width * 0.1,
     lineHeight: width * 0.09,
-    fontWeight: '500',
-    color: '#ffffff',
+    fontWeight: "500",
+    color: "#ffffff",
     letterSpacing: 1,
-    fontFamily: 'MICROGBE',
+    fontFamily: "MICROGBE",
   },
 
   subtitle: {
     fontSize: width * 0.03,
     lineHeight: width * 0.03,
-    fontWeight: '500',
-    color: '#ffffff',
+    fontWeight: "500",
+    color: "#ffffff",
     letterSpacing: 0.5,
     marginTop: 4,
-    fontFamily: 'MICROGBE',
+    fontFamily: "MICROGBE",
   },
 
   iconWrapper: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 10,
   },
 
   icon: {
-    width: width * 0.40,
+    width: width * 0.4,
     height: height * 0.22,
   },
 
   footer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: height * 0.05,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
 
   copyrightText: {
     fontSize: width * 0.03,
-    color: '#ffffff',
-    fontWeight: '600',
+    color: "#ffffff",
+    fontWeight: "600",
     letterSpacing: 1,
-    fontFamily: 'Poppins-Regular',
+    fontFamily: "Poppins-Regular",
   },
 });

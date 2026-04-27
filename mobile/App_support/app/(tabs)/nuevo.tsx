@@ -1,415 +1,574 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
-  Image, Dimensions, KeyboardAvoidingView, Platform, ActivityIndicator, Alert
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
-import * as ImagePicker from 'expo-image-picker';
-import { useNavigation } from 'expo-router';
-import nuevoService from '../../Services/nuevoService';
-import { useAuth } from '../../hooks/useAuth';
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  FlatList,
+} from "react-native";
+import { nuevoStyles as s } from "@/styles/nuevo.styles";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { useNavigation } from "expo-router";
+import nuevoService from "../../Services/nuevoService";
 
-const { width } = Dimensions.get('window');
+interface Option {
+  label: string;
+  value: any;
+}
+function DropdownField({
+  label,
+  required = false,
+  placeholder,
+  options,
+  value,
+  onChange,
+  icon,
+}: {
+  label: string;
+  required?: boolean;
+  placeholder: string;
+  options: Option[];
+  value: any;
+  onChange: (v: any) => void;
+  icon?: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.value === value);
+  const active = value !== null && value !== undefined;
 
-const RequiredLabel = ({ text, icon }: { text: string, icon?: React.ReactNode }) => (
-  <View style={styles.labelContainer}>
-    {icon}
-    <Text style={styles.label}>{text} <Text style={{ color: '#D9534F' }}>*</Text></Text>
-  </View>
-);
+  return (
+    <View style={s.fieldWrapper}>
+      <View style={s.labelRow}>
+        {icon}
+        <Text style={s.label}>
+          {label}
+          {required && <Text style={s.req}> *</Text>}
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={[s.dropTrigger, active && s.dropTriggerActive]}
+        onPress={() => setOpen(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={[s.dropText, !active && s.dropPlaceholder]}>
+          {selected?.label ?? placeholder}
+        </Text>
+        <Ionicons
+          name="chevron-down"
+          size={16}
+          color={active ? "#3C6034" : "#999"}
+        />
+      </TouchableOpacity>
+
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOpen(false)}
+      >
+        <TouchableOpacity
+          style={s.overlay}
+          onPress={() => setOpen(false)}
+          activeOpacity={1}
+        >
+          <View style={s.sheet}>
+            <Text style={s.sheetTitle}>{label}</Text>
+            <FlatList
+              data={options}
+              keyExtractor={(i) => String(i.value)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    s.sheetOption,
+                    item.value === value && s.sheetOptionActive,
+                  ]}
+                  onPress={() => {
+                    onChange(item.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      s.sheetOptionText,
+                      item.value === value && s.sheetOptionTextActive,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                  {item.value === value && (
+                    <Ionicons name="checkmark" size={18} color="#3C6034" />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+}
 
 export default function NuevoTicketScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { state } = useAuth();
-  const user = state.user;
 
-  const [categories, setCategories] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [models, setModels] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Option[]>([]);
+  const [products, setProducts] = useState<Option[]>([]);
+  const [models, setModels] = useState<Option[]>([]);
 
-  const [selectedCat, setSelectedCat] = useState<any>(null);
-  const [selectedProd, setSelectedProd] = useState<any>(null);
-  const [selectedModel, setSelectedModel] = useState<any>(null);
-  const [serialNumber, setSerialNumber] = useState('');
-  const [asunto, setAsunto] = useState('');
-  const [descripcion, setDescripcion] = useState('');
+  const [asunto, setAsunto] = useState("");
+  const [selectedCat, setSelectedCat] = useState<number | null>(null);
+  const [selectedProd, setSelectedProd] = useState<number | null>(null);
+  const [selectedModel, setSelectedModel] = useState<number | null>(null);
+  const [serial, setSerial] = useState("");
+  const [descripcion, setDescripcion] = useState("");
   const [evidences, setEvidences] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const [showNotFoundModal, setShowNotFoundModal] = useState(false);
 
-  const validateInput = (text: string): string => {
-    if (text.startsWith(' ')) {
-      return text.trimStart();
-    }
-    return text;
-  };
+  const clean = (t: string) => (t.startsWith(" ") ? t.trimStart() : t);
 
-  const isAsuntoValid = asunto.trim().length >= 10;
+  const isAsuntoValid = asunto.trim().length >= 5;
   const isDescValid = descripcion.trim().length >= 20;
-
-  const isSerialValid = selectedModel ? serialNumber.trim().length >= 14 : true;
-
-  const canSubmit = selectedCat && isAsuntoValid && isDescValid && isSerialValid && evidences.length > 0;
+  const canSubmit =
+    selectedCat && isAsuntoValid && isDescValid && evidences.length > 0;
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      limpiarFormulario();
-    });
-    return unsubscribe;
+    const unsub = navigation.addListener("focus", reset);
+    return unsub;
   }, [navigation]);
 
   useEffect(() => {
-    const fetchInit = async () => {
-      try {
-        const data = await nuevoService.getCategories();
-        setCategories(data);
-      } catch (e) { console.error(e); }
-    };
-    fetchInit();
+    nuevoService
+      .getCategories()
+      .then((data) =>
+        setCategories(
+          data.map((c: any) => ({
+            label: c.category_name,
+            value: c.category_id,
+          })),
+        ),
+      )
+      .catch(console.error);
   }, []);
 
-  const handleCategoryChange = (val: any) => {
+  const handleCategoryChange = async (val: number) => {
     setSelectedCat(val);
     setSelectedProd(null);
     setProducts([]);
     setSelectedModel(null);
     setModels([]);
-    setSerialNumber('');
-    if (val) fetchProducts(val);
+    setSerial("");
+    try {
+      const data = await nuevoService.getProductsByCategory(val);
+      setProducts(
+        data.map((p: any) => ({ label: p.product_name, value: p.product_id })),
+      );
+    } catch {}
   };
 
-  const fetchProducts = async (catId: any) => {
-    const data = await nuevoService.getProductsByCategory(catId);
-    setProducts(data);
-  };
-
-  const handleProductChange = (val: any) => {
+  const handleProductChange = async (val: number) => {
     setSelectedProd(val);
     setSelectedModel(null);
     setModels([]);
-    setSerialNumber('');
-    if (val) fetchModels(val);
-  };
-
-  const fetchModels = async (prodId: any) => {
-    const data = await nuevoService.getModelsByProduct(prodId);
-    setModels(data);
+    setSerial("");
+    try {
+      const data = await nuevoService.getModelsByProduct(val);
+      setModels(
+        data.map((m: any) => ({
+          label: m.product_model_name,
+          value: m.product_model_id,
+        })),
+      );
+    } catch {}
   };
 
   const pickMedia = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso denegado', 'Necesitamos acceso a tus archivos.');
+    if (status !== "granted") {
+      Alert.alert("Permiso denegado", "Necesitamos acceso a tus archivos.");
       return;
     }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images", "videos"],
       allowsMultipleSelection: true,
       quality: 0.7,
     });
-
-    if (!result.canceled) {
-      setEvidences([...evidences, ...result.assets]);
-    }
+    if (!result.canceled) setEvidences((prev) => [...prev, ...result.assets]);
   };
 
-  const handleSave = async () => {
-    if (!user) return;
+  const submitTicket = async () => {
     setLoading(true);
     try {
-      const ticketData = {
-        customer_id: user.customer_id,
-        category_id: selectedCat,
-        product_id: selectedProd,
-        product_model_id: selectedModel,
-        ticket_subject: asunto.trim(),
-        ticket_description: descripcion.trim(),
-        ticket_serial_number: serialNumber.trim() || null,
-      };
-
-      const res = await nuevoService.createTicket(ticketData, evidences);
-      Alert.alert("¡Enviado!", res.message);
-      limpiarFormulario();
-    } catch (error: any) {
-      Alert.alert("Error", error.response?.data?.error || "Error al crear ticket");
+      await nuevoService.createTicket(
+        {
+          category_id: selectedCat,
+          product_id: selectedProd,
+          product_model_id: selectedModel,
+          ticket_subject: asunto.trim(),
+          ticket_description: descripcion.trim(),
+          ticket_serial_number: serial.trim() || null,
+        },
+        evidences,
+      );
+      Alert.alert(
+        "¡Ticket enviado!",
+        "Tu ticket fue creado correctamente. Un técnico se te asignará lo más pronto posible.",
+      );
+      reset();
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "No se pudo crear el ticket.");
     } finally {
       setLoading(false);
     }
   };
 
-  const limpiarFormulario = () => {
-    setSelectedCat(null); setSelectedProd(null); setSelectedModel(null);
-    setAsunto(''); setDescripcion(''); setEvidences([]); setSerialNumber('');
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+
+    if (!serial.trim()) {
+      await submitTicket();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const warranty = await nuevoService.checkWarrantyBySerial(serial.trim());
+      if (warranty.exists && !warranty.is_expired) {
+        await submitTicket();
+      } else if (warranty.exists && warranty.is_expired) {
+        setShowExpiredModal(true);
+      } else {
+        setShowNotFoundModal(true);
+      }
+    } catch {
+      await submitTicket();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reset = () => {
+    setAsunto("");
+    setDescripcion("");
+    setSerial("");
+    setSelectedCat(null);
+    setSelectedProd(null);
+    setSelectedModel(null);
+    setProducts([]);
+    setModels([]);
+    setEvidences([]);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.mainContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 120 }]}
-        showsVerticalScrollIndicator={false}
+    <>
+      <KeyboardAvoidingView
+        style={s.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Text style={styles.headerTitle}>Nuevo Ticket</Text>
-
-        <View style={styles.formContainer}>
-
-          {/* CATEGORÍA */}
-          <RequiredLabel text="Categoría" icon={<AntDesign name="appstore" size={16} color="black" />} />
-          <View style={[styles.pickerWrapper, { borderColor: selectedCat ? '#3C6034' : '#F5F5F5' }]}>
-            <Picker selectedValue={selectedCat} onValueChange={handleCategoryChange}>
-              <Picker.Item label="Seleccione una Categoría" value={null} color="#999" />
-              {categories.map(c => (
-                <Picker.Item key={c.category_id} label={c.category_name} value={c.category_id} />
-              ))}
-            </Picker>
+        <ScrollView
+          contentContainerStyle={[
+            s.scroll,
+            { paddingBottom: insets.bottom + 140 },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={s.fieldWrapper}>
+            <View style={s.labelRow}>
+              <MaterialCommunityIcons
+                name="format-title"
+                size={16}
+                color="#333"
+              />
+              <Text style={s.label}>
+                Asunto<Text style={s.req}> *</Text>
+              </Text>
+            </View>
+            <TextInput
+              style={[
+                s.input,
+                asunto.length > 0 && {
+                  borderColor: isAsuntoValid ? "#3C6034" : "#D9534F",
+                },
+              ]}
+              placeholder="Ej: Pantalla táctil no responde"
+              placeholderTextColor="#BBB"
+              value={asunto}
+              onChangeText={(t) => setAsunto(clean(t))}
+              maxLength={100}
+            />
+            {asunto.length > 0 && !isAsuntoValid && (
+              <Text style={s.hint}>Mínimo 5 caracteres</Text>
+            )}
           </View>
 
-          {/* PRODUCTO */}
-          {products.length > 0 && (
-            <View style={{ marginTop: 15 }}>
-              <RequiredLabel text="Producto" icon={<Ionicons name="cube" size={16} color="black" />} />
-              <View style={[styles.pickerWrapper, { borderColor: selectedProd ? '#3C6034' : '#F5F5F5' }]}>
-                <Picker selectedValue={selectedProd} onValueChange={handleProductChange}>
-                  <Picker.Item label="Seleccione un Producto" value={null} color="#999" />
-                  {products.map(p => (
-                    <Picker.Item key={p.product_id} label={p.product_name} value={p.product_id} />
-                  ))}
-                </Picker>
-              </View>
-            </View>
-          )}
-
-          {/* MODELO */}
-          {models.length > 0 && (
-            <View style={{ marginTop: 15 }}>
-              <RequiredLabel text="Modelo" icon={<MaterialCommunityIcons name="tag-text-outline" size={18} color="black" />} />
-              <View style={[styles.pickerWrapper, { borderColor: selectedModel ? '#3C6034' : '#F5F5F5' }]}>
-                <Picker selectedValue={selectedModel} onValueChange={setSelectedModel}>
-                  <Picker.Item label="Seleccione un Modelo" value={null} color="#999" />
-                  {models.map(m => (
-                    <Picker.Item key={m.product_model_id} label={m.product_model_name} value={m.product_model_id} />
-                  ))}
-                </Picker>
-              </View>
-            </View>
-          )}
-
-          {/* VALIDACIO NUMERO DE SERIE*/}
-          {selectedModel && (
-            <View style={{ marginTop: 15 }}>
-              <RequiredLabel text="Número de Serie" icon={<MaterialCommunityIcons name="barcode-scan" size={18} color="black" />} />
-              <TextInput
-                style={[styles.input, {
-                  borderColor: serialNumber.length > 0 ? (isSerialValid ? '#3C6034' : '#D9534F') : '#F5F5F5',
-                  borderWidth: 1
-                }]}
-                placeholder="S/N del dispositivo"
-                value={serialNumber}
-                onChangeText={(t) => setSerialNumber(validateInput(t))}
-                autoCapitalize="characters"
-                maxLength={30}
+          <DropdownField
+            label="Categoría"
+            required
+            placeholder="¿Es un dispositivo o una solución?"
+            icon={
+              <MaterialCommunityIcons
+                name="shape-outline"
+                size={16}
+                color="#333"
               />
-            </View>
+            }
+            options={categories}
+            value={selectedCat}
+            onChange={handleCategoryChange}
+          />
+
+          {products.length > 0 && (
+            <DropdownField
+              label="Tipo de dispositivo"
+              required
+              placeholder="Seleccionar dispositivo"
+              icon={
+                <MaterialCommunityIcons name="monitor" size={16} color="#333" />
+              }
+              options={products}
+              value={selectedProd}
+              onChange={handleProductChange}
+            />
           )}
 
-          {/* ASUNTO */}
-          <View style={{ marginTop: 15 }}>
-            <RequiredLabel text="Asunto" icon={<MaterialCommunityIcons name="format-title" size={18} color="black" />} />
+          {models.length > 0 && (
+            <DropdownField
+              label="Modelo"
+              placeholder="Seleccionar modelo"
+              icon={
+                <MaterialCommunityIcons
+                  name="cog-outline"
+                  size={16}
+                  color="#333"
+                />
+              }
+              options={models}
+              value={selectedModel}
+              onChange={setSelectedModel}
+            />
+          )}
+
+          <View style={s.fieldWrapper}>
+            <View style={s.labelRow}>
+              <MaterialCommunityIcons
+                name="barcode-scan"
+                size={16}
+                color="#333"
+              />
+              <Text style={s.label}>
+                No. de Serie<Text style={s.req}> *</Text>
+              </Text>
+            </View>
             <TextInput
-              style={[styles.input, {
-                borderColor: asunto.length > 0 ? (isAsuntoValid ? '#3C6034' : '#D9534F') : '#F5F5F5',
-                borderWidth: 1
-              }]}
-              placeholder="¿Qué sucede? "
-              value={asunto}
-              onChangeText={(t) => setAsunto(validateInput(t))}
+              style={[s.input, serial.length > 0 && { borderColor: "#3C6034" }]}
+              placeholder="Ej: SN-KT31-001"
+              placeholderTextColor="#BBB"
+              value={serial}
+              onChangeText={(t) => setSerial(clean(t).toUpperCase())}
+              autoCapitalize="characters"
+              maxLength={40}
             />
           </View>
 
-          {/* DESCRIPCIÓN */}
-          <View style={{ marginTop: 15 }}>
-            <RequiredLabel text="Descripción" icon={<Ionicons name="document-text" size={18} color="black" />} />
+          <View style={s.fieldWrapper}>
+            <View style={s.labelRow}>
+              <Ionicons name="document-text-outline" size={16} color="#333" />
+              <Text style={s.label}>
+                Descripción del problema<Text style={s.req}> *</Text>
+              </Text>
+            </View>
             <TextInput
-              style={[styles.input, styles.textArea, {
-                borderColor: descripcion.length > 0 ? (isDescValid ? '#3C6034' : '#D9534F') : '#F5F5F5',
-                borderWidth: 1
-              }]}
-              placeholder="Ayudanos a saber un poco mas sobre el Problema"
+              style={[
+                s.input,
+                s.textArea,
+                descripcion.length > 0 && {
+                  borderColor: isDescValid ? "#3C6034" : "#D9534F",
+                },
+              ]}
+              placeholder={
+                "Describe el problema con el mayor detalle posible. Si es posible incluye pasos para reproducirlo, mensajes de error, etc."
+              }
+              placeholderTextColor="#BBB"
               multiline
               value={descripcion}
-              onChangeText={(t) => setDescripcion(validateInput(t))}
+              onChangeText={(t) => setDescripcion(clean(t))}
             />
+            {descripcion.length > 0 && !isDescValid && (
+              <Text style={s.hint}>Mínimo 20 caracteres</Text>
+            )}
           </View>
 
-          {/* EVIDENCIA */}
-          <View style={{ marginTop: 15 }}>
-            <RequiredLabel text="Adjunta Evidencia" />
+          <View style={s.fieldWrapper}>
+            <View style={s.labelRow}>
+              <Ionicons name="attach-outline" size={16} color="#333" />
+              <Text style={s.label}>
+                Evidencias<Text style={s.req}> *</Text>
+              </Text>
+            </View>
+
             <TouchableOpacity
-              style={[styles.uploadArea, { borderColor: evidences.length > 0 ? '#3C6034' : '#ddd' }]}
+              style={[s.uploadBtn, evidences.length > 0 && s.uploadBtnActive]}
               onPress={pickMedia}
+              activeOpacity={0.8}
             >
-              <View style={styles.iconCircle}>
-                <AntDesign name="picture" size={width * 0.08} color="white" />
-              </View>
-              <Text style={styles.uploadText}>
-                <Text style={{ color: '#3C6034', fontWeight: 'bold' }}>Presione Aquí</Text> Para cargar imágenes o videos
+              <Ionicons
+                name="attach"
+                size={18}
+                color={evidences.length > 0 ? "#3C6034" : "#999"}
+              />
+              <Text
+                style={[
+                  s.uploadText,
+                  evidences.length > 0 && s.uploadTextActive,
+                ]}
+              >
+                {evidences.length > 0
+                  ? `${evidences.length} archivo${evidences.length > 1 ? "s" : ""} adjunto${evidences.length > 1 ? "s" : ""}`
+                  : "Adjuntar archivo"}
               </Text>
             </TouchableOpacity>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-              {evidences.map((item, index) => (
-                <View key={index} style={styles.thumbWrapper}>
-                  <Image source={{ uri: item.uri }} style={styles.thumb} />
-                  {item.type === 'video' && (
-                    <View style={styles.videoOverlay}>
-                      <Ionicons name="play" size={15} color="white" />
-                    </View>
-                  )}
-                  <TouchableOpacity
-                    style={styles.removeBtn}
-                    onPress={() => setEvidences(evidences.filter((_, i) => i !== index))}
-                  >
-                    <Ionicons name="close-circle" size={20} color="#D9534F" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
+            {evidences.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginTop: 10 }}
+              >
+                {evidences.map((item, i) => (
+                  <View key={i} style={s.thumb}>
+                    <Image source={{ uri: item.uri }} style={s.thumbImg} />
+                    {item.type === "video" && (
+                      <View style={s.thumbOverlay}>
+                        <Ionicons name="play" size={14} color="white" />
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      style={s.thumbRemove}
+                      onPress={() =>
+                        setEvidences((prev) => prev.filter((_, j) => j !== i))
+                      }
+                    >
+                      <Ionicons name="close-circle" size={20} color="#D9534F" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
           </View>
 
+          <TouchableOpacity
+            style={[
+              s.submitBtn,
+              (!canSubmit || loading) && s.submitBtnDisabled,
+            ]}
+            disabled={!canSubmit || loading}
+            onPress={handleSubmit}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={s.submitText}>Crear Ticket</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      <Modal
+        visible={showExpiredModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowExpiredModal(false)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <View style={s.modalIconWrap}>
+              <Ionicons name="warning-outline" size={32} color="#D97706" />
+            </View>
+            <Text style={s.modalTitle}>Garantía vencida</Text>
+            <Text style={s.modalBody}>
+              El número de serie ingresado tiene la garantía vencida. Esta
+              revisión podría generar un{" "}
+              <Text style={{ fontFamily: "Poppins-Bold" }}>
+                costo adicional
+              </Text>
+              .{"\n\n"}
+              ¿Deseas continuar de todas formas?
+            </Text>
+            <View style={s.modalActions}>
+              <TouchableOpacity
+                style={s.modalBtnCancel}
+                onPress={() => setShowExpiredModal(false)}
+              >
+                <Text style={s.modalBtnCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={s.modalBtnConfirm}
+                onPress={() => {
+                  setShowExpiredModal(false);
+                  submitTicket();
+                }}
+              >
+                <Text style={s.modalBtnConfirmText}>Sí, continuar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
+      </Modal>
 
-        <TouchableOpacity
-          style={[styles.saveButton, (!canSubmit || loading) && { opacity: 0.5 }]}
-          disabled={!canSubmit || loading}
-          onPress={handleSave}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.saveButtonText}>Crear Ticket</Text>
-          )}
-        </TouchableOpacity>
-
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <Modal
+        visible={showNotFoundModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNotFoundModal(false)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <View style={[s.modalIconWrap, { backgroundColor: "#EFF6FF" }]}>
+              <Ionicons
+                name="information-circle-outline"
+                size={32}
+                color="#3B82F6"
+              />
+            </View>
+            <Text style={s.modalTitle}>Número de serie no registrado</Text>
+            <Text style={s.modalBody}>
+              No encontramos ese número de serie en nuestros registros. Puedes
+              continuar con tu solicitud, aunque ten en cuenta que podría
+              aplicar un cargo por la revisión.
+            </Text>
+            <View style={s.modalActions}>
+              <TouchableOpacity
+                style={s.modalBtnCancel}
+                onPress={() => setShowNotFoundModal(false)}
+              >
+                <Text style={s.modalBtnCancelText}>Revisar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.modalBtnConfirm, { backgroundColor: "#3B82F6" }]}
+                onPress={() => {
+                  setShowNotFoundModal(false);
+                  submitTicket();
+                }}
+              >
+                <Text style={s.modalBtnConfirmText}>Continuar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: 'white'
-  },
-  scrollContent: {
-    paddingHorizontal: width * 0.08
-  },
-  headerTitle: {
-    fontFamily: 'Poppins-Bold',
-    fontSize: width * 0.07,
-    color: '#000',
-    marginVertical: 20
-  },
-  formContainer: {
-    width: '100%'
-  },
-  labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8
-  },
-  label: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    marginLeft: 8
-  },
-  pickerWrapper: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 15,
-    borderWidth: 1,
-    overflow: 'hidden'
-  },
-  input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 15,
-    padding: 15,
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#F5F5F5'
-  },
-  textArea: {
-    height: 120,
-    textAlignVertical: 'top'
-  },
-  uploadArea: {
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderRadius: 15,
-    padding: 20,
-    alignItems: 'center',
-    backgroundColor: '#FCFCFC'
-  },
-  iconCircle: {
-    backgroundColor: '#3C6034',
-    padding: 15,
-    borderRadius: 40,
-    marginBottom: 10
-  },
-  uploadText: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center'
-  },
-  thumbWrapper: {
-    marginRight: 10,
-    position: 'relative'
-  },
-  thumb: {
-    width: width * 0.2,
-    height: width * 0.2,
-    borderRadius: 10
-  },
-  videoOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10
-  },
-  removeBtn: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: 'white',
-    borderRadius: 10
-  },
-  saveButton: {
-    backgroundColor: '#3C6034',
-    borderRadius: 25,
-    padding: 18,
-    alignItems: 'center',
-    marginTop: 30,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4
-  },
-  saveButtonText: {
-    color: 'white',
-    fontFamily: 'Poppins-Bold',
-    fontSize: 16
-  },
-  errorText: {
-    color: '#D9534F',
-    fontSize: 11,
-    marginTop: 4,
-    marginLeft: 5,
-    fontFamily: 'Poppins-Regular'
-  }
-});

@@ -1,12 +1,15 @@
 import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.1.26:8000/api'; 
+const API_URL = 'http://192.168.1.18:8000/api';
+
+const authHeader = async () => {
+    const token = await SecureStore.getItemAsync('userToken');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export const getFAQs = async () => {
-    try {
-        const response = await axios.get(`${API_URL}/faqs`);
-        return response.data;
-    } catch (error: any) {
-        throw error.response?.data || { error: 'Error al cargar FAQs' };
-    }
+    const headers = await authHeader();
+    const response = await axios.get(`${API_URL}/mobile/faqs`, { headers });
+    return response.data;
 };

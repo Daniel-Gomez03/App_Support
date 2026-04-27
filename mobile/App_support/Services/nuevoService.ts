@@ -1,134 +1,104 @@
-import axios from 'axios';
 import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.1.26:8000/api';
+const API_URL = 'http://192.168.1.18:8000/api';
+
+const authHeader = async (): Promise<Record<string, string>> => {
+    const token = await SecureStore.getItemAsync('userToken');
+    return { Authorization: `Bearer ${token ?? ''}` };
+};
 
 const nuevoService = {
-    //Obtener todas las categorias
     getCategories: async () => {
-        try {
-            const response = await axios.get(`${API_URL}/categories`);
-            return response.data;
-        } catch (error) {
-            console.error("Error en getCategories Service:", error);
-            throw error;
-        }
+        const headers = await authHeader();
+        const res = await fetch(`${API_URL}/mobile/categories`, { headers });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al obtener categorías');
+        return data;
     },
 
-    //Obtener productos por categoria
-    getProductsByCategory: async (category_id: any) => {
-        try {
-            const response = await axios.get(`${API_URL}/products`);
-            const allProducts = response.data;
-
-            return allProducts.filter((p: any) => p.category_id === category_id);
-        } catch (error) {
-            console.error("Error en getProductsByCategory:", error);
-            return [];
-        }
+    getProductsByCategory: async (category_id: number) => {
+        const headers = await authHeader();
+        const res = await fetch(`${API_URL}/mobile/categories/${category_id}/products`, { headers });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al obtener productos');
+        return data;
     },
 
-    // Obtener modelos filtrados por el producto
-    getModelsByProduct: async (product_id: any) => {
-        try {
-            const response = await axios.get(`${API_URL}/product/${product_id}/models`);
-            return response.data;
-        } catch (error) {
-            console.error("Error en getModelsByProduct:", error);
-            return [];
-        }
+    getModelsByProduct: async (product_id: number) => {
+        const headers = await authHeader();
+        const res = await fetch(`${API_URL}/mobile/products/${product_id}/models`, { headers });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al obtener modelos');
+        return data;
     },
 
-    // Crear ticket
+    checkWarrantyBySerial: async (serial: string) => {
+        const res = await fetch(`${API_URL}/mobile/validate-warranty?type=serie&value=${encodeURIComponent(serial)}`);
+        const data = await res.json();
+        if (!res.ok) return { exists: false, is_expired: false };
+        return data as { exists: boolean; is_expired: boolean; expiry_date?: string };
+    },
+
     createTicket: async (ticketData: any, files: any[]) => {
-        try {
-            const formData = new FormData();
+        const token = await SecureStore.getItemAsync('userToken');
+        const formData = new FormData();
 
-            // Datos del Ticket
-            formData.append('customer_id', ticketData.customer_id.toString());
-            formData.append('category_id', ticketData.category_id.toString());
-            formData.append('product_id', ticketData.product_id ? ticketData.product_id.toString() : '');
-            formData.append('ticket_subject', ticketData.ticket_subject);
-            formData.append('ticket_description', ticketData.ticket_description);
+        formData.append('category_id', ticketData.category_id.toString());
+        formData.append('ticket_subject', ticketData.ticket_subject);
+        formData.append('ticket_description', ticketData.ticket_description);
 
-            if (ticketData.product_model_id) {
-                formData.append('product_model_id', ticketData.product_model_id.toString());
-            }
-            if (ticketData.ticket_serial_number) {
-                formData.append('ticket_serial_number', ticketData.ticket_serial_number);
-            }
+        if (ticketData.product_id)
+            formData.append('product_id', ticketData.product_id.toString());
+        if (ticketData.product_model_id)
+            formData.append('product_model_id', ticketData.product_model_id.toString());
+        if (ticketData.ticket_serial_number)
+            formData.append('ticket_serial_number', ticketData.ticket_serial_number);
 
-            // Procesar Archivos
-            files.forEach((file, index) => {
-                const uri = file.uri;
-                const fileName = file.name || uri.split('/').pop();
-                const extension = fileName.split('.').pop()?.toLowerCase();
+        files.forEach(file => {
+            const uri = file.uri;
+            const fileName = file.name || uri.split('/').pop();
+            const ext = fileName.split('.').pop()?.toLowerCase();
+            let type = `image/${ext === 'png' ? 'png' : 'jpeg'}`;
+            if (file.type === 'video' || ext === 'mp4') type = 'video/mp4';
 
-                let type = '';
-                if (extension === 'pdf') {
-                    type = 'application/pdf';
-                } else if (file.type === 'video' || extension === 'mp4') {
-                    type = 'video/mp4';
-                } else {
-                    type = `image/${extension === 'png' ? 'png' : 'jpeg'}`;
-                }
+            formData.append('evidences', {
+                uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+                name: fileName,
+                type,
+            } as any);
+        });
 
-                formData.append('evidences', {
-                    uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
-                    name: fileName,
-                    type: type,
-                } as any);
-            });
+        const res = await fetch(`${API_URL}/mobile/tickets`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json',
+                'Content-Type': 'multipart/form-data',
+            },
+            body: formData,
+        });
 
-            const response = await fetch(`${API_URL}/tickets`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Error al crear el ticket');
-            }
-
-            return result;
-
-        } catch (error: any) {
-            console.error("Error en createTicket (Fetch):", error.message);
-            throw error;
-        }
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Error al crear el ticket');
+        return result;
     },
-    //Tickets segun el usuario logueado (historial)
+
     getTicketsByCustomer: async (customerId: number) => {
-        try {
-            const response = await fetch(`${API_URL}/tickets/customer/${customerId}`);
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || 'Error al obtener historial');
-            return result; 
-        } catch (error) {
-            throw error;
-        }
+        const headers = await authHeader();
+        const res = await fetch(`${API_URL}/tickets/customer/${customerId}`, { headers });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Error al obtener historial');
+        return result;
     },
-    // Obtener tickets activos del usuario 
+
     getActiveTicketsByCustomer: async (customerId: number) => {
-        try {
-            const response = await fetch(`${API_URL}/tickets/active/${customerId}`);
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Error al obtener tickets activos');
-            }
-            
-            return result; 
-        } catch (error) {
-            console.error("Error en getActiveTicketsByCustomer:", error);
-            throw error;
-        }
-    }
+        const headers = await authHeader();
+        const res = await fetch(`${API_URL}/tickets/active/${customerId}`, { headers });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Error al obtener tickets activos');
+        return result;
+    },
 };
 
 export default nuevoService;

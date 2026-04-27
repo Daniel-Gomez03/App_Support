@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = 'http://192.168.1.26:8000/api';
+const API_URL = "http://192.168.1.18:8000/api";
 
 export interface RegisterPayload {
   // Paso 1
@@ -13,7 +13,7 @@ export interface RegisterPayload {
   customer_phone: string;
   // Paso 2
   customer_company: string;
-  validation_type: 'serie' | 'factura';
+  validation_type: "serie" | "factura";
   validation_value: string;
   // Paso 3
   customer_password: string;
@@ -40,9 +40,7 @@ export interface WarrantyPolicy {
   policy_content: PolicySection[];
 }
 
-
 const authService = {
-
   // ============================================
   // LOGIN
   // ============================================
@@ -54,7 +52,7 @@ const authService = {
       });
       return response.data;
     } catch (error: any) {
-      throw error.response?.data || { error: 'Error en login' };
+      throw error.response?.data || { error: "Error en login" };
     }
   },
 
@@ -66,7 +64,7 @@ const authService = {
       const response = await axios.post(`${API_URL}/mobile/register`, payload);
       return response.data;
     } catch (error: any) {
-      throw error.response?.data || { error: 'Error en registro' };
+      throw error.response?.data || { error: "Error en registro" };
     }
   },
 
@@ -74,8 +72,8 @@ const authService = {
   // VALIDAR GARANTÍA (Paso 2)
   // ============================================
   validateWarranty: async (
-    type: 'serie' | 'factura',
-    value: string
+    type: "serie" | "factura",
+    value: string,
   ): Promise<WarrantyValidationResult> => {
     try {
       const response = await axios.get(`${API_URL}/mobile/validate-warranty`, {
@@ -83,19 +81,19 @@ const authService = {
       });
       return response.data;
     } catch (error: any) {
-      throw error.response?.data || { error: 'Error al validar garantía' };
+      throw error.response?.data || { error: "Error al validar garantía" };
     }
   },
 
   // ============================================
-  // POLÍTICA DE GARANTÍA 
+  // POLÍTICA DE GARANTÍA
   // ============================================
   getWarrantyPolicy: async (): Promise<WarrantyPolicy> => {
     try {
       const response = await axios.get(`${API_URL}/mobile/warranty-policy`);
       return response.data;
     } catch (error: any) {
-      throw error.response?.data || { error: 'Error al obtener la política' };
+      throw error.response?.data || { error: "Error al obtener la política" };
     }
   },
 
@@ -107,7 +105,7 @@ const authService = {
       const response = await axios.get(`${API_URL}/customers/${customerId}`);
       return response.data;
     } catch (error: any) {
-      throw error.response?.data || { error: 'Error al obtener cliente' };
+      throw error.response?.data || { error: "Error al obtener cliente" };
     }
   },
 
@@ -116,19 +114,26 @@ const authService = {
   // ============================================
   forgotPassword: async (customer_email: string) => {
     try {
-      const response = await axios.post(`${API_URL}/mobile/forgot-password`, { customer_email });
+      const response = await axios.post(`${API_URL}/mobile/forgot-password`, {
+        customer_email,
+      });
       return response.data;
     } catch (error: any) {
-      throw error.response?.data || { error: 'Error al enviar el correo' };
+      throw error.response?.data || { error: "Error al enviar el correo" };
     }
   },
 
   resetPassword: async (token: string, new_password: string) => {
     try {
-      const response = await axios.post(`${API_URL}/mobile/reset-password`, { token, new_password });
+      const response = await axios.post(`${API_URL}/mobile/reset-password`, {
+        token,
+        new_password,
+      });
       return response.data;
     } catch (error: any) {
-      throw error.response?.data || { error: 'Error al restablecer la contraseña' };
+      throw (
+        error.response?.data || { error: "Error al restablecer la contraseña" }
+      );
     }
   },
 
@@ -138,16 +143,16 @@ const authService = {
   updateCustomer: async (customerId: number | string, formData: any) => {
     try {
       const response = await fetch(`${API_URL}/customers/${customerId}`, {
-        method: 'PUT',
+        method: "PUT",
         body: formData,
-        headers: { Accept: 'application/json' },
+        headers: { Accept: "application/json" },
       });
       const data = await response.json();
       if (!response.ok) throw data;
       return data;
     } catch (error: any) {
       if (error.error) throw error;
-      throw { error: 'Error de conexión al actualizar el perfil' };
+      throw { error: "Error de conexión al actualizar el perfil" };
     }
   },
 };
