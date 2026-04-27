@@ -18,7 +18,7 @@ import {
 } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
 import nuevoService from "../../Services/nuevoService";
 
 const { width } = Dimensions.get("window");
@@ -82,7 +82,9 @@ function TicketCard({ ticket }: { ticket: any }) {
     <TouchableOpacity
       style={s.card}
       activeOpacity={hasAssigned ? 0.75 : 1}
-      onPress={() => hasAssigned && router.push(`/ticket/${ticket.ticket_id}` as any)}
+      onPress={() =>
+        hasAssigned && router.push(`/ticket/${ticket.ticket_id}` as any)
+      }
     >
       <View style={s.cardTop}>
         <View

@@ -24,7 +24,7 @@ export const loginStyles = StyleSheet.create({
 
   userImageContainer: {
     alignItems: "center",
-    marginBottom: height * -0.046,
+    marginBottom: height * -0.049,
     zIndex: 10,
   },
 
