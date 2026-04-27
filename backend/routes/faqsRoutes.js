@@ -3,36 +3,36 @@ const router = express.Router();
 const faqsController = require('../Controllers/faqsController');
 const authorize = require('../Middleware/authorize');
 
-router.get('/faqs', 
+router.get('/faqs',
     authorize('Q&A', 'permissions_read'),
     faqsController.getAllFaqs
 );
 
-router.get('/faqs/inactives', 
+router.get('/faqs/inactives',
     authorize('Q&A', 'permissions_read'),
     faqsController.getAllFaqsInactives
 );
 
-router.get('/faqs/:id', 
+router.get('/faqs/:id',
     authorize('Q&A', 'permissions_read'),
     faqsController.getFaqById
 );
 
-router.post('/faqs', 
+router.post('/faqs',
     authorize('Q&A', 'permissions_write'),
     faqsController.createFaq
 );
 
-router.put('/faqs/:id', 
+router.put('/faqs/:id',
     authorize('Q&A', 'permissions_edit'),
     faqsController.updateFaq
 );
-router.delete('/faqs/:id', 
+router.delete('/faqs/:id',
     authorize('Q&A', 'permissions_edit'),
     faqsController.deleteFaq
 );
 
-router.patch('/faqs/:id/toggle', 
+router.patch('/faqs/:id/toggle',
     authorize('Q&A', 'permissions_edit'),
     faqsController.toggleFaqStatus
 );

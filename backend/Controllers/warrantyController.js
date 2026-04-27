@@ -1,4 +1,4 @@
-const Warranty       = require('../models/Warranty');
+const Warranty = require('../models/Warranty');
 const WarrantyPolicy = require('../models/WarrantyPolicy');
 const XLSX = require('xlsx');
 const Papa = require('papaparse');
@@ -53,7 +53,7 @@ exports.checkWarrantyBySerial = async (req, res) => {
         const warranty = await Warranty.findOne({
             where: {
                 warranty_serial_number: serial.trim(),
-                warranty_status: 1 
+                warranty_status: 1
             }
         });
 
@@ -66,8 +66,8 @@ exports.checkWarrantyBySerial = async (req, res) => {
 
         res.json({
             exists: true,
-            is_expired: warranty.is_expired, 
-            expiry_date: warranty.warranty_expiry_date, 
+            is_expired: warranty.is_expired,
+            expiry_date: warranty.warranty_expiry_date,
             message: warranty.is_expired
                 ? 'El serial existe pero la garantía ha expirado.'
                 : 'Garantía vigente y validada.'
@@ -95,7 +95,6 @@ exports.createWarranty = async (req, res) => {
             return res.status(400).json({ error: 'La fecha de compra es obligatoria' });
         }
 
-        // --- VALIDACIÓN DE RANGO DE FECHAS ---
         const [year, month, day] = warranty_purchase_date.split('-').map(Number);
         const purchaseDate = new Date(year, month - 1, day, 12, 0, 0);
 
@@ -301,7 +300,6 @@ exports.getPolicy = async (req, res) => {
 
 // ============================================
 // ACTUALIZAR POLÍTICA DE GARANTÍA
-// Desactiva la versión anterior y crea una nueva
 // ============================================
 exports.updatePolicy = async (req, res) => {
     try {
@@ -315,13 +313,11 @@ exports.updatePolicy = async (req, res) => {
             return res.status(400).json({ error: 'El contenido debe ser un arreglo de secciones.' });
         }
 
-        // Desactivar la versión actual
         await WarrantyPolicy.update(
             { policy_is_active: 0 },
             { where: { policy_is_active: 1 } }
         );
 
-        // Crear la nueva versión activa
         const newPolicy = await WarrantyPolicy.create({
             policy_version,
             policy_updated_label,
@@ -337,7 +333,7 @@ exports.updatePolicy = async (req, res) => {
 
         res.status(201).json({
             message: `Política actualizada a ${policy_version} correctamente.`,
-            policy:  newPolicy,
+            policy: newPolicy,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });

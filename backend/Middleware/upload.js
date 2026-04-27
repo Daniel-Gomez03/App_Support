@@ -5,12 +5,12 @@ const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
     const filetypes = /xlsx|xls|csv/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    
+
     const mimetypes = [
         'text/csv',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'application/vnd.ms-excel',
-        'text/plain', 
+        'text/plain',
         'application/csv'
     ];
 
@@ -25,9 +25,9 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
     storage: storage,
-    limits: { 
+    limits: {
         fileSize: 5 * 1024 * 1024, // Limite 5 MB
-        files: 1 
+        files: 1
     },
     fileFilter: fileFilter
 });

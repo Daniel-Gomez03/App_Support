@@ -34,7 +34,7 @@ const fetchConfig = (method, body = null) => {
 const fetchFormDataConfig = (method, formData) => {
     return {
         method: method,
-        body: formData, 
+        body: formData,
         credentials: 'include'
     };
 };

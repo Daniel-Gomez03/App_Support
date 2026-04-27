@@ -16,7 +16,6 @@ interface TabBarProps {
     navigation: any;
 }
 
-// Generador de la curva SVG
 const getPath = (tabWidth: number) => {
     const center = width + (tabWidth / 2);
     const curveWidth = width * 0.20;
@@ -25,13 +24,10 @@ const getPath = (tabWidth: number) => {
 
     const points: [number, number][] = [
         [0, 0],
-        //lado izquierdo
         [center - curveWidth / 2 - sideOffset, 0],
         [center - curveWidth / 2, 0],
         [center - sideOffset, curveDepth],
-        //centro        
         [center, curveDepth],
-        //lado dereho
         [center + sideOffset, curveDepth],
         [center + curveWidth / 2, 0],
         [center + curveWidth / 2 + sideOffset, 0],
@@ -83,7 +79,6 @@ export default function TabBar({ state, descriptors, navigation }: TabBarProps) 
                     </View>
                 </View>
 
-                {/* Botones y Círculos Flotantes */}
                 <View style={styles.buttonsContainer}>
                     {state.routes.map((route: any, index: number) => {
                         const { options } = descriptors[route.key];

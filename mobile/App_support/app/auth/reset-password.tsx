@@ -4,7 +4,6 @@ import {
   ScrollView, Animated, ActivityIndicator, StyleSheet, Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import Entypo from '@expo/vector-icons/Entypo';
 import Svg, { Path } from 'react-native-svg';
 import authService from '@/Services/authService';
@@ -14,27 +13,27 @@ const CURVE_PATH = `M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${widt
 
 interface ValidationRule {
   label: string;
-  test:  (v: string) => boolean;
+  test: (v: string) => boolean;
 }
 
 const RULES: ValidationRule[] = [
-  { label: 'La contraseña debe contener una Mayúscula',            test: v => /[A-Z]/.test(v) },
-  { label: 'La contraseña debe contener una Minúscula',            test: v => /[a-z]/.test(v) },
-  { label: 'La contraseña debe contener un Número',                test: v => /[0-9]/.test(v) },
-  { label: 'La contraseña debe contener un Carácter especial',     test: v => /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]/.test(v) },
-  { label: 'La contraseña debe tener un mínimo de 12 caracteres',  test: v => v.length >= 12 },
+  { label: 'La contraseña debe contener una Mayúscula', test: v => /[A-Z]/.test(v) },
+  { label: 'La contraseña debe contener una Minúscula', test: v => /[a-z]/.test(v) },
+  { label: 'La contraseña debe contener un Número', test: v => /[0-9]/.test(v) },
+  { label: 'La contraseña debe contener un Carácter especial', test: v => /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]/.test(v) },
+  { label: 'La contraseña debe tener un mínimo de 12 caracteres', test: v => v.length >= 12 },
 ];
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const { token } = useLocalSearchParams<{ token: string }>();
 
-  const [newPassword,     setNewPassword]     = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNew,         setShowNew]         = useState(false);
-  const [showConfirm,     setShowConfirm]     = useState(false);
-  const [loading,         setLoading]         = useState(false);
-  const [error,           setError]           = useState('');
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const panelAnim = useRef(new Animated.Value(height)).current;
   useEffect(() => {
@@ -43,7 +42,7 @@ export default function ResetPasswordScreen() {
     }).start();
   }, []);
 
-  const allRulesPass  = RULES.every(r => r.test(newPassword));
+  const allRulesPass = RULES.every(r => r.test(newPassword));
   const passwordsMatch = newPassword !== '' && newPassword === confirmPassword;
   const canSubmit = allRulesPass && passwordsMatch && !loading;
 
@@ -66,7 +65,6 @@ export default function ResetPasswordScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ── Cabecera oscura ── */}
       <View style={styles.header}>
         <Image
           source={require('@/assets/images/Logo.png')}
@@ -75,7 +73,6 @@ export default function ResetPasswordScreen() {
         />
       </View>
 
-      {/* ── Panel blanco animado ── */}
       <Animated.View style={{ flex: 1, transform: [{ translateY: panelAnim }] }}>
         <Svg
           width={width}
@@ -98,7 +95,6 @@ export default function ResetPasswordScreen() {
               Restablece tu contraseña por una nueva. Tu contraseña debe ser diferente a tu contraseña anterior.
             </Text>
 
-            {/* Nueva contraseña */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Nueva Contraseña</Text>
               <View style={styles.passwordRow}>
@@ -117,7 +113,6 @@ export default function ResetPasswordScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Validaciones */}
               <View style={styles.validationList}>
                 {RULES.map((rule, i) => {
                   const pass = rule.test(newPassword);
@@ -139,7 +134,6 @@ export default function ResetPasswordScreen() {
               </View>
             </View>
 
-            {/* Confirmar contraseña */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirmar contraseña</Text>
               <View style={styles.passwordRow}>
@@ -166,7 +160,6 @@ export default function ResetPasswordScreen() {
               <Text style={[styles.errorText, { marginBottom: height * 0.010 }]}>{error}</Text>
             )}
 
-            {/* Botón */}
             <TouchableOpacity
               style={[styles.button, !canSubmit && styles.buttonDisabled]}
               disabled={!canSubmit}
@@ -189,51 +182,51 @@ export default function ResetPasswordScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex:            1,
+    flex: 1,
     backgroundColor: '#0B1C0D',
   },
 
   header: {
-    paddingTop:        height * 0.06,
-    paddingBottom:     height * 0.02,
-    paddingHorizontal: width  * 0.06,
-    alignItems:        'center',
-    justifyContent:    'center',
+    paddingTop: height * 0.06,
+    paddingBottom: height * 0.02,
+    paddingHorizontal: width * 0.06,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   headerLogo: {
-    width:  width  * 0.52,
+    width: width * 0.52,
     height: height * 0.065,
   },
 
   panel: {
-    flex:                1,
-    backgroundColor:     '#ffffff',
+    flex: 1,
+    backgroundColor: '#ffffff',
     borderTopLeftRadius: width * 0.18,
-    overflow:            'hidden',
+    overflow: 'hidden',
   },
 
   scrollContent: {
-    paddingHorizontal: width  * 0.08,
-    paddingTop:        height * 0.045,
-    paddingBottom:     height * 0.04,
+    paddingHorizontal: width * 0.08,
+    paddingTop: height * 0.045,
+    paddingBottom: height * 0.04,
   },
 
   title: {
-    fontSize:     width * 0.072,
-    fontWeight:   'bold',
-    color:        '#111827',
-    fontFamily:   'Poppins-Bold',
-    textAlign:    'center',
+    fontSize: width * 0.072,
+    fontWeight: 'bold',
+    color: '#111827',
+    fontFamily: 'Poppins-Bold',
+    textAlign: 'center',
     marginBottom: height * 0.014,
   },
 
   subtitle: {
-    fontSize:     width * 0.034,
-    color:        '#6b7280',
-    textAlign:    'center',
-    fontFamily:   'Poppins-Regular',
-    lineHeight:   width * 0.05,
+    fontSize: width * 0.034,
+    color: '#6b7280',
+    textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
+    lineHeight: width * 0.05,
     marginBottom: height * 0.030,
   },
 
@@ -242,69 +235,69 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize:     width * 0.034,
-    fontWeight:   '600',
-    color:        '#111827',
-    fontFamily:   'Poppins-Regular',
+    fontSize: width * 0.034,
+    fontWeight: '600',
+    color: '#111827',
+    fontFamily: 'Poppins-Regular',
     marginBottom: height * 0.008,
   },
 
   passwordRow: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    borderWidth:       1,
-    borderColor:       '#e5e7eb',
-    borderRadius:      12,
-    paddingHorizontal: width  * 0.04,
-    paddingVertical:   height * 0.005,
-    backgroundColor:   '#ffffff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    paddingHorizontal: width * 0.04,
+    paddingVertical: height * 0.005,
+    backgroundColor: '#ffffff',
   },
 
   passwordInput: {
-    flex:            1,
-    fontSize:        width  * 0.034,
-    color:           '#111827',
+    flex: 1,
+    fontSize: width * 0.034,
+    color: '#111827',
     paddingVertical: height * 0.010,
-    fontFamily:      'Poppins-Regular',
+    fontFamily: 'Poppins-Regular',
   },
 
   validationList: {
-    gap:       height * 0.005,
+    gap: height * 0.005,
     marginTop: height * 0.010,
   },
 
   validationItem: {
     flexDirection: 'row',
-    alignItems:    'center',
-    gap:           7,
+    alignItems: 'center',
+    gap: 7,
   },
 
   validationDot: {
-    width:        7,
-    height:       7,
+    width: 7,
+    height: 7,
     borderRadius: 4,
-    flexShrink:   0,
+    flexShrink: 0,
   },
 
   validationText: {
-    fontSize:   width * 0.028,
+    fontSize: width * 0.028,
     fontFamily: 'Poppins-Regular',
   },
 
   errorText: {
-    fontSize:   width * 0.028,
-    color:      '#ef4444',
+    fontSize: width * 0.028,
+    color: '#ef4444',
     fontFamily: 'Poppins-Regular',
-    marginTop:  4,
+    marginTop: 4,
   },
 
   button: {
     backgroundColor: '#1B3A1F',
     paddingVertical: height * 0.018,
-    borderRadius:    width  * 0.08,
-    alignItems:      'center',
-    marginTop:       height * 0.010,
-    marginBottom:    height * 0.015,
+    borderRadius: width * 0.08,
+    alignItems: 'center',
+    marginTop: height * 0.010,
+    marginBottom: height * 0.015,
   },
 
   buttonDisabled: {
@@ -312,15 +305,15 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color:      '#ffffff',
-    fontSize:   width * 0.048,
+    color: '#ffffff',
+    fontSize: width * 0.048,
     fontFamily: 'Poppins-Bold',
   },
 
   copyright: {
-    textAlign:  'center',
-    fontSize:   width * 0.026,
-    color:      '#9ca3af',
+    textAlign: 'center',
+    fontSize: width * 0.026,
+    color: '#9ca3af',
     fontFamily: 'Poppins-Regular',
   },
 });

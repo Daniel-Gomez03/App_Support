@@ -21,7 +21,7 @@ const userRoutes = require('./routes/userRoutes');
 const seccionRoutes = require('./routes/seccionRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const historialRoutes = require('./routes/historialRoutes');
-const mobileRoutes       = require('./routes/mobileRoutes');
+const mobileRoutes = require('./routes/mobileRoutes');
 const customerController = require('./Controllers/customerController');
 
 // Importar modelos
@@ -120,11 +120,11 @@ app.get('/api/test', (req, res) => {
 //Rutas
 app.use('/api', authRoutes);
 
-app.use('/api', mobileRoutes);                     // público — antes de verificarToken
-app.get('/api/verify-email', customerController.verifyEmail); // público — confirmación de email
+app.use('/api', mobileRoutes);
+app.get('/api/verify-email', customerController.verifyEmail);
 app.use('/api', verificarToken);
-//RUTAS PROTEGIDAS 
 
+//RUTAS PROTEGIDAS 
 app.use('/api', faqRoutes);
 app.use('/api', categoryRoutes);
 app.use('/api', productRoutes);

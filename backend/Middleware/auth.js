@@ -16,7 +16,7 @@ const verificarToken = async (req, res, next) => {
         const user = await User.findByPk(decoded.user_id);
 
         if (!user) {
-            res.clearCookie('token'); 
+            res.clearCookie('token');
             return res.status(401).json({
                 status: 'error',
                 message: 'El usuario ya no existe en el sistema.'
@@ -24,14 +24,14 @@ const verificarToken = async (req, res, next) => {
         }
 
         if (user.estado === 0) {
-            res.clearCookie('token'); 
+            res.clearCookie('token');
             return res.status(403).json({
                 status: 'error',
                 message: 'Tu cuenta ha sido desactivada. Contacta al administrador.'
             });
         }
-        
-        req.user = user; 
+
+        req.user = user;
         next();
 
     } catch (error) {

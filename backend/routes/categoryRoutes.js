@@ -22,17 +22,17 @@ router.post('/categories',
     categoryController.createCategory
 );
 
-router.put('/categories/:id', 
+router.put('/categories/:id',
     authorize('Q&A', 'permissions_edit'),
     categoryController.updateCategory
 );
 
-router.delete('/categories/:id', 
+router.delete('/categories/:id',
     authorize('Q&A', 'permissions_edit'),
     categoryController.deleteCategory
 );
 
-router.patch('/categories/:id/toggle', 
+router.patch('/categories/:id/toggle',
     authorize('Q&A', 'permissions_edit'),
     categoryController.toggleCategoryStatus
 );

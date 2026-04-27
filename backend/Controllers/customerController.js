@@ -4,8 +4,9 @@ const fs = require('fs');
 const { Op, Sequelize } = require('sequelize');
 const Customer = require('../models/Customer');
 const { uploadToFTP, deleteFromFTP } = require('../Utils/ftpClient');
-const { sendVerificationEmail } = require('../config/email');
+const { sendVerificationEmail, sendAccountActivatedEmail } = require('../config/email');
 const Warranty = require('../models/Warranty');
+const WarrantyPolicy = require('../models/WarrantyPolicy');
 
 const cleanupFile = (path) => {
     if (path && fs.existsSync(path)) fs.unlinkSync(path);
@@ -80,19 +81,43 @@ exports.verifyEmail = async (req, res) => {
             `);
         }
 
+        const isPendingReview = customer.customer_status === 0;
+
         await customer.update({
             email_verified: 1,
             verification_token: null,
             verification_token_expires: null,
-            customer_status: 1
         });
 
-        res.status(200).send(`
-            <div style="font-family: Poppins; text-align: center; padding: 50px;">
-                <h1 style="color: #3C6034;">¡Correo verificado con éxito!</h1>
-                <p>Tu cuenta ha sido activada correctamente. Ya puedes iniciar sesión.</p>
-            </div>
-        `);
+        if (isPendingReview) {
+            res.status(200).send(`
+                <div style="font-family: sans-serif; background: #f4f4f4; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: #fff; border-radius: 12px; padding: 48px 36px; max-width: 480px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                        <h1 style="color: #92400e; font-size: 24px; margin-bottom: 12px;">Correo Verificado</h1>
+                        <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">
+                            Tu dirección de correo ha sido verificada correctamente.<br><br>
+                            Sin embargo, <strong>tu cuenta está pendiente de revisión</strong> por parte de un administrador. Te notificaremos cuando tu acceso sea habilitado.
+                        </p>
+                        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px; color: #92400e; font-size: 13px;">
+                            ⚠️ No podrás iniciar sesión hasta que un administrador active tu cuenta.
+                        </div>
+                    </div>
+                </div>
+            `);
+        } else {
+            res.status(200).send(`
+                <div style="font-family: sans-serif; background: #f4f4f4; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: #fff; border-radius: 12px; padding: 48px 36px; max-width: 480px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                        <h1 style="color: #3C6034; font-size: 24px; margin-bottom: 12px;">¡Correo Verificado!</h1>
+                        <p style="color: #555; line-height: 1.6;">
+                            Tu cuenta ha sido activada correctamente.<br>Ya puedes iniciar sesión en la aplicación.
+                        </p>
+                    </div>
+                </div>
+            `);
+        }
 
     } catch (error) {
         console.error("Error verificando email:", error);
@@ -191,6 +216,11 @@ exports.registerAdmin = async (req, res) => {
             cleanupFile(tempFilePath);
         }
 
+        const activePolicy = await WarrantyPolicy.findOne({
+            where: { policy_is_active: 1 },
+            order: [['created_at', 'DESC']],
+        });
+
         const newCustomer = await Customer.create({
             customer_first_name: cleanFirstName,
             customer_second_name: cleanSecondName,
@@ -206,7 +236,9 @@ exports.registerAdmin = async (req, res) => {
             customer_image,
             customer_status: initialStatus,
             email_verified: 0,
-            verification_token: null
+            verification_token: null,
+            accepted_policy_at: activePolicy ? new Date() : null,
+            accepted_policy_version: activePolicy ? activePolicy.policy_version : null,
         });
 
         const io = req.app.get('io');
@@ -374,15 +406,26 @@ exports.toggleCustomerStatus = async (req, res) => {
         const customer = await Customer.findByPk(id);
         if (!customer) return res.status(404).json({ error: 'Cliente no encontrado' });
 
-        const newStatus = customer.customer_status === 1 ? 0 : 1;
+        const wasInactive = customer.customer_status === 0;
+        const newStatus = wasInactive ? 1 : 0;
+
         await customer.update({ customer_status: newStatus });
+
+        if (wasInactive && newStatus === 1) {
+            const fullName = `${customer.customer_first_name} ${customer.customer_last_name}`;
+            await sendAccountActivatedEmail(customer.customer_email, fullName);
+        }
 
         const io = req.app.get('io');
         if (io) {
             io.emit('customer_status_updated', { customer_id: id, new_status: newStatus });
         }
 
-        res.status(200).json({ message: `Estado actualizado a ${newStatus === 1 ? 'Activo' : 'Inactivo'}` });
+        res.status(200).json({
+            message: `Estado actualizado a ${newStatus === 1 ? 'Activo' : 'Inactivo'}`,
+            new_status: newStatus,
+            email_sent: wasInactive && newStatus === 1,
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

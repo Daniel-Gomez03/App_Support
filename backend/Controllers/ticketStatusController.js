@@ -7,7 +7,7 @@ exports.getAllTicketStatuses = async (req, res) => {
     try {
         const statuses = await TicketStatus.findAll({
             where: { ticket_status: 1 },
-            order: [['ticket_status_id', 'ASC']] 
+            order: [['ticket_status_id', 'ASC']]
         });
         res.json(statuses);
     } catch (error) {

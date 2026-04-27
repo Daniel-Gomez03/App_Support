@@ -18,7 +18,7 @@ const fetchConfig = (method, body = null) => {
     const config = {
         method: method,
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include' 
+        credentials: 'include'
     };
     if (body) config.body = JSON.stringify(body);
     return config;

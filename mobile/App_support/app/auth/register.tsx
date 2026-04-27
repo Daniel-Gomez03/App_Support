@@ -17,37 +17,32 @@ import { countries } from '@/data/countries';
 import authService, { WarrantyPolicy } from '@/Services/authService';
 import { registerStyles as styles, width, height } from '@/styles/register.styles';
 
-// ── Textos por paso ────────────────────────────────────────────────────────────
 const STEP_INFO = [
   {
-    title:       'Información básica',
+    title: 'Información básica',
     description: 'Ingresa tu información básica para crear tu cuenta. Tus datos serán utilizados de forma segura.',
   },
   {
-    title:       'Datos empresariales',
+    title: 'Datos empresariales',
     description: 'Proporciona la información requerida para verificar tu empresa de forma segura.',
   },
   {
-    title:       'Crear contraseña',
+    title: 'Crear contraseña',
     description: 'Establece una contraseña segura para garantizar la protección de tu cuenta.',
   },
 ];
 
-// ── Tipos ──────────────────────────────────────────────────────────────────────
 type WarrantyStatus = 'idle' | 'loading' | 'valid' | 'expired' | 'notfound';
 
-// SVG path igual que CurvedBorder
 const CURVE_PATH = `M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`;
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function RegisterScreen() {
   const router = useRouter();
 
-  const [step,    setStep]    = useState(1);
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Panel sube desde abajo (mismo spring que login)
   const panelAnim = useRef(new Animated.Value(height)).current;
   useEffect(() => {
     Animated.spring(panelAnim, {
@@ -55,11 +50,10 @@ export default function RegisterScreen() {
     }).start();
   }, []);
 
-  // ── Toast ─────────────────────────────────────────────────────────────────
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
-  const toastY       = useRef(new Animated.Value(-80)).current;
+  const toastY = useRef(new Animated.Value(-80)).current;
   const toastOpacity = useRef(new Animated.Value(0)).current;
-  const toastTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = (message: string, type: 'success' | 'warning') => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -67,7 +61,7 @@ export default function RegisterScreen() {
     toastOpacity.setValue(0);
     setToast({ message, type });
     Animated.parallel([
-      Animated.spring(toastY,       { toValue: 0,  tension: 60, friction: 10, useNativeDriver: true }),
+      Animated.spring(toastY, { toValue: 0, tension: 60, friction: 10, useNativeDriver: true }),
       Animated.timing(toastOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
     ]).start();
     toastTimer.current = setTimeout(() => {
@@ -77,56 +71,54 @@ export default function RegisterScreen() {
     }, 4000);
   };
 
-  // Mostrar toast al entrar al paso 3 con el resultado de la garantía
   useEffect(() => {
     if (step !== 3 || warrantyStatus === 'idle') return;
     const found = warrantyStatus === 'valid' || warrantyStatus === 'expired';
     showToast(warrantyMsg, found ? 'success' : 'warning');
-  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [step]);
 
-  // ── Paso 1: Información personal ──────────────────────────────────────────
-  const [firstName,       setFirstName]       = useState('');
-  const [secondName,      setSecondName]      = useState('');
-  const [lastName,        setLastName]        = useState('');
-  const [secondLastName,  setSecondLastName]  = useState('');
-  const [phone,           setPhone]           = useState('');
-  const [email,           setEmail]           = useState('');
+  // Paso 1: Información personal 
+  const [firstName, setFirstName] = useState('');
+  const [secondName, setSecondName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [secondLastName, setSecondLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
 
-  // ── Política de garantía ──────────────────────────────────────────────────
-  const [policy,          setPolicy]          = useState<WarrantyPolicy | null>(null);
-  const [policyAccepted,  setPolicyAccepted]  = useState(false);
+  // Política de garantía 
+  const [policy, setPolicy] = useState<WarrantyPolicy | null>(null);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
 
   useEffect(() => {
     authService.getWarrantyPolicy()
       .then(setPolicy)
-      .catch(() => {}); // si falla, el backend validará igual
+      .catch(() => { });
   }, []);
 
-  // ── Paso 2: Empresa y garantía ────────────────────────────────────────────
-  const [company,           setCompany]           = useState('');
-  const [verificationType,  setVerificationType]  = useState<'serie' | 'factura' | ''>('');
+  // Paso 2: Empresa y garantía
+  const [company, setCompany] = useState('');
+  const [verificationType, setVerificationType] = useState<'serie' | 'factura' | ''>('');
   const [verificationValue, setVerificationValue] = useState('');
-  const [dropdownOpen,      setDropdownOpen]      = useState(false);
-  const [warrantyStatus,    setWarrantyStatus]    = useState<WarrantyStatus>('idle');
-  const [warrantyMsg,       setWarrantyMsg]       = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [warrantyStatus, setWarrantyStatus] = useState<WarrantyStatus>('idle');
+  const [warrantyMsg, setWarrantyMsg] = useState('');
 
-  // ── Paso 3: Contraseña ────────────────────────────────────────────────────
-  const [password,        setPassword]        = useState('');
+  // Paso 3: Contraseña
+  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword,    setShowPassword]    = useState(false);
-  const [showConfirm,     setShowConfirm]     = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [pwValidation, setPwValidation] = useState({
     hasUpperCase: false, hasLowerCase: false,
-    hasNumber:    false, minLength:    false,
+    hasNumber: false, minLength: false,
     hasSpecialChar: false,
   });
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  const trim      = (v: string) => v.trimStart();
-  const noSpaces  = (v: string) => v.replace(/\s/g, '');
+  const trim = (v: string) => v.trimStart();
+  const noSpaces = (v: string) => v.replace(/\s/g, '');
   const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
   const handlePhone = (v: string) => {
@@ -136,17 +128,17 @@ export default function RegisterScreen() {
   const handlePassword = (v: string) => {
     setPassword(v);
     setPwValidation({
-      hasUpperCase:   /[A-Z]/.test(v),
-      hasLowerCase:   /[a-z]/.test(v),
-      hasNumber:      /[0-9]/.test(v),
-      minLength:      v.length >= 12,
+      hasUpperCase: /[A-Z]/.test(v),
+      hasLowerCase: /[a-z]/.test(v),
+      hasNumber: /[0-9]/.test(v),
+      minLength: v.length >= 12,
       hasSpecialChar: /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]/.test(v),
     });
   };
 
   const step1Valid =
     firstName.trim().length >= 2 &&
-    lastName.trim().length  >= 2 &&
+    lastName.trim().length >= 2 &&
     isEmailValid(email) &&
     phone.length >= selectedCountry.minDigits;
 
@@ -158,12 +150,12 @@ export default function RegisterScreen() {
 
   const allPwValid =
     pwValidation.hasUpperCase && pwValidation.hasLowerCase &&
-    pwValidation.hasNumber    && pwValidation.minLength    &&
+    pwValidation.hasNumber && pwValidation.minLength &&
     pwValidation.hasSpecialChar;
 
   const step3Valid = allPwValid && password === confirmPassword && confirmPassword !== '';
 
-  // ── Verificar garantía ────────────────────────────────────────────────────
+  // Verificar garantía
   const checkWarranty = async () => {
     const typeName = verificationType === 'factura' ? 'Factura' : 'Serie';
     setWarrantyStatus('loading');
@@ -186,14 +178,12 @@ export default function RegisterScreen() {
     }
   };
 
-  // ── Avanzar / Retroceder ──────────────────────────────────────────────────
   const handleNext = async () => {
     if (step === 1) {
       if (!step1Valid) return;
       setStep(2);
     } else if (step === 2) {
       if (!step2Valid) return;
-      // Verificar si aún no se hizo — siempre puede continuar
       if (warrantyStatus === 'idle') {
         await checkWarranty();
       }
@@ -209,27 +199,26 @@ export default function RegisterScreen() {
     else setStep(s => s - 1);
   };
 
-  // ── Enviar registro ───────────────────────────────────────────────────────
   const handleSubmit = async () => {
     setLoading(true);
     try {
       await authService.register({
-        customer_first_name:       firstName.trim(),
-        customer_second_name:      secondName.trim() || undefined,
-        customer_last_name:        lastName.trim(),
+        customer_first_name: firstName.trim(),
+        customer_second_name: secondName.trim() || undefined,
+        customer_last_name: lastName.trim(),
         customer_second_last_name: secondLastName.trim() || undefined,
-        customer_email:            email.trim().toLowerCase(),
-        customer_country_code:     selectedCountry.prefix,
-        customer_phone:            phone,
-        customer_company:          company.trim(),
-        validation_type:            verificationType as 'serie' | 'factura',
-        validation_value:           verificationValue.trim(),
-        customer_password:          password,
-        accepted_policy_version:    policy?.policy_version ?? '',
+        customer_email: email.trim().toLowerCase(),
+        customer_country_code: selectedCountry.prefix,
+        customer_phone: phone,
+        customer_company: company.trim(),
+        validation_type: verificationType as 'serie' | 'factura',
+        validation_value: verificationValue.trim(),
+        customer_password: password,
+        accepted_policy_version: policy?.policy_version ?? '',
       });
       router.replace({
         pathname: '/auth/verify-email',
-        params:   { email: email.trim().toLowerCase() },
+        params: { email: email.trim().toLowerCase() },
       });
     } catch (error: any) {
       alert('Error: ' + (error.error || error.message || 'Error desconocido'));
@@ -238,7 +227,6 @@ export default function RegisterScreen() {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
   const isStepDisabled =
     (step === 1 && !step1Valid) ||
     (step === 2 && (!step2Valid || warrantyStatus === 'loading')) ||
@@ -252,7 +240,6 @@ export default function RegisterScreen() {
         enabled={Platform.OS === 'ios'}
         style={{ flex: 1 }}
       >
-        {/* ── Cabecera oscura (fija) ── */}
         <View style={styles.header}>
           {step >= 2 && (
             <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
@@ -266,10 +253,8 @@ export default function RegisterScreen() {
           />
         </View>
 
-        {/* ── Panel blanco animado — sube desde abajo ── */}
         <Animated.View style={{ flex: 1, transform: [{ translateY: panelAnim }] }}>
 
-          {/* Curva SVG — se superpone sobre la cabecera oscura */}
           <Svg
             width={width}
             height={100}
@@ -279,7 +264,6 @@ export default function RegisterScreen() {
             <Path d={CURVE_PATH} fill="#ffffff" />
           </Svg>
 
-          {/* Política de garantía — bottom sheet */}
           {policy && (
             <PolicyBottomSheet
               visible={showPolicyModal}
@@ -294,7 +278,6 @@ export default function RegisterScreen() {
             />
           )}
 
-          {/* Toast — aparece en el área blanca, sobre el panel */}
           {toast && (
             <Animated.View
               pointerEvents="none"
@@ -318,16 +301,12 @@ export default function RegisterScreen() {
             </Animated.View>
           )}
 
-          {/* Contenedor blanco — flex:1 garantiza que llega hasta el fondo */}
           <View style={styles.panelContainer}>
-
-            {/* Título + paso siempre visibles (fuera del ScrollView) */}
             <View style={styles.stickyHeader}>
               <Text style={styles.title}>Regístrate</Text>
               <Text style={styles.stepLabel}>Paso {step} de 3</Text>
             </View>
 
-            {/* Contenido desplazable */}
             <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={styles.scrollContent}
@@ -498,7 +477,7 @@ export default function RegisterScreen() {
                       ]}>
                         {verificationType === 'factura' ? 'Número de Factura'
                           : verificationType === 'serie' ? 'Número de Serie'
-                          : 'Selecciona el tipo de Verificación'}
+                            : 'Selecciona el tipo de Verificación'}
                       </Text>
                       <FontAwesome
                         name={dropdownOpen ? 'chevron-up' : 'chevron-down'}
@@ -620,11 +599,11 @@ export default function RegisterScreen() {
 
                     <View style={styles.validationList}>
                       {[
-                        { ok: pwValidation.hasUpperCase,   text: 'La contraseña debe contener una Mayúscula' },
-                        { ok: pwValidation.hasLowerCase,   text: 'La contraseña debe contener una Minúscula' },
-                        { ok: pwValidation.hasNumber,      text: 'La contraseña debe contener un Número' },
+                        { ok: pwValidation.hasUpperCase, text: 'La contraseña debe contener una Mayúscula' },
+                        { ok: pwValidation.hasLowerCase, text: 'La contraseña debe contener una Minúscula' },
+                        { ok: pwValidation.hasNumber, text: 'La contraseña debe contener un Número' },
                         { ok: pwValidation.hasSpecialChar, text: 'La contraseña debe contener un carácter especial' },
-                        { ok: pwValidation.minLength,      text: 'Mínimo 12 caracteres' },
+                        { ok: pwValidation.minLength, text: 'Mínimo 12 caracteres' },
                       ].map((item, i) => (
                         <View key={i} style={styles.validationItem}>
                           <View style={[
@@ -677,12 +656,11 @@ export default function RegisterScreen() {
                 {loading
                   ? <ActivityIndicator color="#ffffff" />
                   : <Text style={styles.primaryButtonText}>
-                      {step === 3 ? 'Completar' : 'Siguiente'}
-                    </Text>
+                    {step === 3 ? 'Completar' : 'Siguiente'}
+                  </Text>
                 }
               </TouchableOpacity>
 
-              {/* ── Link a login ── */}
               <View style={styles.loginLinkRow}>
                 <Text style={styles.loginLinkText}>¿Ya tienes cuenta?</Text>
                 <TouchableOpacity onPress={() => router.replace('/auth/login')}>

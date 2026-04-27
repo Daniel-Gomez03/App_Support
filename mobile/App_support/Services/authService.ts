@@ -2,21 +2,19 @@ import axios from 'axios';
 
 const API_URL = 'http://192.168.1.26:8000/api';
 
-// ── Tipos ─────────────────────────────────────────────────────────────────────
-
 export interface RegisterPayload {
   // Paso 1
-  customer_first_name:        string;
-  customer_second_name?:      string;
-  customer_last_name:         string;
+  customer_first_name: string;
+  customer_second_name?: string;
+  customer_last_name: string;
   customer_second_last_name?: string;
-  customer_email:             string;
-  customer_country_code:      string;
-  customer_phone:             string;
+  customer_email: string;
+  customer_country_code: string;
+  customer_phone: string;
   // Paso 2
-  customer_company:    string;
-  validation_type:     'serie' | 'factura';
-  validation_value:    string;
+  customer_company: string;
+  validation_type: 'serie' | 'factura';
+  validation_value: string;
   // Paso 3
   customer_password: string;
   // Política
@@ -24,10 +22,10 @@ export interface RegisterPayload {
 }
 
 export interface WarrantyValidationResult {
-  exists:      boolean;
+  exists: boolean;
   is_expired?: boolean;
   expiry_date?: string;
-  message:     string;
+  message: string;
 }
 
 export interface PolicySection {
@@ -36,13 +34,12 @@ export interface PolicySection {
 }
 
 export interface WarrantyPolicy {
-  policy_id:            number;
-  policy_version:       string;
+  policy_id: number;
+  policy_version: string;
   policy_updated_label: string;
-  policy_content:       PolicySection[];
+  policy_content: PolicySection[];
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 const authService = {
 
@@ -91,7 +88,7 @@ const authService = {
   },
 
   // ============================================
-  // POLÍTICA DE GARANTÍA (público)
+  // POLÍTICA DE GARANTÍA 
   // ============================================
   getWarrantyPolicy: async (): Promise<WarrantyPolicy> => {
     try {
@@ -141,8 +138,8 @@ const authService = {
   updateCustomer: async (customerId: number | string, formData: any) => {
     try {
       const response = await fetch(`${API_URL}/customers/${customerId}`, {
-        method:  'PUT',
-        body:    formData,
+        method: 'PUT',
+        body: formData,
         headers: { Accept: 'application/json' },
       });
       const data = await response.json();

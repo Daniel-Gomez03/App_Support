@@ -29,7 +29,6 @@ export default function VerifyEmailScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ── Cabecera oscura ── */}
       <View style={styles.header}>
         <Image
           source={require('@/assets/images/Logo.png')}
@@ -38,7 +37,6 @@ export default function VerifyEmailScreen() {
         />
       </View>
 
-      {/* ── Panel blanco animado ── */}
       <Animated.View style={{ flex: 1, transform: [{ translateY: panelAnim }] }}>
         <Svg
           width={width}
@@ -54,21 +52,17 @@ export default function VerifyEmailScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Ícono correo */}
             <View style={styles.iconCircle}>
               <Ionicons name="mail-outline" size={width * 0.13} color="#6366f1" />
             </View>
 
-            {/* Título */}
             <Text style={styles.title}>Verifica tu Email</Text>
 
-            {/* Subtítulo + correo */}
             <Text style={styles.subtitle}>
               Hemos enviado un correo de verificación a
             </Text>
             <Text style={styles.emailText}>{email}</Text>
 
-            {/* Caja de instrucciones */}
             <View style={styles.infoBox}>
               <Text style={styles.infoTitle}>Para completar tu registro:</Text>
 
@@ -79,14 +73,12 @@ export default function VerifyEmailScreen() {
                 </View>
               ))}
 
-              {/* Advertencia de expiración */}
               <View style={styles.warningRow}>
                 <Ionicons name="warning-outline" size={15} color="#d97706" />
                 <Text style={styles.warningText}>El enlace expirará en 15 minutos</Text>
               </View>
             </View>
 
-            {/* Botón */}
             <TouchableOpacity
               style={styles.button}
               onPress={() => router.replace('/auth/login')}
@@ -105,149 +97,144 @@ export default function VerifyEmailScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex:            1,
+    flex: 1,
     backgroundColor: '#0B1C0D',
   },
 
   header: {
-    paddingTop:        height * 0.06,
-    paddingBottom:     height * 0.02,
-    paddingHorizontal: width  * 0.06,
-    alignItems:        'center',
-    justifyContent:    'center',
+    paddingTop: height * 0.06,
+    paddingBottom: height * 0.02,
+    paddingHorizontal: width * 0.06,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   headerLogo: {
-    width:  width  * 0.52,
+    width: width * 0.52,
     height: height * 0.065,
   },
 
   panel: {
-    flex:                1,
-    backgroundColor:     '#ffffff',
+    flex: 1,
+    backgroundColor: '#ffffff',
     borderTopLeftRadius: width * 0.18,
-    overflow:            'hidden',
+    overflow: 'hidden',
   },
 
   scrollContent: {
-    paddingHorizontal: width  * 0.08,
-    paddingTop:        height * 0.045,
-    paddingBottom:     height * 0.04,
-    alignItems:        'center',
+    paddingHorizontal: width * 0.08,
+    paddingTop: height * 0.045,
+    paddingBottom: height * 0.04,
+    alignItems: 'center',
   },
 
-  // ── Ícono ────────────────────────────────────────────────────────────────
   iconCircle: {
-    width:           width * 0.24,
-    height:          width * 0.24,
-    borderRadius:    width * 0.12,
+    width: width * 0.24,
+    height: width * 0.24,
+    borderRadius: width * 0.12,
     backgroundColor: '#ede9fe',
-    alignItems:      'center',
-    justifyContent:  'center',
-    marginBottom:    height * 0.025,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: height * 0.025,
   },
 
-  // ── Textos ───────────────────────────────────────────────────────────────
   title: {
-    fontSize:     width * 0.072,
-    fontWeight:   'bold',
-    color:        '#111827',
-    fontFamily:   'Poppins-Bold',
-    textAlign:    'center',
+    fontSize: width * 0.072,
+    fontWeight: 'bold',
+    color: '#111827',
+    fontFamily: 'Poppins-Bold',
+    textAlign: 'center',
     marginBottom: height * 0.012,
   },
 
   subtitle: {
-    fontSize:     width * 0.034,
-    color:        '#6b7280',
-    textAlign:    'center',
-    fontFamily:   'Poppins-Regular',
-    lineHeight:   width * 0.05,
+    fontSize: width * 0.034,
+    color: '#6b7280',
+    textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
+    lineHeight: width * 0.05,
   },
 
   emailText: {
-    fontSize:     width * 0.038,
-    fontWeight:   'bold',
-    color:        '#111827',
-    fontFamily:   'Poppins-Bold',
-    textAlign:    'center',
-    marginTop:    height * 0.005,
+    fontSize: width * 0.038,
+    fontWeight: 'bold',
+    color: '#111827',
+    fontFamily: 'Poppins-Bold',
+    textAlign: 'center',
+    marginTop: height * 0.005,
     marginBottom: height * 0.030,
   },
 
-  // ── Caja de instrucciones ─────────────────────────────────────────────────
   infoBox: {
-    width:           '100%',
+    width: '100%',
     backgroundColor: '#f9fafb',
-    borderRadius:    14,
-    padding:         width * 0.05,
-    marginBottom:    height * 0.035,
-    gap:             height * 0.010,
+    borderRadius: 14,
+    padding: width * 0.05,
+    marginBottom: height * 0.035,
+    gap: height * 0.010,
   },
 
   infoTitle: {
-    fontSize:     width * 0.032,
-    fontWeight:   '700',
-    color:        '#374151',
-    fontFamily:   'Poppins-Regular',
+    fontSize: width * 0.032,
+    fontWeight: '700',
+    color: '#374151',
+    fontFamily: 'Poppins-Regular',
     marginBottom: height * 0.004,
   },
 
   infoRow: {
     flexDirection: 'row',
-    alignItems:    'flex-start',
-    gap:           8,
+    alignItems: 'flex-start',
+    gap: 8,
   },
 
   bullet: {
     fontSize: width * 0.04,
-    color:    '#6b7280',
+    color: '#6b7280',
     lineHeight: width * 0.052,
   },
 
   infoText: {
-    flex:       1,
-    fontSize:   width * 0.032,
-    color:      '#374151',
+    flex: 1,
+    fontSize: width * 0.032,
+    color: '#374151',
     fontFamily: 'Poppins-Regular',
     lineHeight: width * 0.048,
   },
 
   warningRow: {
     flexDirection: 'row',
-    alignItems:    'center',
-    gap:           6,
-    marginTop:     height * 0.004,
+    alignItems: 'center',
+    gap: 6,
+    marginTop: height * 0.004,
   },
 
   warningText: {
-    fontSize:   width * 0.030,
-    color:      '#d97706',
+    fontSize: width * 0.030,
+    color: '#d97706',
     fontWeight: '600',
     fontFamily: 'Poppins-Regular',
   },
 
-  // ── Botón ────────────────────────────────────────────────────────────────
   button: {
-    width:           '100%',
+    width: '100%',
     backgroundColor: '#1B3A1F',
     paddingVertical: height * 0.018,
-    borderRadius:    width  * 0.08,
-    alignItems:      'center',
-    marginBottom:    height * 0.015,
+    borderRadius: width * 0.08,
+    alignItems: 'center',
+    marginBottom: height * 0.015,
   },
 
   buttonText: {
-    color:      '#ffffff',
-    fontSize:   width * 0.048,
+    color: '#ffffff',
+    fontSize: width * 0.048,
     fontFamily: 'Poppins-Bold',
   },
 
-  // ── Copyright ─────────────────────────────────────────────────────────────
   copyright: {
-    fontSize:   width * 0.026,
-    color:      '#9ca3af',
+    fontSize: width * 0.026,
+    color: '#9ca3af',
     fontFamily: 'Poppins-Regular',
-    textAlign:  'center',
+    textAlign: 'center',
   },
 });

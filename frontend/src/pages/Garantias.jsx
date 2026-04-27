@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styles from "./Garantias.module.less"; 
+import styles from "./Garantias.module.less";
 import lensIcon from "../assets/icons/Lens-icon.svg";
 import { MdFilterListAlt } from "react-icons/md";
 import { LuCheck, LuX, LuUpload, LuFileText } from "react-icons/lu";
@@ -46,7 +46,7 @@ const Garantias = () => {
 
     const [appliedFilters, setAppliedFilters] = useState({ status: 'all' });
 
-    const [policy, setPolicy]               = useState(null);
+    const [policy, setPolicy] = useState(null);
     const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
 
     const loadPolicy = async () => {
@@ -112,10 +112,10 @@ const Garantias = () => {
             item.warranty_invoice_number?.toLowerCase().includes(searchLower)
         );
 
-        const matchesVigencia = 
+        const matchesVigencia =
             appliedFilters.status === 'all' ? true :
-            appliedFilters.status === 'expired' ? item.is_expired === true :
-            item.is_expired === false;
+                appliedFilters.status === 'expired' ? item.is_expired === true :
+                    item.is_expired === false;
 
         return matchesSearch && matchesVigencia;
     });
@@ -211,7 +211,7 @@ const Garantias = () => {
                     <WarrantiesTable
                         data={filteredWarranties}
                         onEdit={(item) => { setSelectedWarranty(item); setIsAddModalOpen(true); }}
-                        canEdit={canEdit} 
+                        canEdit={canEdit}
                     />
                 )}
             </div>
@@ -227,7 +227,7 @@ const Garantias = () => {
                     <BulkUploadModal
                         isOpen={isBulkModalOpen}
                         onClose={() => setIsBulkModalOpen(false)}
-                        onSuccess={() => loadWarranties()} 
+                        onSuccess={() => loadWarranties()}
                     />
                 </>
             )}

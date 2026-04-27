@@ -51,6 +51,6 @@ exports.saveUserPermissions = async (user_id, permissionsArray, req) => {
         return { success: true };
     } catch (error) {
         console.error('Error al guardar permisos:', error);
-        throw error; 
+        throw error;
     }
 };

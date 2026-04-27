@@ -11,7 +11,7 @@ import UserFilterModal from "../components/Usuarios/UserFilterModal/UserFilterMo
 import AddCustomerModal from "../components/Usuarios/AddCustomerModal/AddCustomerModal";
 
 import { getUsers, toggleUserStatus, updateUser, getSecciones } from "../services/Userservice";
-import { getCustomers, toggleCustomerStatus, updateCustomer } from "../services/Customerservice";
+import { getCustomers, toggleCustomerStatus, updateCustomer, socket } from "../services/Customerservice";
 import { useAuth } from "../context/AuthContext";
 
 const Usuarios = () => {
@@ -29,13 +29,14 @@ const Usuarios = () => {
     const [secciones, setSecciones] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [toastConfig, setToastConfig] = useState({ show: false, title: "", message: "" });
+    const [toastConfig, setToastConfig] = useState({ show: false, title: "", message: "", type: "success" });
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [confirmActivate, setConfirmActivate] = useState(null);
 
     const [appliedFilters, setAppliedFilters] = useState({
         rol: '',
@@ -67,6 +68,22 @@ const Usuarios = () => {
     useEffect(() => {
         loadInitialData();
         document.title = "Soporte | Usuarios";
+
+        socket.connect();
+        socket.on('customer_review_required', (data) => {
+            const typeLabel = data.validation_type === 'factura' ? 'Factura' : 'Serie';
+            loadInitialData();
+            showToast(
+                'Revisión Manual Requerida',
+                `${data.full_name} requiere validación de ${typeLabel}: ${data.validation_value}`,
+                'warning'
+            );
+        });
+
+        return () => {
+            socket.off('customer_review_required');
+            socket.disconnect();
+        };
     }, []);
 
     const filterOptions = {
@@ -149,6 +166,15 @@ const Usuarios = () => {
     const handleToggleStatus = async (item) => {
         if (!canEdit) return showToast("Error", "No tienes permisos.");
 
+        if (activeTab === "clientes" && item.customer_status === 0) {
+            setConfirmActivate(item);
+            return;
+        }
+
+        await executeToggle(item);
+    };
+
+    const executeToggle = async (item) => {
         try {
             if (activeTab === "internos") {
                 const response = await toggleUserStatus(item.user_id);
@@ -159,7 +185,10 @@ const Usuarios = () => {
                 setCustomers(prev => prev.map(c =>
                     c.customer_id === item.customer_id ? { ...c, customer_status: response.new_status } : c
                 ));
-                showToast("Estado de cliente actualizado", response.message);
+                const toastMsg = response.email_sent
+                    ? `Cuenta activada. Se notificó a ${item.customer_first_name} ${item.customer_last_name} por correo.`
+                    : response.message;
+                showToast("Estado de cliente actualizado", toastMsg);
             }
         } catch (error) {
             console.error(error);
@@ -177,9 +206,9 @@ const Usuarios = () => {
         }
     };
 
-    const showToast = (title, message) => {
-        setToastConfig({ show: true, title, message });
-        setTimeout(() => setToastConfig({ show: false, title: "", message: "" }), 4000);
+    const showToast = (title, message, type = "success") => {
+        setToastConfig({ show: true, title, message, type });
+        setTimeout(() => setToastConfig({ show: false, title: "", message: "", type: "success" }), 4000);
     };
 
     return (
@@ -275,13 +304,45 @@ const Usuarios = () => {
             />
 
             {toastConfig.show && (
-                <div className={styles.successToast}>
+                <div className={toastConfig.type === 'warning' ? styles.warningToast : styles.successToast}>
                     <div className={styles.toastIconContainer}><LuCheck className={styles.checkIcon} /></div>
                     <div className={styles.toastContent}>
                         <h4>{toastConfig.title}</h4>
                         <p>{toastConfig.message}</p>
                     </div>
-                    <button onClick={() => setToastConfig({ show: false, title: "", message: "" })} className={styles.toastClose}><LuX /></button>
+                    <button onClick={() => setToastConfig({ show: false, title: "", message: "", type: "success" })} className={styles.toastClose}><LuX /></button>
+                </div>
+            )}
+
+            {confirmActivate && (
+                <div className={styles.confirmOverlay}>
+                    <div className={styles.confirmModal}>
+                        <h3 className={styles.confirmTitle}>Activar Cuenta</h3>
+                        <p className={styles.confirmText}>
+                            ¿Confirmas activar la cuenta de <strong>{confirmActivate.customer_first_name} {confirmActivate.customer_last_name}</strong>?
+                        </p>
+                        <p className={styles.confirmSubtext}>
+                            Se le enviará un correo notificándole que ya puede acceder a la aplicación.
+                        </p>
+                        <div className={styles.confirmActions}>
+                            <button
+                                className={styles.confirmCancel}
+                                onClick={() => setConfirmActivate(null)}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                className={styles.confirmAccept}
+                                onClick={async () => {
+                                    const item = confirmActivate;
+                                    setConfirmActivate(null);
+                                    await executeToggle(item);
+                                }}
+                            >
+                                Sí, Activar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

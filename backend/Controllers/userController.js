@@ -11,7 +11,7 @@ exports.getAllUsers = async (req, res) => {
             include: [{
                 model: Permissions,
                 as: 'Permissions',
-                include: ['Seccion'] 
+                include: ['Seccion']
             }],
             order: [['created_at', 'DESC']]
         });

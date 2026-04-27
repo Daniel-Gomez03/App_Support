@@ -2,56 +2,46 @@ import React, { useEffect, useRef } from 'react';
 import { View, Animated, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { splashStyles as styles, S } from '@/styles/splash.styles';
-
-// ── Contenido del texto ───────────────────────────────────────────────────────
-const TITLE_LETTERS    = ['T', 'B', 'O', 'X', 'S', 'A'];
+const TITLE_LETTERS = ['T', 'B', 'O', 'X', 'S', 'A'];
 const SUBTITLE_LETTERS = [
-  'T','H','I','N','K',' ',
-  'O','U','T','S','I','D','E',' ',
-  'T','H','E',' ',
-  'B','O','X',
+  'T', 'H', 'I', 'N', 'K', ' ',
+  'O', 'U', 'T', 'S', 'I', 'D', 'E', ' ',
+  'T', 'H', 'E', ' ',
+  'B', 'O', 'X',
 ];
-const TITLE_COUNT    = TITLE_LETTERS.length;    // 6
-const SUBTITLE_COUNT = SUBTITLE_LETTERS.length; // 21
-const TOTAL_LETTERS  = TITLE_COUNT + SUBTITLE_COUNT;
-
-// ─────────────────────────────────────────────────────────────────────────────
+const TITLE_COUNT = TITLE_LETTERS.length;
+const SUBTITLE_COUNT = SUBTITLE_LETTERS.length;
+const TOTAL_LETTERS = TITLE_COUNT + SUBTITLE_COUNT;
 
 export default function AnimatedLogo() {
   const router = useRouter();
 
-  // Círculo
-  const circleRotate  = useRef(new Animated.Value(0)).current;
+  const circleRotate = useRef(new Animated.Value(0)).current;
   const circleOpacity = useRef(new Animated.Value(1)).current;
 
-  // Logo/ícono
-  const iconScale     = useRef(new Animated.Value(0.3)).current;
-  const iconOpacity   = useRef(new Animated.Value(0)).current;
-  const iconY         = useRef(new Animated.Value(S.LOGO_START_Y)).current;
-  const iconX         = useRef(new Animated.Value(0)).current;
+  const iconScale = useRef(new Animated.Value(0.3)).current;
+  const iconOpacity = useRef(new Animated.Value(0)).current;
+  const iconY = useRef(new Animated.Value(S.LOGO_START_Y)).current;
+  const iconX = useRef(new Animated.Value(0)).current;
 
-  // Nombre empresa
-  const nameOpacity   = useRef(new Animated.Value(0)).current;
-  const nameScale     = useRef(new Animated.Value(0.85)).current;
+  const nameOpacity = useRef(new Animated.Value(0)).current;
+  const nameScale = useRef(new Animated.Value(0.85)).current;
 
-  // Letras: primeras TITLE_COUNT vienen de izquierda (translateX),
-  // el resto vienen de abajo (translateY).
   const letterAnims = useRef(
     Array.from({ length: TOTAL_LETTERS }, (_, i) =>
       new Animated.Value(i < TITLE_COUNT ? S.LETTER_TITLE_START : S.LETTER_SUB_START)
     )
   ).current;
 
-  // Interpolación de rotación del círculo
   const circleRotateDeg = circleRotate.interpolate({
-    inputRange:  [0, 1],
+    inputRange: [0, 1],
     outputRange: ['0deg', '45deg'],
   });
 
   useEffect(() => {
     Animated.sequence([
 
-      // ── Fase 1: Círculo gira y se desvanece, logo sube con rebote ──────────
+      // Fase 1: Círculo gira y se desvanece, logo sube con rebote
       Animated.parallel([
         Animated.timing(circleRotate, {
           toValue: 1,
@@ -87,7 +77,7 @@ export default function AnimatedLogo() {
         }),
       ]),
 
-      // ── Fase 2: Logo se encoge y vuelve al centro ─────────────────────────
+      // Fase 2: Logo se encoge y vuelve al centro 
       Animated.parallel([
         Animated.timing(iconScale, {
           toValue: 0.6,
@@ -101,14 +91,14 @@ export default function AnimatedLogo() {
         }),
       ]),
 
-      // ── Fase 3: Logo se desplaza a la izquierda ───────────────────────────
+      // Fase 3: Logo se desplaza a la izquierda
       Animated.timing(iconX, {
         toValue: S.LOGO_FINAL_X,
         duration: 500,
         useNativeDriver: true,
       }),
 
-      // ── Fase 4: Nombre de la empresa aparece ──────────────────────────────
+      // Fase 4: Nombre de la empresa aparece 
       Animated.parallel([
         Animated.timing(nameOpacity, {
           toValue: 1,
@@ -124,7 +114,7 @@ export default function AnimatedLogo() {
         }),
       ]),
 
-      // ── Fase 5: Letras del título entran escalonadas desde la izquierda ───
+      //Fase 5: Letras del título entran escalonadas desde la izquierda 
       Animated.stagger(
         50,
         letterAnims.slice(0, TITLE_COUNT).map(anim =>
@@ -132,7 +122,7 @@ export default function AnimatedLogo() {
         )
       ),
 
-      // ── Fase 6: Subtítulo entra en bloque desde abajo ─────────────────────
+      // Fase 6: Subtítulo entra en bloque desde abajo 
       Animated.parallel(
         letterAnims.slice(TITLE_COUNT).map(anim =>
           Animated.timing(anim, { toValue: 0, duration: 200, useNativeDriver: true })
@@ -140,7 +130,6 @@ export default function AnimatedLogo() {
       ),
 
     ]).start(() => {
-      // replace evita que el usuario regrese a la intro con el botón atrás
       router.replace('/auth/login');
     });
   }, []);
@@ -148,10 +137,8 @@ export default function AnimatedLogo() {
   return (
     <View style={styles.container}>
 
-      {/* ── Área central ──────────────────────────────────────────────── */}
       <View style={styles.circleContainer}>
 
-        {/* Círculo giratorio */}
         <Animated.Image
           source={require('@/assets/images/circle.png')}
           style={[
@@ -164,17 +151,15 @@ export default function AnimatedLogo() {
           resizeMode="contain"
         />
 
-        {/* Nombre de la empresa */}
         <Animated.View
           style={[
             styles.nameContainer,
             {
-              opacity:   nameOpacity,
+              opacity: nameOpacity,
               transform: [{ scale: nameScale }],
             },
           ]}
         >
-          {/* "TBOXSA" — letras entran desde la izquierda */}
           <View style={styles.titleRow}>
             {TITLE_LETTERS.map((letter, i) => (
               <Animated.Text
@@ -182,7 +167,7 @@ export default function AnimatedLogo() {
                 style={[
                   styles.mainTitle,
                   {
-                    opacity:   nameOpacity,
+                    opacity: nameOpacity,
                     transform: [{ translateX: letterAnims[i] }],
                   },
                 ]}
@@ -192,7 +177,6 @@ export default function AnimatedLogo() {
             ))}
           </View>
 
-          {/* "THINK OUTSIDE THE BOX" — letras entran desde abajo */}
           <View style={styles.subtitleRow}>
             {SUBTITLE_LETTERS.map((letter, i) => (
               <Animated.Text
@@ -200,7 +184,7 @@ export default function AnimatedLogo() {
                 style={[
                   styles.subtitle,
                   {
-                    opacity:   nameOpacity,
+                    opacity: nameOpacity,
                     transform: [{ translateY: letterAnims[TITLE_COUNT + i] }],
                   },
                 ]}
@@ -211,16 +195,15 @@ export default function AnimatedLogo() {
           </View>
         </Animated.View>
 
-        {/* Logo / ícono */}
         <Animated.View
           style={[
             styles.iconWrapper,
             {
               opacity: iconOpacity,
               transform: [
-                { scale:      iconScale },
-                { translateY: iconY     },
-                { translateX: iconX     },
+                { scale: iconScale },
+                { translateY: iconY },
+                { translateX: iconX },
               ],
             },
           ]}
@@ -234,7 +217,6 @@ export default function AnimatedLogo() {
 
       </View>
 
-      {/* ── Copyright ─────────────────────────────────────────────────── */}
       <View style={styles.footer}>
         <Animated.Text style={styles.copyrightText}>
           COPYRIGHT © TBOXSA 2026

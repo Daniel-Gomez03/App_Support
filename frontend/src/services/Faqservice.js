@@ -101,7 +101,6 @@ export const updateFaq = async (id, faqData) => {
 // ============================================
 export const toggleFaqStatus = async (id) => {
     try {
-        // Nota: Según tus rutas es /faqs/:id/toggle
         const response = await fetch(`${API_URL}/faqs/${id}/toggle`, fetchConfig('PATCH'));
         return await handleResponse(response);
     } catch (error) {

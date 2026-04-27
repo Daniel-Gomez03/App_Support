@@ -35,24 +35,24 @@ const processEvidence = async (file) => {
 
             await sharp(file.buffer)
                 .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-                .webp({ quality: 80 }) 
+                .webp({ quality: 80 })
                 .toFile(filePath);
 
-            return { 
-                fileName, 
-                filePath: filePath.replace(/\\/g, '/'), 
-                mimetype: 'image/webp' 
+            return {
+                fileName,
+                filePath: filePath.replace(/\\/g, '/'),
+                mimetype: 'image/webp'
             };
         } else {
             const fileName = `evidence-${uniqueSuffix}${path.extname(file.originalname)}`;
             const filePath = path.join(folder, fileName);
 
             fs.writeFileSync(filePath, file.buffer);
-            
-            return { 
-                fileName, 
-                filePath: filePath.replace(/\\/g, '/'), 
-                mimetype: file.mimetype 
+
+            return {
+                fileName,
+                filePath: filePath.replace(/\\/g, '/'),
+                mimetype: file.mimetype
             };
         }
     } catch (error) {

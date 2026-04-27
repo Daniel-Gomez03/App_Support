@@ -65,7 +65,7 @@ const Customer = sequelize.define('Customer', {
         allowNull: true,
         defaultValue: null
     },
-        accepted_policy_at: {
+    accepted_policy_at: {
         type: DataTypes.DATE,
         allowNull: true,
         defaultValue: null

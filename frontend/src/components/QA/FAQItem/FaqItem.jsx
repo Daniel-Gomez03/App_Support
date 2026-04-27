@@ -113,7 +113,7 @@ const FAQItem = ({ faq, onEdit, onToggleStatus }) => {
                             href={faq.faq_video_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()} 
+                            onClick={(e) => e.stopPropagation()}
                         >
                             Ver Video Tutorial
                         </a>

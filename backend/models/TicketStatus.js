@@ -27,9 +27,9 @@ const TicketStatus = sequelize.define('TicketStatus', {
 
 //Asociacion 
 TicketStatus.associate = (models) => {
-    TicketStatus.hasMany(models.Ticket, { 
-        foreignKey: 'ticket_status_id', 
-        as: 'tickets' 
+    TicketStatus.hasMany(models.Ticket, {
+        foreignKey: 'ticket_status_id',
+        as: 'tickets'
     });
 };
 

@@ -2,33 +2,31 @@ import React, { ReactNode, createContext, useContext, useReducer, useCallback, u
 import authService from '@/Services/authService';
 import * as SecureStore from 'expo-secure-store';
 
-// ── Tipos ─────────────────────────────────────────────────────────────────────
-
 interface User {
-  customer_id:           number;
-  customer_first_name:   string;
+  customer_id: number;
+  customer_first_name: string;
   customer_second_name?: string;
-  customer_last_name:    string;
-  customer_email:        string;
-  customer_company:      string;
+  customer_last_name: string;
+  customer_email: string;
+  customer_company: string;
   customer_country_code: string;
-  customer_phone:        string;
-  customer_image:        string | null;
-  customer_status:       number;
+  customer_phone: string;
+  customer_image: string | null;
+  customer_status: number;
 }
 
 interface AuthState {
-  isLoading:  boolean;
-  userToken:  string | null;
-  user:       User | null;
-  error:      string | null;
+  isLoading: boolean;
+  userToken: string | null;
+  user: User | null;
+  error: string | null;
 }
 
 interface AuthContextType {
-  state:      AuthState;
-  login:      (email: string, password: string) => Promise<void>;
+  state: AuthState;
+  login: (email: string, password: string) => Promise<void>;
   updateUser: (id: number, formData: FormData) => Promise<any>;
-  logout:     () => Promise<void>;
+  logout: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -37,16 +35,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const initialState: AuthState = {
   isLoading: true,
   userToken: null,
-  user:      null,
-  error:     null,
+  user: null,
+  error: null,
 };
 
 type AuthAction =
   | { type: 'RESTORE_TOKEN'; payload: { token: string; user: User } }
-  | { type: 'SIGN_IN';       payload: { token: string; user: User } }
-  | { type: 'UPDATE_USER';   payload: User }
+  | { type: 'SIGN_IN'; payload: { token: string; user: User } }
+  | { type: 'UPDATE_USER'; payload: User }
   | { type: 'SIGN_OUT' }
-  | { type: 'SET_ERROR';     payload: string }
+  | { type: 'SET_ERROR'; payload: string }
   | { type: 'CLEAR_ERROR' };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
@@ -67,7 +65,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
@@ -76,7 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const bootstrapAsync = async () => {
       try {
         const token = await SecureStore.getItemAsync('userToken');
-        const user  = await SecureStore.getItemAsync('user');
+        const user = await SecureStore.getItemAsync('user');
         if (token && user) {
           dispatch({ type: 'RESTORE_TOKEN', payload: { token, user: JSON.parse(user) } });
         } else {
@@ -89,11 +86,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     bootstrapAsync();
   }, []);
 
-  // ── Login ──────────────────────────────────────────────────────────────────
+
   const login = useCallback(async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password);
-      // El endpoint /mobile/login devuelve { message, customer: {...} }
       const customer = response.customer;
 
       await SecureStore.setItemAsync('userToken', customer.customer_id.toString());
@@ -106,10 +102,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // ── Actualizar usuario ─────────────────────────────────────────────────────
   const updateUser = useCallback(async (id: number, formData: FormData) => {
     try {
-      const response    = await authService.updateCustomer(id, formData);
+      const response = await authService.updateCustomer(id, formData);
       const updatedUser = response.customer;
       if (updatedUser) {
         await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
@@ -122,7 +117,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // ── Logout ─────────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     await SecureStore.deleteItemAsync('userToken');
     await SecureStore.deleteItemAsync('user');

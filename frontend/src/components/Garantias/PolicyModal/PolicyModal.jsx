@@ -3,16 +3,16 @@ import { LuX, LuShieldCheck, LuPencil, LuSave, LuLoaderCircle } from 'react-icon
 import styles from './PolicyModal.module.less';
 
 const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
-    const [mode, setMode]       = useState('view');
-    const [draft, setDraft]     = useState(null);
+    const [mode, setMode] = useState('view');
+    const [draft, setDraft] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (isOpen && policy) {
             setMode('view');
             setDraft({
-                version:  policy.policy_version,
-                label:    policy.policy_updated_label,
+                version: policy.policy_version,
+                label: policy.policy_updated_label,
                 sections: JSON.parse(JSON.stringify(policy.policy_content)),
             });
         }
@@ -31,9 +31,9 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
         setIsSaving(true);
         try {
             await onSave({
-                policy_version:       draft.version.trim(),
+                policy_version: draft.version.trim(),
                 policy_updated_label: draft.label.trim(),
-                policy_content:       draft.sections,
+                policy_content: draft.sections,
             });
             setMode('view');
         } catch (err) {
@@ -45,8 +45,8 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
 
     const handleCancel = () => {
         setDraft({
-            version:  policy.policy_version,
-            label:    policy.policy_updated_label,
+            version: policy.policy_version,
+            label: policy.policy_updated_label,
             sections: JSON.parse(JSON.stringify(policy.policy_content)),
         });
         setMode('view');
@@ -58,7 +58,6 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
         <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
 
-                {/* ── Header ── */}
                 <div className={styles.modalHeader}>
                     <div className={styles.headerTitle}>
                         <div className={styles.headerIconWrap}>
@@ -75,8 +74,6 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
                         <LuX />
                     </button>
                 </div>
-
-                {/* ── Body ── */}
                 <div className={styles.modalBody}>
                     {mode === 'view' ? (
                         <div className={styles.policyView}>
@@ -132,7 +129,6 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
                     )}
                 </div>
 
-                {/* ── Footer ── */}
                 <div className={styles.modalFooter}>
                     {mode === 'view' ? (
                         canEdit && (

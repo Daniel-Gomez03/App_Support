@@ -14,22 +14,20 @@ import { useAuth } from '@/hooks/useAuth';
 import * as SecureStore from 'expo-secure-store';
 import { loginStyles as styles, height } from '@/styles/login.styles';
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function LoginScreen() {
-  const router      = useRouter();
+  const router = useRouter();
   const authContext = useAuth();
 
-  const [email,        setEmail]        = useState('');
-  const [password,     setPassword]     = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe,   setRememberMe]   = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loginTouched, setLoginTouched] = useState({ email: false, password: false });
 
-  // ── Animaciones de entrada ─────────────────────────────────────────────────
-  const logoOpacity       = useRef(new Animated.Value(0)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
   const panelEntranceAnim = useRef(new Animated.Value(height)).current;
-  const userOpacity       = useRef(new Animated.Value(1)).current;
+  const userOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -45,29 +43,28 @@ export default function LoginScreen() {
     ]).start();
   }, []);
 
-  // Cargar email recordado
   useEffect(() => {
     const load = async () => {
       try {
         const saved = await SecureStore.getItemAsync('remembered_email');
         if (saved) { setEmail(saved); setRememberMe(true); }
-      } catch { /* ignorar */ }
+      } catch {
+
+      }
     };
     load();
   }, []);
 
-  // ── Validación ─────────────────────────────────────────────────────────────
   const isEmailValidFormat = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const loginFormValid = email.trim() !== '' && password.trim() !== '';
 
   const getLoginBorderColor = (field: 'email' | 'password', value: string) => {
     if (!loginTouched[field]) return '#C4C4C4';
-    if (value.trim() === '')  return '#D9534F';
+    if (value.trim() === '') return '#D9534F';
     if (field === 'email' && !isEmailValidFormat(value)) return '#D9534F';
     return '#28a745';
   };
 
-  // ── Login ──────────────────────────────────────────────────────────────────
   const handleLogin = async () => {
     try {
       await authContext.login(email, password);
@@ -82,7 +79,6 @@ export default function LoginScreen() {
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -95,7 +91,6 @@ export default function LoginScreen() {
         bounces={false}
         overScrollMode="never"
       >
-        {/* ── Logo ── */}
         <Animated.View style={[styles.logo, { opacity: logoOpacity }]}>
           <Image
             source={require('@/assets/images/Logo.png')}
@@ -103,7 +98,6 @@ export default function LoginScreen() {
           />
         </Animated.View>
 
-        {/* ── Ilustración + Panel (suben juntos) ── */}
         <Animated.View style={{ transform: [{ translateY: panelEntranceAnim }] }}>
           <Animated.View style={[styles.userImageContainer, { opacity: userOpacity }]}>
             <Image
@@ -115,8 +109,6 @@ export default function LoginScreen() {
           <CurvedBorder>
 
             <Text style={styles.title}>Bienvenido</Text>
-
-            {/* Email */}
             <View style={styles.inputGroup}>
               <View style={styles.labelContainer}>
                 <FontAwesome5 name="user-alt" size={18} color="#000000" />
@@ -134,7 +126,6 @@ export default function LoginScreen() {
               />
             </View>
 
-            {/* Contraseña */}
             <View style={styles.inputGroup}>
               <View style={styles.labelContainer}>
                 <FontAwesome name="lock" size={18} color="#000000" />
@@ -156,13 +147,14 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            {/* Recuérdame + Olvidé */}
             <View style={styles.checkboxContainer}>
               <TouchableOpacity
                 style={[
                   styles.checkbox,
-                  { backgroundColor: rememberMe ? '#3C6034' : 'transparent',
-                    borderColor: rememberMe ? '#3C6034' : '#C7C3C3' },
+                  {
+                    backgroundColor: rememberMe ? '#3C6034' : 'transparent',
+                    borderColor: rememberMe ? '#3C6034' : '#C7C3C3'
+                  },
                 ]}
                 onPress={() => setRememberMe(v => !v)}
               >
@@ -174,7 +166,6 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Botón */}
             <TouchableOpacity
               style={[styles.loginButton, { opacity: loginFormValid ? 1 : 0.5 }]}
               disabled={!loginFormValid}
@@ -183,7 +174,6 @@ export default function LoginScreen() {
               <Text style={styles.loginButtonText}>Ingresar</Text>
             </TouchableOpacity>
 
-            {/* Crear cuenta → navega a register */}
             <View style={styles.signupContainer}>
               <Text style={styles.signupText}>¿No tienes cuenta?</Text>
               <TouchableOpacity onPress={() => router.push('/auth/register')}>

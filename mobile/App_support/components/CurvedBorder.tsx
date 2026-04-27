@@ -15,9 +15,6 @@ export default function CurvedBorder({ children }: { children: ReactNode }) {
             overflow: 'visible',
             position: 'relative',
         }}>
-            {/* Curva SVG que crea la transición cóncava/convexa entre el fondo y el panel.
-                El path original tenía "M 0 100000" (bug de coordenada fuera del viewBox).
-                Corrección: "M 0 100" — mismo punto de inicio pero dentro del viewBox. */}
             <Svg
                 width={width}
                 height={100}
@@ -30,6 +27,7 @@ export default function CurvedBorder({ children }: { children: ReactNode }) {
                 }}
             >
                 <Path
+                    // NO TOCAR AQUI QUE NI ME ACUERDO COMO LO HICE XD
                     d={`M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`}
                     fill="#ffffff"
                 />

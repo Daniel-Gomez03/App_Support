@@ -7,7 +7,7 @@ const Faq = sequelize.define('Faq', {
         primaryKey: true,
         autoIncrement: true
     },
-    category_id:{
+    category_id: {
         type: DataTypes.INTEGER,
         allowNull: false
     },
@@ -22,10 +22,10 @@ const Faq = sequelize.define('Faq', {
         type: DataTypes.STRING(255),
         allowNull: false
     },
-    faq_answer:{
+    faq_answer: {
         type: DataTypes.TEXT,
-        allowNull:false
-    }, 
+        allowNull: false
+    },
     faq_video_url: {
         type: DataTypes.STRING(255),
         allowNull: false
@@ -44,16 +44,16 @@ const Faq = sequelize.define('Faq', {
 });
 
 Faq.associate = (models) => {
-    Faq.belongsTo(models.Category, { 
-        foreignKey: 'category_id', 
-        as: 'category' 
+    Faq.belongsTo(models.Category, {
+        foreignKey: 'category_id',
+        as: 'category'
     });
-    Faq.belongsTo(models.Product, { 
-        foreignKey: 'product_id', 
-        as: 'product' 
+    Faq.belongsTo(models.Product, {
+        foreignKey: 'product_id',
+        as: 'product'
     });
-    Faq.belongsTo(models.ProductModel, { 
-        foreignKey: 'product_model_id', 
+    Faq.belongsTo(models.ProductModel, {
+        foreignKey: 'product_model_id',
         as: 'product_model',
         allowNull: true
     });

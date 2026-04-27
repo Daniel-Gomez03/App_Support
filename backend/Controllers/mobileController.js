@@ -1,9 +1,9 @@
-const bcrypt         = require('bcrypt');
-const crypto         = require('crypto');
-const Customer       = require('../models/Customer');
-const Warranty       = require('../models/Warranty');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const Customer = require('../models/Customer');
+const Warranty = require('../models/Warranty');
 const WarrantyPolicy = require('../models/WarrantyPolicy');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('../config/email');
+const { sendVerificationEmail, sendPasswordResetEmail, sendPendingReviewEmail } = require('../config/email');
 
 // ============================================
 // LOGIN MÓVIL
@@ -27,7 +27,7 @@ exports.mobileLogin = async (req, res) => {
         }
 
         if (customer.customer_status === 0) {
-            return res.status(403).json({ error: 'Tu cuenta está desactivada. Contacta al soporte.' });
+            return res.status(403).json({ error: 'Tu cuenta está pendiente de revisión. Un administrador debe verificar tu registro antes de que puedas acceder.' });
         }
 
         if (!customer.email_verified) {
@@ -46,16 +46,16 @@ exports.mobileLogin = async (req, res) => {
         res.json({
             message: 'Login exitoso.',
             customer: {
-                customer_id:           customer.customer_id,
-                customer_first_name:   customer.customer_first_name,
-                customer_second_name:  customer.customer_second_name,
-                customer_last_name:    customer.customer_last_name,
-                customer_email:        customer.customer_email,
-                customer_phone:        customer.customer_phone,
+                customer_id: customer.customer_id,
+                customer_first_name: customer.customer_first_name,
+                customer_second_name: customer.customer_second_name,
+                customer_last_name: customer.customer_last_name,
+                customer_email: customer.customer_email,
+                customer_phone: customer.customer_phone,
                 customer_country_code: customer.customer_country_code,
-                customer_company:      customer.customer_company,
-                customer_image:        customer.customer_image,
-                customer_status:       customer.customer_status,
+                customer_company: customer.customer_company,
+                customer_image: customer.customer_image,
+                customer_status: customer.customer_status,
             }
         });
 
@@ -81,7 +81,7 @@ exports.mobileRegister = async (req, res) => {
             customer_phone,
             // Paso 2
             customer_company,
-            validation_type,    // 'serie' | 'factura'
+            validation_type,
             validation_value,
             // Paso 3
             customer_password,
@@ -89,17 +89,15 @@ exports.mobileRegister = async (req, res) => {
             accepted_policy_version
         } = req.body;
 
-        // ── Sanitizar ──────────────────────────────────────────────────────
-        const cleanFirst    = customer_first_name?.trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-        const cleanSecond   = customer_second_name?.trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') || null;
-        const cleanLast     = customer_last_name?.trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-        const cleanSecLast  = customer_second_last_name?.trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') || null;
-        const cleanEmail    = customer_email?.trim().toLowerCase();
-        const cleanPhone    = customer_phone?.replace(/[^0-9]/g, '');
-        const cleanCompany  = customer_company?.trim();
-        const cleanValue    = validation_value?.trim();
+        const cleanFirst = customer_first_name?.trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+        const cleanSecond = customer_second_name?.trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') || null;
+        const cleanLast = customer_last_name?.trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+        const cleanSecLast = customer_second_last_name?.trim().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') || null;
+        const cleanEmail = customer_email?.trim().toLowerCase();
+        const cleanPhone = customer_phone?.replace(/[^0-9]/g, '');
+        const cleanCompany = customer_company?.trim();
+        const cleanValue = validation_value?.trim();
 
-        // ── Validar requeridos ─────────────────────────────────────────────
         if (!cleanFirst || !cleanLast || !cleanEmail || !cleanPhone ||
             !customer_country_code || !cleanCompany ||
             !validation_type || !cleanValue || !customer_password ||
@@ -111,18 +109,15 @@ exports.mobileRegister = async (req, res) => {
             return res.status(400).json({ error: 'Tipo de verificación inválido.' });
         }
 
-        // ── Formato email ──────────────────────────────────────────────────
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(cleanEmail)) {
             return res.status(400).json({ error: 'Formato de correo electrónico inválido.' });
         }
 
-        // ── Longitud mínima del nombre ─────────────────────────────────────
         if (cleanFirst.length < 2) {
             return res.status(400).json({ error: 'El primer nombre debe tener al menos 2 caracteres.' });
         }
 
-        // ── Validar contraseña ─────────────────────────────────────────────
         const pwRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{12,}$/;
         if (!pwRegex.test(customer_password)) {
             return res.status(400).json({
@@ -130,62 +125,71 @@ exports.mobileRegister = async (req, res) => {
             });
         }
 
-        // ── Unicidad email y teléfono ──────────────────────────────────────
         const emailUsed = await Customer.findOne({ where: { customer_email: cleanEmail } });
         if (emailUsed) return res.status(400).json({ error: 'Este correo ya está registrado.' });
 
         const phoneUsed = await Customer.findOne({ where: { customer_phone: cleanPhone } });
         if (phoneUsed) return res.status(400).json({ error: 'Este número de teléfono ya está registrado.' });
 
-        // ── Validar garantía ───────────────────────────────────────────────
         const warrantyWhere = validation_type === 'serie'
-            ? { warranty_serial_number: cleanValue }
-            : { warranty_invoice_number: cleanValue };
+            ? { warranty_serial_number: cleanValue, warranty_status: 1 }
+            : { warranty_invoice_number: cleanValue, warranty_status: 1 };
 
         const warrantyExists = await Warranty.findOne({ where: warrantyWhere });
 
-        const customerStatus   = warrantyExists ? 1 : 0;
-        const requiresReview   = !warrantyExists;
+        const customerStatus = warrantyExists ? 1 : 0;
+        const requiresReview = !warrantyExists;
 
-        // ── Hash contraseña ────────────────────────────────────────────────
         const hashedPassword = await bcrypt.hash(customer_password, 12);
 
-        // ── Token de verificación de email ─────────────────────────────────
         const verificationToken = crypto.randomBytes(32).toString('hex');
-        const tokenExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+        const tokenExpires = new Date(Date.now() + 15 * 60 * 1000);
 
-        // ── Crear cliente ──────────────────────────────────────────────────
         const newCustomer = await Customer.create({
-            customer_first_name:       cleanFirst,
-            customer_second_name:      cleanSecond,
-            customer_last_name:        cleanLast,
+            customer_first_name: cleanFirst,
+            customer_second_name: cleanSecond,
+            customer_last_name: cleanLast,
             customer_second_last_name: cleanSecLast,
-            customer_email:            cleanEmail,
-            customer_phone:            cleanPhone,
+            customer_email: cleanEmail,
+            customer_phone: cleanPhone,
             customer_country_code,
-            customer_company:          cleanCompany,
-            customer_registration_type:  validation_type,
+            customer_company: cleanCompany,
+            customer_registration_type: validation_type,
             customer_registration_value: cleanValue,
-            customer_password:         hashedPassword,
-            customer_image:            null,
-            customer_status:           customerStatus,
-            email_verified:            0,
-            verification_token:        verificationToken,
+            customer_password: hashedPassword,
+            customer_image: null,
+            customer_status: customerStatus,
+            email_verified: 0,
+            verification_token: verificationToken,
             verification_token_expires: tokenExpires,
-            accepted_policy_at:        new Date(),
-            accepted_policy_version:   accepted_policy_version,
+            accepted_policy_at: new Date(),
+            accepted_policy_version: accepted_policy_version,
         });
 
-        // ── Enviar email de verificación ───────────────────────────────────
         const fullName = `${cleanFirst} ${cleanLast}`;
-        await sendVerificationEmail(cleanEmail, verificationToken, fullName, '15 minutos');
+        if (requiresReview) {
+            await sendPendingReviewEmail(cleanEmail, verificationToken, fullName, validation_type);
+        } else {
+            await sendVerificationEmail(cleanEmail, verificationToken, fullName, '15 minutos');
+        }
 
         const io = req.app.get('io');
-        if (io) io.emit('customer_created', {
-            customer_id: newCustomer.customer_id,
-            full_name: fullName,
-            status: customerStatus
-        });
+        if (io) {
+            io.emit('customer_created', {
+                customer_id: newCustomer.customer_id,
+                full_name: fullName,
+                status: customerStatus,
+            });
+
+            if (requiresReview) {
+                io.emit('customer_review_required', {
+                    customer_id: newCustomer.customer_id,
+                    full_name: fullName,
+                    validation_type: validation_type,
+                    validation_value: cleanValue,
+                });
+            }
+        }
 
         res.status(201).json({
             message: requiresReview
@@ -232,8 +236,8 @@ exports.validateWarranty = async (req, res) => {
         }
 
         res.json({
-            exists:      true,
-            is_expired:  warranty.is_expired,
+            exists: true,
+            is_expired: warranty.is_expired,
             expiry_date: warranty.warranty_expiry_date,
             message: warranty.is_expired
                 ? 'La garantía existe pero ha expirado.'
@@ -262,7 +266,6 @@ exports.forgotPassword = async (req, res) => {
         const customer = await Customer.findOne({ where: { customer_email: cleanEmail } });
 
         if (customer && customer.email_verified) {
-            // Bloquear si ya hay un token activo (no expirado)
             if (customer.reset_password_token &&
                 customer.reset_password_expires &&
                 customer.reset_password_expires > new Date()) {
@@ -271,11 +274,11 @@ exports.forgotPassword = async (req, res) => {
                 });
             }
 
-            const resetToken   = crypto.randomBytes(32).toString('hex');
+            const resetToken = crypto.randomBytes(32).toString('hex');
             const resetExpires = new Date(Date.now() + 15 * 60 * 1000);
 
             await customer.update({
-                reset_password_token:   resetToken,
+                reset_password_token: resetToken,
                 reset_password_expires: resetExpires,
             });
 
@@ -315,7 +318,6 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ error: 'El enlace de recuperación es inválido o ha expirado.' });
         }
 
-        // Validar que la nueva contraseña sea diferente a la actual
         if (customer.customer_password) {
             const isSame = await bcrypt.compare(new_password, customer.customer_password);
             if (isSame) {
@@ -326,8 +328,8 @@ exports.resetPassword = async (req, res) => {
         const hashedPassword = await bcrypt.hash(new_password, 12);
 
         await customer.update({
-            customer_password:      hashedPassword,
-            reset_password_token:   null,
+            customer_password: hashedPassword,
+            reset_password_token: null,
             reset_password_expires: null,
         });
 
@@ -378,7 +380,7 @@ exports.resetRedirect = (req, res) => {
 };
 
 // ============================================
-// OBTENER POLÍTICA DE GARANTÍA ACTIVA (público)
+// OBTENER POLÍTICA DE GARANTÍA ACTIVA
 // ============================================
 exports.getWarrantyPolicy = async (req, res) => {
     try {
@@ -392,10 +394,10 @@ exports.getWarrantyPolicy = async (req, res) => {
         }
 
         res.json({
-            policy_id:            policy.policy_id,
-            policy_version:       policy.policy_version,
+            policy_id: policy.policy_id,
+            policy_version: policy.policy_version,
             policy_updated_label: policy.policy_updated_label,
-            policy_content:       policy.policy_content,
+            policy_content: policy.policy_content,
         });
     } catch (error) {
         console.error('Error en getWarrantyPolicy:', error);
