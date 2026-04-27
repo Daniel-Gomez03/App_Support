@@ -1,7 +1,6 @@
 import { io } from "socket.io-client";
 
-//const SOCKET_URL = 'http://192.168.1.24:8000'; 
-const SOCKET_URL = 'http://10.10.0.32:8000'; 
+const SOCKET_URL = 'http://192.168.1.26:8000'; 
 
 const socket = io(SOCKET_URL, {
   transports: ["websocket"], 

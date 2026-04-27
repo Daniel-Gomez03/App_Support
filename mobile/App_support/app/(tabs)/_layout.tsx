@@ -2,9 +2,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import CustomHeader from '@/components/CustomHeader';
 import TabBar from '@/components/TabBar';
 import Inicio from './index';
-import QA from './qa';
+import FAQ from './faq';
 import Nuevo from './nuevo';
-import Usuario from './usuario';
+import Historial from './historial';
+import Perfil from './Perfil';
 
 const Tab = createBottomTabNavigator();
 
@@ -12,7 +13,7 @@ export default function TabLayout() {
     return (
         <Tab.Navigator
             screenOptions={{
-                header: (props) => <CustomHeader {...props} />,
+                header: () => <CustomHeader />,
                 headerShown: true,
                 tabBarActiveTintColor: '#3C6034',
                 tabBarInactiveTintColor: '#999999',
@@ -22,30 +23,27 @@ export default function TabLayout() {
             <Tab.Screen
                 name="index"
                 component={Inicio}
-                options={{
-                    title: 'Inicio',
-                }}
+                options={{ title: 'Inicio' }}
             />
             <Tab.Screen
-                name="qa"
-                component={QA}
-                options={{
-                    title: 'Q&A',
-                }}
+                name="faq"
+                component={FAQ}
+                options={{ title: 'FAQ' }}
             />
             <Tab.Screen
                 name="nuevo"
                 component={Nuevo}
-                options={{
-                    title: 'Nuevo',
-                }}
+                options={{ title: 'Nuevo' }}
             />
             <Tab.Screen
-                name="usuario"
-                component={Usuario}
-                options={{
-                    title: 'Usuario',
-                }}
+                name="historial"
+                component={Historial}
+                options={{ title: 'Historial' }}
+            />
+            <Tab.Screen
+                name="perfil"
+                component={Perfil}
+                options={{ title: 'Perfil' }}
             />
         </Tab.Navigator>
     );

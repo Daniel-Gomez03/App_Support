@@ -1,54 +1,51 @@
-import React, { StrictMode } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, Entypo } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 
 const { width } = Dimensions.get('window');
+const AVATAR_SIZE = width * 0.112;
 
-export default function CustomHeader({ navigation }: any) {
+export default function CustomHeader() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { state } = useAuth();
 
-    const userImage = state.user?.customer_image;
+    const user = state.user;
+    const firstName = user?.customer_first_name || 'Usuario';
+    const initial = firstName.charAt(0).toUpperCase();
+    const userImage = user?.customer_image;
 
     return (
-        <StrictMode>
-            <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
+        <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
+            <View style={styles.greeting}>
+                <Text style={styles.greetingText}>Hola, {firstName}</Text>
+                <Text style={styles.subText}>En qué podemos ayudarte hoy?</Text>
+            </View>
+
+            <View style={styles.right}>
                 <TouchableOpacity
-                    style={styles.menuButton}
-                    onPress={() => navigation.openDrawer()}
+                    style={styles.bellBtn}
+                    onPress={() => router.push('/notificaciones')}
+                    activeOpacity={0.7}
                 >
-                    <Entypo name="menu" size={width * 0.07} color="white" />
+                    <Ionicons name="notifications" size={width * 0.068} color="#3C6034" />
+                    <View style={styles.badge} />
                 </TouchableOpacity>
 
-                <View style={styles.greetingContainer}>
-                    <Text style={styles.welcomeText}>Bienvenido</Text>
-                    <Text style={styles.subText}>En que podemos ayudarte hoy?</Text>
-                </View>
-
-                <View style={styles.rightContainer}>
-                    <TouchableOpacity
-                        style={styles.iconButton}
-                        onPress={() => router.push('/notificaciones')}
-                    >
-                        <Ionicons name="notifications" size={width * 0.065} color="#3C6034" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.profileContainer}>
-                        {userImage ? (
-                            <Image source={{ uri: userImage }} style={styles.profileImage} />
-                        ) : (
-                            <View style={[styles.profileImage, styles.noneImage]}>
-                                <Ionicons name="person" size={width * 0.05} color="white" />
-                            </View>
-                        )}
-                    </TouchableOpacity>
-                </View>
+                <TouchableOpacity activeOpacity={0.8}>
+                    {userImage ? (
+                        <Image source={{ uri: userImage }} style={styles.avatar} />
+                    ) : (
+                        <View style={styles.avatarInitial}>
+                            <Text style={styles.initialText}>{initial}</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
             </View>
-        </StrictMode>
+        </View>
     );
 }
 
@@ -56,54 +53,60 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         backgroundColor: 'white',
-        paddingHorizontal: width * 0.05,
-        paddingBottom: 15,
+        paddingHorizontal: width * 0.055,
+        paddingBottom: 16,
         alignItems: 'center',
         justifyContent: 'space-between',
     },
-    menuButton: {
-        backgroundColor: '#3C6034',
-        padding: width * 0.008,
-        borderRadius: width * 0.007,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    greetingContainer: {
+    greeting: {
         flex: 1,
-        marginLeft: 15,
     },
-    welcomeText: {
+    greetingText: {
         fontFamily: 'Poppins-Bold',
-        fontSize: width * 0.045,
+        fontSize: width * 0.055,
         color: '#000',
-        marginBottom: -2,
+        lineHeight: width * 0.068,
     },
     subText: {
         fontFamily: 'Poppins-Regular',
         fontSize: width * 0.03,
         color: '#999',
     },
-    rightContainer: {
+    right: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 14,
     },
-    iconButton: {
-        marginRight: 15,
+    bellBtn: {
         position: 'relative',
     },
-    profileContainer: {
-        width: width * 0.11,
-        height: width * 0.11,
-        borderRadius: (width * 0.11) / 2,
-        overflow: 'hidden',
+    badge: {
+        position: 'absolute',
+        top: 0,
+        right: 1,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#E53E3E',
+        borderWidth: 1.5,
+        borderColor: 'white',
     },
-    profileImage: {
-        width: '100%',
-        height: '100%',
+    avatar: {
+        width: AVATAR_SIZE,
+        height: AVATAR_SIZE,
+        borderRadius: AVATAR_SIZE / 2,
     },
-    noneImage: {
-        backgroundColor: '#ccc',
+    avatarInitial: {
+        width: AVATAR_SIZE,
+        height: AVATAR_SIZE,
+        borderRadius: AVATAR_SIZE / 2,
+        backgroundColor: '#3C6034',
         justifyContent: 'center',
         alignItems: 'center',
-    }
+    },
+    initialText: {
+        fontFamily: 'Poppins-Bold',
+        fontSize: width * 0.045,
+        color: 'white',
+    },
 });
