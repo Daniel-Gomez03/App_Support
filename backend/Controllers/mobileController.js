@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const { Op } = require("sequelize");
 const Customer = require("../models/Customer");
 const Warranty = require("../models/Warranty");
 const WarrantyPolicy = require("../models/WarrantyPolicy");
@@ -48,30 +49,23 @@ exports.mobileLogin = async (req, res) => {
         }
 
         if (customer.customer_status === 0) {
-            return res
-                .status(403)
-                .json({
-                    error:
-                        "Tu cuenta está pendiente de revisión. Un administrador debe verificar tu registro antes de que puedas acceder.",
-                });
+            return res.status(403).json({
+                error:
+                    "Tu cuenta está pendiente de revisión. Un administrador debe verificar tu registro antes de que puedas acceder.",
+            });
         }
 
         if (!customer.email_verified) {
-            return res
-                .status(403)
-                .json({
-                    error:
-                        "Debes verificar tu correo electrónico antes de iniciar sesión.",
-                });
+            return res.status(403).json({
+                error: "Debes verificar tu correo electrónico antes de iniciar sesión.",
+            });
         }
 
         if (!customer.customer_password) {
-            return res
-                .status(401)
-                .json({
-                    error:
-                        "Esta cuenta no tiene contraseña configurada. Contacta al soporte.",
-                });
+            return res.status(401).json({
+                error:
+                    "Esta cuenta no tiene contraseña configurada. Contacta al soporte.",
+            });
         }
 
         const isMatch = await bcrypt.compare(
@@ -419,11 +413,9 @@ exports.resetPassword = async (req, res) => {
             !customer.reset_password_expires ||
             customer.reset_password_expires < new Date()
         ) {
-            return res
-                .status(400)
-                .json({
-                    error: "El enlace de recuperación es inválido o ha expirado.",
-                });
+            return res.status(400).json({
+                error: "El enlace de recuperación es inválido o ha expirado.",
+            });
         }
 
         if (customer.customer_password) {
@@ -432,12 +424,10 @@ exports.resetPassword = async (req, res) => {
                 customer.customer_password,
             );
             if (isSame) {
-                return res
-                    .status(400)
-                    .json({
-                        error:
-                            "La nueva contraseña no puede ser igual a la contraseña actual.",
-                    });
+                return res.status(400).json({
+                    error:
+                        "La nueva contraseña no puede ser igual a la contraseña actual.",
+                });
             }
         }
 
@@ -468,30 +458,32 @@ exports.resetRedirect = (req, res) => {
 
     const deepLink = "tboxsasupport://auth/reset-password?token=" + token;
 
-    res.send(`<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Restableciendo contraseña...</title>
-  <style>
-    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #0B1C0D; }
-    .card { background: white; border-radius: 16px; padding: 32px 24px; max-width: 360px; text-align: center; margin: 20px; }
-    h2 { color: #1B3A1F; margin-top: 0; font-size: 22px; }
-    p { color: #6b7280; font-size: 14px; line-height: 1.6; }
-    a.btn { display: inline-block; background: #1B3A1F; color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 16px; }
-  </style>
-  <script>setTimeout(function(){ window.location.href = '${deepLink}'; }, 500);</script>
-</head>
-<body>
-  <div class="card">
-    <h2>Restablecer Contraseña</h2>
-    <p>Abriendo la aplicación TBOXSA...</p>
-    <p>Si no se abre automáticamente, toca el botón de abajo.</p>
-    <a class="btn" href="${deepLink}">Abrir Aplicación</a>
-  </div>
-</body>
-</html>`);
+    res.send(
+        `<!DOCTYPE html>
+            <html lang="es">
+                <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Restableciendo contraseña...</title>
+                <style>
+                    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #0B1C0D; }
+                    .card { background: white; border-radius: 16px; padding: 32px 24px; max-width: 360px; text-align: center; margin: 20px; }
+                    h2 { color: #1B3A1F; margin-top: 0; font-size: 22px; }
+                    p { color: #6b7280; font-size: 14px; line-height: 1.6; }
+                    a.btn { display: inline-block; background: #1B3A1F; color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 16px; }
+                </style>
+                <script>setTimeout(function(){ window.location.href = '${deepLink}'; }, 500);</script>
+                </head>
+                <body>
+                <div class="card">
+                    <h2>Restablecer Contraseña</h2>
+                    <p>Abriendo la aplicación TBOXSA...</p>
+                    <p>Si no se abre automáticamente, toca el botón de abajo.</p>
+                    <a class="btn" href="${deepLink}">Abrir Aplicación</a>
+                </div>
+                </body>
+        </html>`,
+    );
 };
 
 // ============================================
@@ -552,10 +544,12 @@ exports.getMobileFaqs = async (req, res) => {
 // ============================================
 exports.getMobileCategories = async (req, res) => {
     try {
-        const categories = await Category.findAll({ where: { category_status: true } });
+        const categories = await Category.findAll({
+            where: { category_status: true },
+        });
         res.json(categories);
     } catch (error) {
-        res.status(500).json({ error: 'Error al obtener categorías.' });
+        res.status(500).json({ error: "Error al obtener categorías." });
     }
 };
 
@@ -566,11 +560,11 @@ exports.getMobileProductsByCategory = async (req, res) => {
     try {
         const { category_id } = req.params;
         const products = await Product.findAll({
-            where: { category_id, product_status: true }
+            where: { category_id, product_status: true },
         });
         res.json(products);
     } catch (error) {
-        res.status(500).json({ error: 'Error al obtener productos.' });
+        res.status(500).json({ error: "Error al obtener productos." });
     }
 };
 
@@ -581,11 +575,11 @@ exports.getMobileModelsByProduct = async (req, res) => {
     try {
         const { product_id } = req.params;
         const models = await ProductModel.findAll({
-            where: { product_id, product_model_status: true }
+            where: { product_id, product_model_status: true },
         });
         res.json(models);
     } catch (error) {
-        res.status(500).json({ error: 'Error al obtener modelos.' });
+        res.status(500).json({ error: "Error al obtener modelos." });
     }
 };
 
@@ -597,59 +591,81 @@ exports.createMobileTicket = async (req, res) => {
     const localFilesToCleanup = [];
 
     try {
-        const { category_id, product_id, product_model_id, ticket_subject, ticket_description, ticket_serial_number } = req.body;
+        const {
+            category_id,
+            product_id,
+            product_model_id,
+            ticket_subject,
+            ticket_description,
+            ticket_serial_number,
+        } = req.body;
         const customer_id = req.customer.customer_id;
 
         if (!category_id || !ticket_subject || !ticket_description) {
-            return res.status(400).json({ error: 'Faltan datos obligatorios.' });
+            return res.status(400).json({ error: "Faltan datos obligatorios." });
         }
 
         if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ error: 'Se requiere al menos una evidencia.' });
+            return res
+                .status(400)
+                .json({ error: "Se requiere al menos una evidencia." });
         }
 
         let finalStatus = 1;
         if (ticket_serial_number) {
-            const warranty = await Warranty.findOne({ where: { warranty_serial_number: ticket_serial_number } });
+            const warranty = await Warranty.findOne({
+                where: { warranty_serial_number: ticket_serial_number },
+            });
             if (!warranty || warranty.is_expired) finalStatus = 2;
         } else {
             finalStatus = 2;
         }
 
-        const newTicket = await Ticket.create({
-            customer_id,
-            category_id,
-            product_id: product_id || null,
-            product_model_id: product_model_id || null,
-            ticket_status_id: finalStatus,
-            ticket_subject,
-            ticket_description,
-            ticket_serial_number: ticket_serial_number || null,
-            ticket_priority: null,
-            ticket_status: 1
-        }, { transaction: t });
+        const newTicket = await Ticket.create(
+            {
+                customer_id,
+                category_id,
+                product_id: product_id || null,
+                product_model_id: product_model_id || null,
+                ticket_status_id: finalStatus,
+                ticket_subject,
+                ticket_description,
+                ticket_serial_number: ticket_serial_number || null,
+                ticket_priority: null,
+                ticket_status: 1,
+            },
+            { transaction: t },
+        );
 
         for (const file of req.files) {
             const processed = await processEvidence(file);
             localFilesToCleanup.push(processed.filePath);
             const ftpUrl = await uploadToFTP(processed.filePath, processed.fileName);
-            await TicketEvidence.create({
-                ticket_id: newTicket.ticket_id,
-                ticket_evidence_path: ftpUrl
-            }, { transaction: t });
+            await TicketEvidence.create(
+                {
+                    ticket_id: newTicket.ticket_id,
+                    ticket_evidence_path: ftpUrl,
+                },
+                { transaction: t },
+            );
         }
 
         await t.commit();
-        localFilesToCleanup.forEach(p => { if (fs.existsSync(p)) fs.unlinkSync(p); });
+        localFilesToCleanup.forEach((p) => {
+            if (fs.existsSync(p)) fs.unlinkSync(p);
+        });
 
-        const io = req.app.get('io');
-        if (io) io.emit('new_ticket_created', newTicket);
+        const io = req.app.get("io");
+        if (io) io.emit("new_ticket_created", newTicket);
 
-        res.status(201).json({ message: 'Ticket creado correctamente.', ticket: newTicket });
-
+        res
+            .status(201)
+            .json({ message: "Ticket creado correctamente.", ticket: newTicket });
     } catch (error) {
         await t.rollback();
-        localFilesToCleanup.forEach(p => { if (fs.existsSync(p)) fs.unlinkSync(p); });
+        localFilesToCleanup.forEach((p) => {
+            if (fs.existsSync(p)) fs.unlinkSync(p);
+        });
         res.status(500).json({ error: error.message });
     }
 };
@@ -662,23 +678,75 @@ exports.getMobileActiveTickets = async (req, res) => {
         const customer_id = req.customer.customer_id;
 
         const tickets = await Ticket.findAll({
-            where: { customer_id, ticket_status: 1 },
+            where: {
+                customer_id,
+                ticket_status_id: { [Op.notIn]: [9, 10] },
+            },
             include: [
-                { model: Category, as: 'category', attributes: ['category_id', 'category_name'] },
-                { model: TicketStatus, as: 'status', attributes: ['ticket_status_id', 'ticket_status_name'] },
                 {
-                    model: User, as: 'assignedUsers',
-                    attributes: ['user_id', 'nombre_completo', 'foto'],
-                    through: { attributes: [] }
-                }
+                    model: Category,
+                    as: "category",
+                    attributes: ["category_id", "category_name"],
+                },
+                {
+                    model: TicketStatus,
+                    as: "status",
+                    attributes: ["ticket_status_id", "ticket_status_name"],
+                },
+                {
+                    model: User,
+                    as: "assignedUsers",
+                    attributes: ["user_id", "nombre_completo", "foto"],
+                    through: { attributes: [] },
+                },
             ],
-            order: [['created_at', 'DESC']]
+            order: [["created_at", "DESC"]],
         });
 
         res.json(tickets);
     } catch (error) {
-        console.error('Error en getMobileActiveTickets:', error);
-        res.status(500).json({ error: 'Error al obtener tickets activos.' });
+        console.error("Error en getMobileActiveTickets:", error);
+        res.status(500).json({ error: "Error al obtener tickets activos." });
+    }
+};
+
+// ============================================
+// HISTORIAL DE TICKETS DEL CLIENTE (MÓVIL)
+// ============================================
+exports.getMobileHistoryTickets = async (req, res) => {
+    try {
+        const customer_id = req.customer.customer_id;
+
+        const tickets = await Ticket.findAll({
+            where: {
+                customer_id,
+                ticket_status_id: { [Op.in]: [9, 10] },
+            },
+            include: [
+                {
+                    model: Category,
+                    as: "category",
+                    attributes: ["category_id", "category_name"],
+                },
+                {
+                    model: TicketStatus,
+                    as: "status",
+                    attributes: ["ticket_status_id", "ticket_status_name"],
+                },
+                {
+                    model: User,
+                    as: "assignedUsers",
+                    attributes: ["user_id", "nombre_completo", "foto"],
+                    through: { attributes: [] },
+                },
+            ],
+            order: [["created_at", "DESC"]],
+        });
+
+        res.json(tickets);
+    } catch (error) {
+        console.error("Error en getMobileHistoryTickets:", error);
+        res.status(500).json({ error: "Error al obtener historial." });
     }
 };
 
@@ -693,20 +761,50 @@ exports.getMobileTicketDetail = async (req, res) => {
         const ticket = await Ticket.findOne({
             where: { ticket_id: id, customer_id },
             include: [
-                { model: Category, as: 'category', attributes: ['category_id', 'category_name'] },
-                { model: Product, as: 'product', attributes: ['product_id', 'product_name'] },
-                { model: ProductModel, as: 'productModel', attributes: ['product_model_id', 'product_model_name'] },
-                { model: TicketStatus, as: 'status', attributes: ['ticket_status_id', 'ticket_status_name'] },
-                { model: Warranty, as: 'warranty', attributes: ['warranty_serial_number', 'is_expired', 'warranty_expiry_date'] },
-                { model: User, as: 'assignedUsers', attributes: ['user_id', 'nombre_completo', 'foto', 'cargo'], through: { attributes: [] } }
-            ]
+                {
+                    model: Category,
+                    as: "category",
+                    attributes: ["category_id", "category_name"],
+                },
+                {
+                    model: Product,
+                    as: "product",
+                    attributes: ["product_id", "product_name"],
+                },
+                {
+                    model: ProductModel,
+                    as: "productModel",
+                    attributes: ["product_model_id", "product_model_name"],
+                },
+                {
+                    model: TicketStatus,
+                    as: "status",
+                    attributes: ["ticket_status_id", "ticket_status_name"],
+                },
+                {
+                    model: Warranty,
+                    as: "warranty",
+                    attributes: [
+                        "warranty_serial_number",
+                        "is_expired",
+                        "warranty_expiry_date",
+                    ],
+                },
+                {
+                    model: User,
+                    as: "assignedUsers",
+                    attributes: ["user_id", "nombre_completo", "foto", "cargo"],
+                    through: { attributes: [] },
+                },
+            ],
         });
 
-        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' });
+        if (!ticket)
+            return res.status(404).json({ error: "Ticket no encontrado." });
         res.json(ticket);
     } catch (error) {
-        console.error('Error en getMobileTicketDetail:', error);
-        res.status(500).json({ error: 'Error al obtener el ticket.' });
+        console.error("Error en getMobileTicketDetail:", error);
+        res.status(500).json({ error: "Error al obtener el ticket." });
     }
 };
 
@@ -718,29 +816,48 @@ exports.getMobileTicketComments = async (req, res) => {
         const customer_id = req.customer.customer_id;
         const { id } = req.params;
 
-        const ticket = await Ticket.findOne({ where: { ticket_id: id, customer_id } });
-        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' });
+        const ticket = await Ticket.findOne({
+            where: { ticket_id: id, customer_id },
+        });
+        if (!ticket)
+            return res.status(404).json({ error: "Ticket no encontrado." });
 
         const comments = await TicketComment.findAll({
             where: { ticket_id: id },
             include: [
-                { model: User, as: 'author', attributes: ['user_id', 'nombre_completo', 'foto'] },
-                { model: Customer, as: 'customerAuthor', attributes: ['customer_id', 'customer_first_name', 'customer_last_name', 'customer_image'] }
+                {
+                    model: User,
+                    as: "author",
+                    attributes: ["user_id", "nombre_completo", "foto", "rol"],
+                },
+                {
+                    model: Customer,
+                    as: "customerAuthor",
+                    attributes: [
+                        "customer_id",
+                        "customer_first_name",
+                        "customer_last_name",
+                        "customer_image",
+                    ],
+                },
+                { model: TicketCommentAttachment, as: "attachments" },
             ],
-            order: [['created_at', 'ASC']]
+            order: [["created_at", "ASC"]],
         });
 
-        // Desencriptar todos los mensajes (tech y cliente); mensajes de sistema no cifrados quedan intactos
-        const decrypted = comments.map(c => {
+        const decrypted = comments.map((c) => {
             const plain = c.toJSON();
-            try { plain.comment_text = decrypt(plain.comment_text); } catch { /* no cifrado, mantener original */ }
+            try {
+                plain.comment_text = decrypt(plain.comment_text);
+            } catch {
+            }
             return plain;
         });
 
         res.json(decrypted);
     } catch (error) {
-        console.error('Error en getMobileTicketComments:', error);
-        res.status(500).json({ error: 'Error al obtener comentarios.' });
+        console.error("Error en getMobileTicketComments:", error);
+        res.status(500).json({ error: "Error al obtener comentarios." });
     }
 };
 
@@ -754,58 +871,77 @@ exports.addMobileTicketComment = async (req, res) => {
         const { comment_text } = req.body;
 
         if (!comment_text?.trim()) {
-            return res.status(400).json({ error: 'El mensaje no puede estar vacío.' });
+            return res
+                .status(400)
+                .json({ error: "El mensaje no puede estar vacío." });
         }
 
-        const ticket = await Ticket.findOne({ where: { ticket_id: id, customer_id } });
-        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' });
+        const ticket = await Ticket.findOne({
+            where: { ticket_id: id, customer_id },
+        });
+        if (!ticket)
+            return res.status(404).json({ error: "Ticket no encontrado." });
 
         const comment = await TicketComment.create({
             ticket_id: id,
             customer_id,
             user_id: null,
-            comment_text: encrypt(comment_text.trim())
+            comment_text: encrypt(comment_text.trim()),
         });
 
-        // Procesar adjuntos si los hay
         const localFilesToCleanup = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 const processed = await processEvidence(file);
                 localFilesToCleanup.push(processed.filePath);
-                const ftpUrl = await uploadToFTP(processed.filePath, processed.fileName);
+                const ftpUrl = await uploadToFTP(
+                    processed.filePath,
+                    processed.fileName,
+                );
                 await TicketCommentAttachment.create({
                     comment_id: comment.comment_id,
                     file_path: ftpUrl,
-                    file_name: file.originalname
+                    file_name: file.originalname,
                 });
             }
-            localFilesToCleanup.forEach(p => { if (fs.existsSync(p)) fs.unlinkSync(p); });
+            localFilesToCleanup.forEach((p) => {
+                if (fs.existsSync(p)) fs.unlinkSync(p);
+            });
         }
 
         const full = await TicketComment.findByPk(comment.comment_id, {
             include: [
-                { model: Customer, as: 'customerAuthor', attributes: ['customer_id', 'customer_first_name', 'customer_last_name', 'customer_image'] },
-                { model: TicketCommentAttachment, as: 'attachments' }
-            ]
+                {
+                    model: Customer,
+                    as: "customerAuthor",
+                    attributes: [
+                        "customer_id",
+                        "customer_first_name",
+                        "customer_last_name",
+                        "customer_image",
+                    ],
+                },
+                { model: TicketCommentAttachment, as: "attachments" },
+            ],
         });
 
         const plain = full.toJSON();
-        // Devolver texto ya desencriptado al cliente móvil
-        try { plain.comment_text = decrypt(plain.comment_text); } catch { plain.comment_text = comment_text.trim(); }
+        try {
+            plain.comment_text = decrypt(plain.comment_text);
+        } catch {
+            plain.comment_text = comment_text.trim();
+        }
 
-        const io = req.app.get('io');
+        const io = req.app.get("io");
         if (io) {
-            // Evento para el cliente móvil
             io.emit(`ticket_comment_${id}`, plain);
-            // Evento para el admin web (mismo formato que addComment del admin)
-            io.emit('new_comment', { ticket_id: parseInt(id), comment: plain });
+            io.emit("new_comment", { ticket_id: parseInt(id), comment: plain });
         }
 
         res.status(201).json(plain);
     } catch (error) {
-        console.error('Error en addMobileTicketComment:', error);
-        res.status(500).json({ error: 'Error al enviar el mensaje.' });
+        console.error("Error en addMobileTicketComment:", error);
+        res.status(500).json({ error: "Error al enviar el mensaje." });
     }
 };
 
@@ -817,25 +953,29 @@ exports.requestTicketCancellation = async (req, res) => {
         const customer_id = req.customer.customer_id;
         const { id } = req.params;
 
-        const ticket = await Ticket.findOne({ where: { ticket_id: id, customer_id } });
-        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado.' });
+        const ticket = await Ticket.findOne({
+            where: { ticket_id: id, customer_id },
+        });
+        if (!ticket)
+            return res.status(404).json({ error: "Ticket no encontrado." });
 
         const comment = await TicketComment.create({
             ticket_id: id,
             customer_id,
             user_id: null,
-            comment_text: '🔴 El cliente ha solicitado la cancelación de este ticket.'
+            comment_text:
+                "🔴 El cliente ha solicitado la cancelación de este ticket.",
         });
 
-        const io = req.app.get('io');
+        const io = req.app.get("io");
         if (io) {
             io.emit(`ticket_comment_${id}`, comment);
-            io.emit('ticket_cancel_requested', { ticket_id: id, customer_id });
+            io.emit("ticket_cancel_requested", { ticket_id: id, customer_id });
         }
 
-        res.json({ message: 'Solicitud de cancelación enviada correctamente.' });
+        res.json({ message: "Solicitud de cancelación enviada correctamente." });
     } catch (error) {
-        console.error('Error en requestTicketCancellation:', error);
-        res.status(500).json({ error: 'Error al procesar la solicitud.' });
+        console.error("Error en requestTicketCancellation:", error);
+        res.status(500).json({ error: "Error al procesar la solicitud." });
     }
 };

@@ -113,7 +113,10 @@ exports.addComment = async (req, res) => {
         decryptComment(plain);
 
         const io = req.app.get('io');
-        if (io) io.emit('new_comment', { ticket_id: parseInt(id), comment: plain });
+        if (io) {
+            io.emit('new_comment', { ticket_id: parseInt(id), comment: plain });
+            io.emit(`ticket_comment_${id}`, plain);
+        }
 
         res.status(201).json(plain);
     } catch (error) {

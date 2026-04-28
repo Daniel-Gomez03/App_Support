@@ -24,6 +24,21 @@ import socket from "@/Services/socket";
 const { width } = Dimensions.get("window");
 const API_URL = "http://10.10.0.84:8000/api";
 
+const AVATAR_COLORS = [
+  "#3C6034",
+  "#2563EB",
+  "#7C3AED",
+  "#DB2777",
+  "#D97706",
+  "#0891B2",
+  "#059669",
+  "#DC2626",
+];
+const avatarColor = (name: string) =>
+  AVATAR_COLORS[(name?.charCodeAt(0) ?? 0) % AVATAR_COLORS.length];
+const validPhoto = (foto?: string | null) =>
+  !!foto && foto !== "default.jpg" && foto.startsWith("http");
+
 const MESES = [
   "Ene",
   "Feb",
@@ -67,7 +82,6 @@ const authHeader = async (): Promise<Record<string, string>> => {
   return { Authorization: `Bearer ${token ?? ""}` };
 };
 
-// ── Avatar ────────────────────────────────────────────────────
 function Avatar({
   uri,
   name,
@@ -78,10 +92,10 @@ function Avatar({
   size?: number;
 }) {
   const initial = (name ?? "?").charAt(0).toUpperCase();
-  if (uri)
+  if (validPhoto(uri))
     return (
       <Image
-        source={{ uri }}
+        source={{ uri: uri! }}
         style={{ width: size, height: size, borderRadius: size / 2 }}
       />
     );
@@ -91,7 +105,7 @@ function Avatar({
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: "#3C6034",
+        backgroundColor: avatarColor(name ?? ""),
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -109,7 +123,6 @@ function Avatar({
   );
 }
 
-// ── Progress bar ──────────────────────────────────────────────
 function ProgressBar({ step }: { step: number }) {
   const steps = ["Nuevo", "En Proceso", "Finalizado"];
   return (
@@ -146,7 +159,6 @@ function ProgressBar({ step }: { step: number }) {
   );
 }
 
-// ── Main screen ───────────────────────────────────────────────
 export default function TicketDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -185,7 +197,12 @@ export default function TicketDetailScreen() {
 
   useEffect(() => {
     fetchAll();
-    const handler = (comment: any) => setComments((prev) => [...prev, comment]);
+    const handler = (comment: any) =>
+      setComments((prev) =>
+        prev.some((c) => c.comment_id === comment.comment_id)
+          ? prev
+          : [...prev, comment],
+      );
     socket.on(`ticket_comment_${id}`, handler);
     return () => {
       socket.off(`ticket_comment_${id}`, handler);
@@ -276,9 +293,7 @@ export default function TicketDetailScreen() {
                 "Solicitud enviada",
                 "Un agente revisará tu solicitud de cancelación.",
               );
-            } catch {
-              /* silencioso */
-            }
+            } catch {}
           },
         },
       ],
@@ -294,6 +309,9 @@ export default function TicketDetailScreen() {
   }
 
   const step = getStep(ticket.status?.ticket_status_name ?? "");
+  const statusId = ticket.status?.ticket_status_id ?? 0;
+  const isClosed = statusId === 9 || statusId === 10;
+  const isCancelled = statusId === 10;
   const techs: any[] = ticket.assignedUsers ?? [];
   const warranty = ticket.warranty;
   const warrantyLabel = !ticket.ticket_serial_number
@@ -369,20 +387,52 @@ export default function TicketDetailScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          {/* Técnico principal */}
+          {/* Técnico(s) asignado(s) */}
           {techs.length > 0 && (
             <View style={s.techCard}>
-              <Avatar
-                uri={techs[0].foto}
-                name={techs[0].nombre_completo}
-                size={46}
-              />
-              <View style={{ marginLeft: 12 }}>
-                <Text style={s.techCardName}>{techs[0].nombre_completo}</Text>
-                <Text style={s.techCardRole}>
-                  {techs[0].cargo ?? "Técnico"}
-                </Text>
-              </View>
+              {techs.length === 1 ? (
+                <>
+                  <Avatar
+                    uri={techs[0].foto}
+                    name={techs[0].nombre_completo}
+                    size={46}
+                  />
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={s.techCardName}>
+                      {techs[0].nombre_completo}
+                    </Text>
+                    <Text style={s.techCardRole}>
+                      {techs[0].cargo ?? "Técnico"}
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <View style={s.techAvatarStack}>
+                    {techs.slice(0, 3).map((t, i) => (
+                      <View
+                        key={t.user_id}
+                        style={[
+                          s.techStackItem,
+                          { marginLeft: i > 0 ? -14 : 0, zIndex: 10 - i },
+                        ]}
+                      >
+                        <Avatar
+                          uri={t.foto}
+                          name={t.nombre_completo}
+                          size={40}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={s.techCardName}>Equipo de soporte</Text>
+                    <Text style={s.techCardRole}>
+                      {techs.length} técnicos asignados
+                    </Text>
+                  </View>
+                </>
+              )}
             </View>
           )}
 
@@ -398,6 +448,10 @@ export default function TicketDetailScreen() {
               const isCustomer =
                 !!item.customer_id && item.customer_id === customerId;
               const isSystem = item.comment_text?.startsWith("🔴");
+              const hasAttachments = (item.attachments?.length ?? 0) > 0;
+              const showText =
+                !hasAttachments || item.comment_text !== "📎 Archivo adjunto";
+
               if (isSystem) {
                 return (
                   <View style={s.sysMsg}>
@@ -421,23 +475,36 @@ export default function TicketDetailScreen() {
                     ]}
                   >
                     {!isCustomer && (
-                      <Text style={s.bubbleAuthor}>
-                        {item.author?.nombre_completo ?? "Técnico"}
+                      <View style={s.bubbleAuthorRow}>
+                        <Text style={s.bubbleAuthor}>
+                          {item.author?.nombre_completo ?? "Técnico"}
+                        </Text>
+                        {item.author?.rol === "Admin" && (
+                          <View style={s.supportBadge}>
+                            <Text style={s.supportBadgeText}>Admin</Text>
+                          </View>
+                        )}
+                      </View>
+                    )}
+                    {showText && (
+                      <Text
+                        style={[
+                          s.bubbleText,
+                          isCustomer && s.bubbleTextCustomer,
+                        ]}
+                      >
+                        {item.comment_text}
                       </Text>
                     )}
-                    <Text
-                      style={[s.bubbleText, isCustomer && s.bubbleTextCustomer]}
-                    >
-                      {item.comment_text}
-                    </Text>
-                    {item.attachments?.map((a: any) => (
-                      <Image
-                        key={a.attachment_id}
-                        source={{ uri: a.file_path }}
-                        style={s.attachImg}
-                        resizeMode="cover"
-                      />
-                    ))}
+                    {hasAttachments &&
+                      item.attachments.map((a: any) => (
+                        <Image
+                          key={a.attachment_id}
+                          source={{ uri: a.file_path }}
+                          style={s.attachImg}
+                          resizeMode="cover"
+                        />
+                      ))}
                     <Text
                       style={[s.bubbleTime, isCustomer && s.bubbleTimeCustomer]}
                     >
@@ -458,7 +525,7 @@ export default function TicketDetailScreen() {
           />
 
           {/* Preview de adjuntos pendientes */}
-          {pendingFiles.length > 0 && (
+          {!isClosed && pendingFiles.length > 0 && (
             <View style={s.pendingRow}>
               {pendingFiles.map((f, i) => (
                 <View key={i} style={s.pendingThumb}>
@@ -476,38 +543,65 @@ export default function TicketDetailScreen() {
             </View>
           )}
 
-          {/* Input */}
-          <View
-            style={[s.inputRow, { paddingBottom: Math.max(insets.bottom, 8) }]}
-          >
-            <TouchableOpacity
-              style={s.attachBtn}
-              onPress={pickFiles}
-              activeOpacity={0.7}
+          {/* Input / aviso de ticket cerrado */}
+          {isClosed ? (
+            <View
+              style={[
+                s.chatClosedBanner,
+                { paddingBottom: Math.max(insets.bottom, 12) },
+              ]}
             >
-              <Ionicons name="attach" size={22} color="#9CA3AF" />
-            </TouchableOpacity>
-            <TextInput
-              style={s.chatInput}
-              placeholder="Escribe un mensaje..."
-              placeholderTextColor="#999"
-              value={msg}
-              onChangeText={setMsg}
-              multiline
-            />
-            <TouchableOpacity
-              style={[s.sendBtn, !canSend && s.sendBtnDisabled]}
-              onPress={sendComment}
-              disabled={!canSend || sending}
-              activeOpacity={0.8}
+              <Ionicons
+                name={
+                  isCancelled
+                    ? "close-circle-outline"
+                    : "checkmark-circle-outline"
+                }
+                size={18}
+                color={isCancelled ? "#DC2626" : "#3C6034"}
+              />
+              <Text style={s.chatClosedText}>
+                {isCancelled
+                  ? "Este ticket fue cancelado. No puedes enviar mensajes."
+                  : "Este ticket está finalizado. No puedes enviar mensajes."}
+              </Text>
+            </View>
+          ) : (
+            <View
+              style={[
+                s.inputRow,
+                { paddingBottom: Math.max(insets.bottom, 8) },
+              ]}
             >
-              {sending ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Ionicons name="send" size={18} color="#fff" />
-              )}
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={s.attachBtn}
+                onPress={pickFiles}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="attach" size={22} color="#9CA3AF" />
+              </TouchableOpacity>
+              <TextInput
+                style={s.chatInput}
+                placeholder="Escribe un mensaje..."
+                placeholderTextColor="#999"
+                value={msg}
+                onChangeText={setMsg}
+                multiline
+              />
+              <TouchableOpacity
+                style={[s.sendBtn, !canSend && s.sendBtnDisabled]}
+                onPress={sendComment}
+                disabled={!canSend || sending}
+                activeOpacity={0.8}
+              >
+                {sending ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Ionicons name="send" size={18} color="#fff" />
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </KeyboardAvoidingView>
       )}
 
@@ -642,14 +736,44 @@ export default function TicketDetailScreen() {
             </View>
           )}
 
-          {/* Solicitar cancelación */}
-          <TouchableOpacity
-            style={s.cancelBtn}
-            onPress={requestCancel}
-            activeOpacity={0.8}
-          >
-            <Text style={s.cancelBtnText}>Solicitar cancelación</Text>
-          </TouchableOpacity>
+          {/* Solicitar cancelación / estado final */}
+          {isClosed ? (
+            <View
+              style={[
+                s.closedInfoBanner,
+                isCancelled ? s.closedInfoBannerRed : s.closedInfoBannerGreen,
+              ]}
+            >
+              <Ionicons
+                name={isCancelled ? "close-circle" : "checkmark-circle"}
+                size={28}
+                color={isCancelled ? "#DC2626" : "#3C6034"}
+              />
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[
+                    s.closedInfoTitle,
+                    { color: isCancelled ? "#DC2626" : "#3C6034" },
+                  ]}
+                >
+                  {isCancelled ? "Ticket cancelado" : "Ticket finalizado"}
+                </Text>
+                <Text style={s.closedInfoSub}>
+                  {isCancelled
+                    ? "Este ticket fue cerrado por solicitud de cancelación."
+                    : "La atención de este ticket ha sido completada satisfactoriamente."}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={s.cancelBtn}
+              onPress={requestCancel}
+              activeOpacity={0.8}
+            >
+              <Text style={s.cancelBtnText}>Solicitar cancelación</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       )}
     </View>
@@ -657,8 +781,11 @@ export default function TicketDetailScreen() {
 }
 
 const s = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  // Header
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   header: {
     backgroundColor: "#1B3A1F",
     flexDirection: "row",
@@ -667,8 +794,12 @@ const s = StyleSheet.create({
     paddingBottom: 14,
     gap: 10,
   },
-  backBtn: { padding: 4 },
-  headerCenter: { flex: 1 },
+  backBtn: {
+    padding: 4,
+  },
+  headerCenter: {
+    flex: 1,
+  },
   headerTitle: {
     fontFamily: "Poppins-Bold",
     fontSize: width * 0.042,
@@ -690,14 +821,19 @@ const s = StyleSheet.create({
     fontSize: width * 0.028,
     color: "#fff",
   },
-  // Progress bar in header
   progressWrapper: {
     backgroundColor: "#1B3A1F",
     paddingBottom: 14,
     paddingHorizontal: 16,
   },
-  progress: { flexDirection: "row", alignItems: "center" },
-  progressStep: { alignItems: "center", gap: 4 },
+  progress: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  progressStep: {
+    alignItems: "center",
+    gap: 4,
+  },
   progressDot: {
     width: 10,
     height: 10,
@@ -728,14 +864,17 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)",
     marginBottom: 16,
   },
-  progressLineActive: { backgroundColor: "rgba(255,255,255,0.6)" },
+  progressLineActive: {
+    backgroundColor: "rgba(255,255,255,0.6)",
+  },
   progressLabel: {
     fontFamily: "Poppins-Regular",
     fontSize: width * 0.025,
     color: "rgba(255,255,255,0.5)",
   },
-  progressLabelActive: { color: "#fff" },
-  // Tabs
+  progressLabelActive: {
+    color: "#fff",
+  },
   tabsRow: {
     flexDirection: "row",
     backgroundColor: "#1B3A1F",
@@ -753,14 +892,18 @@ const s = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.08)",
   },
-  tabBtnActive: { backgroundColor: "rgba(255,255,255,0.2)" },
+  tabBtnActive: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
   tabLabel: {
     fontFamily: "Poppins-Regular",
     fontSize: width * 0.033,
     color: "#ccc",
   },
-  tabLabelActive: { color: "#fff", fontFamily: "Poppins-Bold" },
-  // Tech card
+  tabLabelActive: {
+    color: "#fff",
+    fontFamily: "Poppins-Bold",
+  },
   techCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -778,9 +921,25 @@ const s = StyleSheet.create({
     fontSize: width * 0.03,
     color: "#888",
   },
-  // Chat
-  chatList: { paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
-  chatEmpty: { alignItems: "center", paddingTop: 40 },
+  techAvatarStack: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  techStackItem: {
+    borderRadius: 23,
+    borderWidth: 2,
+    borderColor: "#fff",
+    overflow: "hidden",
+  },
+  chatList: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  chatEmpty: {
+    alignItems: "center",
+    paddingTop: 40,
+  },
   chatEmptyText: {
     fontFamily: "Poppins-Regular",
     fontSize: width * 0.033,
@@ -788,23 +947,57 @@ const s = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 30,
   },
-  msgRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
-  msgRowRight: { flexDirection: "row-reverse" },
-  bubble: { maxWidth: width * 0.65, borderRadius: 16, padding: 12 },
-  bubbleTech: { backgroundColor: "#F5F5F5", borderBottomLeftRadius: 4 },
-  bubbleCustomer: { backgroundColor: "#3C6034", borderBottomRightRadius: 4 },
+  msgRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+  },
+  msgRowRight: {
+    flexDirection: "row-reverse",
+  },
+  bubble: {
+    maxWidth: width * 0.65,
+    borderRadius: 16,
+    padding: 12,
+  },
+  bubbleTech: {
+    backgroundColor: "#F5F5F5",
+    borderBottomLeftRadius: 4,
+  },
+  bubbleCustomer: {
+    backgroundColor: "#3C6034",
+    borderBottomRightRadius: 4,
+  },
+  bubbleAuthorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+  },
   bubbleAuthor: {
     fontFamily: "Poppins-Bold",
     fontSize: width * 0.028,
-    color: "#555",
-    marginBottom: 2,
+    color: "#444",
+  },
+  supportBadge: {
+    backgroundColor: "#E8F5E9",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  supportBadgeText: {
+    fontFamily: "Poppins-Bold",
+    fontSize: width * 0.023,
+    color: "#3C6034",
   },
   bubbleText: {
     fontFamily: "Poppins-Regular",
     fontSize: width * 0.034,
     color: "#222",
   },
-  bubbleTextCustomer: { color: "#fff" },
+  bubbleTextCustomer: {
+    color: "#fff",
+  },
   bubbleTime: {
     fontFamily: "Poppins-Regular",
     fontSize: width * 0.026,
@@ -812,7 +1005,9 @@ const s = StyleSheet.create({
     marginTop: 4,
     textAlign: "right",
   },
-  bubbleTimeCustomer: { color: "rgba(255,255,255,0.6)" },
+  bubbleTimeCustomer: {
+    color: "rgba(255,255,255,0.6)",
+  },
   sysMsg: {
     alignSelf: "center",
     backgroundColor: "#FEF3C7",
@@ -826,7 +1021,6 @@ const s = StyleSheet.create({
     fontSize: width * 0.03,
     color: "#92400E",
   },
-  // Input
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -837,7 +1031,9 @@ const s = StyleSheet.create({
     borderTopColor: "#F0F0F0",
     backgroundColor: "#fff",
   },
-  attachBtn: { padding: 6 },
+  attachBtn: {
+    padding: 6,
+  },
   chatInput: {
     flex: 1,
     backgroundColor: "#F5F5F5",
@@ -857,15 +1053,15 @@ const s = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  sendBtnDisabled: { backgroundColor: "#B0C4B1" },
-  // Attachments in bubble
+  sendBtnDisabled: {
+    backgroundColor: "#B0C4B1",
+  },
   attachImg: {
     width: width * 0.5,
     height: width * 0.4,
     borderRadius: 10,
     marginTop: 6,
   },
-  // Pending files preview
   pendingRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -876,8 +1072,14 @@ const s = StyleSheet.create({
     borderTopColor: "#F0F0F0",
     backgroundColor: "#fff",
   },
-  pendingThumb: { position: "relative" },
-  pendingImg: { width: 56, height: 56, borderRadius: 8 },
+  pendingThumb: {
+    position: "relative",
+  },
+  pendingImg: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+  },
   pendingRemove: {
     position: "absolute",
     top: -6,
@@ -885,8 +1087,10 @@ const s = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
   },
-  // Info tab
-  infoScroll: { padding: 16, gap: 14 },
+  infoScroll: {
+    padding: 16,
+    gap: 14,
+  },
   infoCard: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -894,7 +1098,10 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#F0F0F0",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 2,
@@ -905,9 +1112,15 @@ const s = StyleSheet.create({
     color: "#111",
     marginBottom: 14,
   },
-  // Steps
-  stepsRow: { flexDirection: "row", alignItems: "center" },
-  stepItem: { alignItems: "center", gap: 6, width: 70 },
+  stepsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  stepItem: {
+    alignItems: "center",
+    gap: 6,
+    width: 70,
+  },
   stepCircle: {
     width: 36,
     height: 36,
@@ -918,24 +1131,37 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#E0E0E0",
   },
-  stepCircleActive: { backgroundColor: "#3C6034", borderColor: "#3C6034" },
-  stepNum: { fontFamily: "Poppins-Bold", fontSize: 15, color: "#aaa" },
-  stepNumActive: { color: "#fff" },
+  stepCircleActive: {
+    backgroundColor: "#3C6034",
+    borderColor: "#3C6034",
+  },
+  stepNum: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 15,
+    color: "#aaa",
+  },
+  stepNumActive: {
+    color: "#fff",
+  },
   stepLabel: {
     fontFamily: "Poppins-Regular",
     fontSize: width * 0.028,
     color: "#aaa",
     textAlign: "center",
   },
-  stepLabelActive: { color: "#3C6034", fontFamily: "Poppins-Bold" },
+  stepLabelActive: {
+    color: "#3C6034",
+    fontFamily: "Poppins-Bold",
+  },
   stepLine: {
     flex: 1,
     height: 2,
     backgroundColor: "#E8E8E8",
     marginBottom: 20,
   },
-  stepLineActive: { backgroundColor: "#3C6034" },
-  // Details
+  stepLineActive: {
+    backgroundColor: "#3C6034",
+  },
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -965,19 +1191,32 @@ const s = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 20,
   },
-  warrantyActive: { backgroundColor: "#F0FDF4" },
-  warrantyExpired: { backgroundColor: "#FEF2F2" },
-  warrantyDot: { width: 7, height: 7, borderRadius: 3.5 },
-  warrantyText: { fontFamily: "Poppins-Bold", fontSize: width * 0.03 },
-  // Info description
+  warrantyActive: {
+    backgroundColor: "#F0FDF4",
+  },
+  warrantyExpired: {
+    backgroundColor: "#FEF2F2",
+  },
+  warrantyDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  warrantyText: {
+    fontFamily: "Poppins-Bold",
+    fontSize: width * 0.03,
+  },
   infoDesc: {
     fontFamily: "Poppins-Regular",
     fontSize: width * 0.034,
     color: "#444",
     lineHeight: 22,
   },
-  // Techs in info
-  techRow: { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
+  techRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
   techName: {
     fontFamily: "Poppins-Bold",
     fontSize: width * 0.036,
@@ -988,7 +1227,6 @@ const s = StyleSheet.create({
     fontSize: width * 0.03,
     color: "#888",
   },
-  // Cancel
   cancelBtn: {
     backgroundColor: "#FEF2F2",
     borderRadius: 16,
@@ -997,5 +1235,52 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#FECACA",
   },
-  cancelBtnText: { fontFamily: "Poppins-Bold", fontSize: 15, color: "#DC2626" },
+  cancelBtnText: {
+    fontFamily: "Poppins-Bold",
+    fontSize: 15,
+    color: "#DC2626",
+  },
+  chatClosedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+    backgroundColor: "#FAFAFA",
+  },
+  chatClosedText: {
+    flex: 1,
+    fontFamily: "Poppins-Regular",
+    fontSize: width * 0.031,
+    color: "#6B7280",
+  },
+  closedInfoBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+  },
+  closedInfoBannerGreen: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#BBF7D0",
+  },
+  closedInfoBannerRed: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+  closedInfoTitle: {
+    fontFamily: "Poppins-Bold",
+    fontSize: width * 0.038,
+    marginBottom: 2,
+  },
+  closedInfoSub: {
+    fontFamily: "Poppins-Regular",
+    fontSize: width * 0.03,
+    color: "#6B7280",
+    lineHeight: 18,
+  },
 });

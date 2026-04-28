@@ -43,6 +43,10 @@ router.get('/mobile/tickets/active',
     mobileAuth,
     mobileController.getMobileActiveTickets
 );
+router.get('/mobile/tickets/history',
+    mobileAuth,
+    mobileController.getMobileHistoryTickets
+);
 router.get('/mobile/tickets/:id',
     mobileAuth,
     mobileController.getMobileTicketDetail
@@ -67,11 +71,13 @@ router.get('/mobile/categories',
 );
 
 router.get('/mobile/categories/:category_id/products',
-    mobileAuth, mobileController.getMobileProductsByCategory
+    mobileAuth, 
+    mobileController.getMobileProductsByCategory
 );
 
 router.get('/mobile/products/:product_id/models',
-    mobileAuth, mobileController.getMobileModelsByProduct
+    mobileAuth, 
+    mobileController.getMobileModelsByProduct
 );
 
 router.post('/mobile/tickets',

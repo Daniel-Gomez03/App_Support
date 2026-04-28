@@ -251,13 +251,25 @@ export const registerStyles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
   },
 
-  warrantyValid: { backgroundColor: "#f0fdf4" },
-  warrantyExpired: { backgroundColor: "#fffbeb" },
-  warrantyNotFound: { backgroundColor: "#fff1f2" },
+  warrantyValid: {
+    backgroundColor: "#f0fdf4"
+  },
+  warrantyExpired: {
+    backgroundColor: "#fffbeb"
+  },
+  warrantyNotFound: {
+    backgroundColor: "#fff1f2"
+  },
 
-  warrantyValidText: { color: "#16a34a" },
-  warrantyExpiredText: { color: "#d97706" },
-  warrantyNotFoundText: { color: "#e11d48" },
+  warrantyValidText: {
+    color: "#16a34a"
+  },
+  warrantyExpiredText: {
+    color: "#d97706"
+  },
+  warrantyNotFoundText: {
+    color: "#e11d48"
+  },
 
   validationList: {
     gap: height * 0.004,
@@ -389,7 +401,10 @@ export const registerStyles = StyleSheet.create({
     padding: width * 0.04,
     gap: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3
+    },
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 6,
@@ -416,8 +431,12 @@ export const registerStyles = StyleSheet.create({
     flexShrink: 0,
   },
 
-  toastIconSuccess: { backgroundColor: "#16a34a" },
-  toastIconWarning: { backgroundColor: "#dc2626" },
+  toastIconSuccess: {
+    backgroundColor: "#16a34a"
+  },
+  toastIconWarning: {
+    backgroundColor: "#dc2626"
+  },
 
   toastText: {
     flex: 1,
@@ -426,6 +445,10 @@ export const registerStyles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
   },
 
-  toastTextSuccess: { color: "#166534" },
-  toastTextWarning: { color: "#991b1b" },
+  toastTextSuccess: {
+    color: "#166534"
+  },
+  toastTextWarning: {
+    color: "#991b1b"
+  },
 });

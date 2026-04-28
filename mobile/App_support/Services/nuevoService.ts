@@ -99,6 +99,14 @@ const nuevoService = {
         if (!res.ok) throw new Error(result.error || 'Error al obtener tickets activos');
         return result;
     },
+
+    getHistoryTickets: async () => {
+        const headers = await authHeader();
+        const res = await fetch(`${API_URL}/mobile/tickets/history`, { headers });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Error al obtener historial');
+        return result;
+    },
 };
 
 export default nuevoService;

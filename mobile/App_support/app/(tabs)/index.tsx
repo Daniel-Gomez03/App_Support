@@ -45,6 +45,10 @@ const formatDate = (iso: string) => {
 
 const isPendingReview = (ticket: any) => ticket.status?.ticket_status_id === 2;
 
+const AVATAR_COLORS = ['#3C6034','#2563EB','#7C3AED','#DB2777','#D97706','#0891B2','#059669','#DC2626'];
+const avatarColor = (name: string) => AVATAR_COLORS[(name?.charCodeAt(0) ?? 0) % AVATAR_COLORS.length];
+const validPhoto = (foto?: string | null) => !!foto && foto !== 'default.jpg' && foto.startsWith('http');
+
 const isDispositivo = (ticket: any) =>
   ticket.category?.category_name?.toLowerCase().includes("dispositivo");
 
@@ -137,12 +141,12 @@ function TicketCard({ ticket }: { ticket: any }) {
                 key={t.user_id}
                 style={[s.techAvatar, { marginLeft: i > 0 ? -10 : 0 }]}
               >
-                {t.foto ? (
+                {validPhoto(t.foto) ? (
                   <Image source={{ uri: t.foto }} style={s.techImg} />
                 ) : (
-                  <View style={[s.techImg, s.techInitial]}>
+                  <View style={[s.techImg, s.techInitial, { backgroundColor: avatarColor(t.nombre_completo ?? '') }]}>
                     <Text style={s.techInitialText}>
-                      {t.nombre_completo?.charAt(0) ?? "?"}
+                      {(t.nombre_completo ?? '?').charAt(0).toUpperCase()}
                     </Text>
                   </View>
                 )}
@@ -419,6 +423,7 @@ const s = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 2,
     borderColor: "#FFF",
+    overflow: 'hidden',
   },
   techImg: {
     width: "100%",
