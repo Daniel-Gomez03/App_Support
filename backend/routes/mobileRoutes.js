@@ -39,6 +39,17 @@ router.get('/mobile/faqs',
     mobileController.getMobileFaqs
 );
 
+router.patch('/mobile/change-password',
+    mobileAuth,
+    mobileController.changeMobilePassword
+);
+
+router.patch('/mobile/profile',
+    mobileAuth,
+    upload.single('image'),
+    mobileController.updateMobileProfile
+);
+
 router.get('/mobile/tickets/active',
     mobileAuth,
     mobileController.getMobileActiveTickets

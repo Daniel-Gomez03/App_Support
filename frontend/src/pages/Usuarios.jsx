@@ -80,8 +80,19 @@ const Usuarios = () => {
             );
         });
 
+        socket.on('customer_updated', (updatedCustomer) => {
+            setCustomers(prev =>
+                prev.map(c =>
+                    c.customer_id === updatedCustomer.customer_id
+                        ? { ...c, ...updatedCustomer }
+                        : c
+                )
+            );
+        });
+
         return () => {
             socket.off('customer_review_required');
+            socket.off('customer_updated');
             socket.disconnect();
         };
     }, []);

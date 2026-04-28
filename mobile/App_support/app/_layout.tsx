@@ -5,6 +5,7 @@ import { Stack } from "expo-router";
 import { useAuth, AuthProvider } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,6 +31,9 @@ function RootLayoutNav() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="ticket/[id]" />
+          <Stack.Screen name="editar-perfil" />
+          <Stack.Screen name="cambiar-contrasena" />
+          <Stack.Screen name="politicas-garantia" />
         </Stack>
       </GestureHandlerRootView>
     );
@@ -62,8 +66,10 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

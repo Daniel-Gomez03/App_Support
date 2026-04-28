@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import nuevoService from "../../Services/nuevoService";
+import { useTheme } from "@/context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -45,9 +46,20 @@ const formatDate = (iso: string) => {
 
 const isPendingReview = (ticket: any) => ticket.status?.ticket_status_id === 2;
 
-const AVATAR_COLORS = ['#3C6034','#2563EB','#7C3AED','#DB2777','#D97706','#0891B2','#059669','#DC2626'];
-const avatarColor = (name: string) => AVATAR_COLORS[(name?.charCodeAt(0) ?? 0) % AVATAR_COLORS.length];
-const validPhoto = (foto?: string | null) => !!foto && foto !== 'default.jpg' && foto.startsWith('http');
+const AVATAR_COLORS = [
+  "#3C6034",
+  "#2563EB",
+  "#7C3AED",
+  "#DB2777",
+  "#D97706",
+  "#0891B2",
+  "#059669",
+  "#DC2626",
+];
+const avatarColor = (name: string) =>
+  AVATAR_COLORS[(name?.charCodeAt(0) ?? 0) % AVATAR_COLORS.length];
+const validPhoto = (foto?: string | null) =>
+  !!foto && foto !== "default.jpg" && foto.startsWith("http");
 
 const isDispositivo = (ticket: any) =>
   ticket.category?.category_name?.toLowerCase().includes("dispositivo");
@@ -71,6 +83,7 @@ const getStatusStyle = (name: string) => {
 
 function TicketCard({ ticket }: { ticket: any }) {
   const router = useRouter();
+  const { colors } = useTheme();
   const pending = isPendingReview(ticket);
   const dispositivo = isDispositivo(ticket);
   const hasAssigned = (ticket.assignedUsers ?? []).length > 0;
@@ -84,7 +97,10 @@ function TicketCard({ ticket }: { ticket: any }) {
 
   return (
     <TouchableOpacity
-      style={s.card}
+      style={[
+        s.card,
+        { backgroundColor: colors.card, borderColor: colors.border },
+      ]}
       activeOpacity={hasAssigned ? 0.75 : 1}
       onPress={() =>
         hasAssigned && router.push(`/ticket/${ticket.ticket_id}` as any)
@@ -95,11 +111,7 @@ function TicketCard({ ticket }: { ticket: any }) {
           style={[s.catIcon, dispositivo ? s.catIconDevice : s.catIconCode]}
         >
           {dispositivo ? (
-            <FontAwesome5
-              name="cog"
-              size={16}
-              color={dispositivo ? "#3C6034" : "#3B82F6"}
-            />
+            <FontAwesome5 name="cog" size={16} color="#3C6034" />
           ) : (
             <MaterialCommunityIcons
               name="code-tags"
@@ -108,7 +120,7 @@ function TicketCard({ ticket }: { ticket: any }) {
             />
           )}
         </View>
-        <Text style={s.subject} numberOfLines={1}>
+        <Text style={[s.subject, { color: colors.text }]} numberOfLines={1}>
           {ticket.ticket_subject}
         </Text>
         {!pending && (
@@ -121,17 +133,22 @@ function TicketCard({ ticket }: { ticket: any }) {
       </View>
 
       {pending && (
-        <View style={s.pendingBanner}>
-          <Ionicons name="time-outline" size={13} color="#6B7280" />
-          <Text style={s.pendingText}>Pendiente de revisión</Text>
+        <View style={[s.pendingBanner, { backgroundColor: colors.input }]}>
+          <Ionicons name="time-outline" size={13} color={colors.textMuted} />
+          <Text style={[s.pendingText, { color: colors.textMuted }]}>
+            Pendiente de revisión
+          </Text>
         </View>
       )}
 
-      <Text style={s.description} numberOfLines={2}>
+      <Text
+        style={[s.description, { color: colors.textSub }]}
+        numberOfLines={2}
+      >
         {ticket.ticket_description}
       </Text>
 
-      <View style={s.divider} />
+      <View style={[s.divider, { backgroundColor: colors.border }]} />
 
       <View style={s.cardBottom}>
         {techs.length > 0 ? (
@@ -144,32 +161,47 @@ function TicketCard({ ticket }: { ticket: any }) {
                 {validPhoto(t.foto) ? (
                   <Image source={{ uri: t.foto }} style={s.techImg} />
                 ) : (
-                  <View style={[s.techImg, s.techInitial, { backgroundColor: avatarColor(t.nombre_completo ?? '') }]}>
+                  <View
+                    style={[
+                      s.techImg,
+                      s.techInitial,
+                      { backgroundColor: avatarColor(t.nombre_completo ?? "") },
+                    ]}
+                  >
                     <Text style={s.techInitialText}>
-                      {(t.nombre_completo ?? '?').charAt(0).toUpperCase()}
+                      {(t.nombre_completo ?? "?").charAt(0).toUpperCase()}
                     </Text>
                   </View>
                 )}
               </View>
             ))}
-            <Text style={s.techName}>
+            <Text style={[s.techName, { color: colors.textSub }]}>
               {techs.length === 1
                 ? techs[0].nombre_completo
                 : `${techs.length} técnicos`}
             </Text>
           </View>
         ) : (
-          <View style={s.unassignedRow}>
-            <View style={s.unassignedAvatar}>
-              <Ionicons name="person-outline" size={16} color="#9CA3AF" />
+          <View style={[s.unassignedRow, { backgroundColor: colors.input }]}>
+            <View
+              style={[s.unassignedAvatar, { backgroundColor: colors.surface }]}
+            >
+              <Ionicons
+                name="person-outline"
+                size={16}
+                color={colors.textMuted}
+              />
             </View>
-            <Text style={s.unassignedText}>Por asignar técnico</Text>
+            <Text style={[s.unassignedText, { color: colors.textMuted }]}>
+              Por asignar técnico
+            </Text>
           </View>
         )}
-
         <View style={s.dateRow}>
-          <Ionicons name="time-outline" size={12} color="#9CA3AF" />
-          <Text style={s.dateText}>{formatDate(ticket.created_at)}</Text>
+          <Ionicons name="time-outline" size={12} color={colors.textMuted} />
+          <Text style={[s.dateText, { color: colors.textMuted }]}>
+            {formatDate(ticket.created_at)}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -179,6 +211,7 @@ function TicketCard({ ticket }: { ticket: any }) {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
 
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -219,7 +252,12 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={[s.container, { paddingTop: insets.top - 45 }]}>
+    <View
+      style={[
+        s.container,
+        { paddingTop: insets.top - 45, backgroundColor: colors.background },
+      ]}
+    >
       <FlatList
         data={filtered}
         keyExtractor={(t) => t.ticket_id.toString()}
@@ -237,41 +275,49 @@ export default function HomeScreen() {
         }
         ListHeaderComponent={
           <View>
-            <View style={s.searchBox}>
-              <Ionicons name="search-outline" size={18} color="#9CA3AF" />
+            <View style={[s.searchBox, { backgroundColor: colors.input }]}>
+              <Ionicons
+                name="search-outline"
+                size={18}
+                color={colors.textMuted}
+              />
               <TextInput
-                style={s.searchInput}
+                style={[s.searchInput, { color: colors.text }]}
                 placeholder="Buscar tickets..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textMuted}
                 value={search}
                 onChangeText={setSearch}
               />
               {search.length > 0 && (
                 <TouchableOpacity onPress={() => setSearch("")}>
-                  <Ionicons name="close-circle" size={16} color="#CCC" />
+                  <Ionicons
+                    name="close-circle"
+                    size={16}
+                    color={colors.textMuted}
+                  />
                 </TouchableOpacity>
               )}
             </View>
-            <Text style={s.title}>Mis Tickets</Text>
+            <Text style={[s.title, { color: colors.text }]}>Mis Tickets</Text>
           </View>
         }
         renderItem={({ item }) => <TicketCard ticket={item} />}
         ListEmptyComponent={
           <View style={s.empty}>
-            <View style={s.emptyIconBg}>
+            <View style={[s.emptyIconBg, { backgroundColor: colors.surface }]}>
               <MaterialCommunityIcons
                 name="ticket-outline"
                 size={width * 0.18}
-                color="#D1D1D1"
+                color={colors.border}
               />
               <View style={s.emptyBadge}>
                 <Ionicons name="search" size={width * 0.045} color="#FFF" />
               </View>
             </View>
-            <Text style={s.emptyTitle}>
+            <Text style={[s.emptyTitle, { color: colors.text }]}>
               {search ? "Sin resultados" : "No tienes tickets activos"}
             </Text>
-            <Text style={s.emptySub}>
+            <Text style={[s.emptySub, { color: colors.textMuted }]}>
               {search
                 ? "Intenta con otro término de búsqueda."
                 : "Cuando reportes un inconveniente técnico aparecerán aquí."}
@@ -423,7 +469,7 @@ const s = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 2,
     borderColor: "#FFF",
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   techImg: {
     width: "100%",

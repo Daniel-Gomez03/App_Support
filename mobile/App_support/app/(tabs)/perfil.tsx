@@ -1,554 +1,410 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
-  Image, Dimensions, KeyboardAvoidingView, Platform, TextInputProps
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, FontAwesome, FontAwesome5, MaterialIcons, Entypo } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { useAuth } from '@/hooks/useAuth';
-import { countries } from '@/data/countries';
-import CountryPickerModal from '@/components/CountryPickerModal';
-import { useNavigation } from 'expo-router';
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Switch,
+  Dimensions,
+  Alert,
+  Linking,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/context/ThemeContext";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
+// ── URLs de redes sociales — edita aquí ──────────────────────
+const SOCIAL_LINKS = [
+  { icon: "logo-facebook", url: "https://www.facebook.com/tboxsahn/" },
+  { icon: "logo-instagram", url: "https://www.instagram.com/tboxsahn/" },
+  { icon: "globe-outline", url: "https://tboxsa.com/" },
+  { icon: "logo-tiktok", url: "https://www.tiktok.com/@tboxsa?lang=es-419" },
+  { icon: "logo-linkedin", url: "https://www.linkedin.com/company/tboxsahn/" },
+] as const;
+// ─────────────────────────────────────────────────────────────
 
-interface CustomInputProps extends TextInputProps {
-  label: string;
-  icon: React.ReactNode;
-  error?: boolean;
+const AVATAR_COLORS = [
+  "#3C6034",
+  "#2563EB",
+  "#7C3AED",
+  "#DB2777",
+  "#D97706",
+  "#0891B2",
+  "#059669",
+  "#DC2626",
+];
+const avatarColor = (name: string) =>
+  AVATAR_COLORS[(name?.charCodeAt(0) ?? 0) % AVATAR_COLORS.length];
+const validPhoto = (foto?: string | null) =>
+  !!foto && foto !== "default.jpg" && foto.startsWith("http");
+
+function MenuItem({
+  icon,
+  title,
+  subtitle,
+  onPress,
+  colors,
+}: {
+  icon: string;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+  colors: import("@/context/ThemeContext").ThemeColors;
+}) {
+  return (
+    <TouchableOpacity style={s.menuItem} onPress={onPress} activeOpacity={0.7}>
+      <View style={[s.menuIconWrap, { backgroundColor: colors.input }]}>
+        <Ionicons name={icon as any} size={20} color={colors.textSub} />
+      </View>
+      <View style={s.menuText}>
+        <Text style={[s.menuTitle, { color: colors.text }]}>{title}</Text>
+        <Text style={[s.menuSub, { color: colors.textMuted }]}>{subtitle}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color={colors.border} />
+    </TouchableOpacity>
+  );
 }
 
-const InputField = ({ label, icon, value, error, ...props }: CustomInputProps) => (
-  <View style={styles.inputGroup}>
-    <View style={styles.labelContainer}>
-      {icon}
-      <Text style={styles.label}>{label}</Text>
+function MenuItemToggle({
+  icon,
+  title,
+  subtitle,
+  value,
+  onValueChange,
+  colors,
+}: {
+  icon: string;
+  title: string;
+  subtitle: string;
+  value: boolean;
+  onValueChange: (v: boolean) => void;
+  colors: import("@/context/ThemeContext").ThemeColors;
+}) {
+  return (
+    <View style={s.menuItem}>
+      <View style={[s.menuIconWrap, { backgroundColor: colors.input }]}>
+        <Ionicons name={icon as any} size={20} color={colors.textSub} />
+      </View>
+      <View style={s.menuText}>
+        <Text style={[s.menuTitle, { color: colors.text }]}>{title}</Text>
+        <Text style={[s.menuSub, { color: colors.textMuted }]}>{subtitle}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        trackColor={{ false: colors.border, true: colors.primary }}
+        thumbColor="#fff"
+      />
     </View>
-    <TextInput
-      style={[styles.input, error && styles.inputError]}
-      value={value}
-      placeholderTextColor="#999"
-      {...props}
-    />
-  </View>
-);
-
-export default function UsuarioScreen() {
-  const insets = useSafeAreaInsets();
-  const { state, updateUser } = useAuth();
-  const user = state.user;
-  const navigation = useNavigation();
-
-  // ESTADOS
-  const [nombre, setNombre] = useState(String(user?.customer_name || ''));
-  const [empresa] = useState(String(user?.customer_company || ''));
-  const [email] = useState(String(user?.customer_email || ''));
-  const [telefono, setTelefono] = useState(String(user?.customer_phone || ''));
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [image, setImage] = useState(user?.customer_image);
-  const [loading, setLoading] = useState(false);
-
-  //Estados de control
-  const [selectedCountry, setSelectedCountry] = useState(
-    countries.find(c => c.prefix === user?.customer_country_code) || countries[0]
   );
+}
 
-  const [showCountryPicker, setShowCountryPicker] = useState(false);
-  const [formValid, setFormValid] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+export default function PerfilScreen() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { state, logout } = useAuth();
+  const user = state.user;
 
-  // Validacion de contraseña
-  const [passwordValidation, setPasswordValidation] = useState({
-    hasUpperCase: false,
-    hasLowerCase: false,
-    hasNumber: false,
-    minLength: false,
-    hasSpecialChar: false,
-  });
+  const { colors, isDark, toggleTheme } = useTheme();
+  const [notifEnabled, setNotifEnabled] = useState(false);
 
-  //Funcion para colores del borde
-  const getBorderColor = (type: 'nombre' | 'telefono' | 'password' | 'confirm') => {
-    switch (type) {
-      case 'nombre':
-        if (nombre.length > 0 && nombre.length < 3) return '#D9534F';
-        break;
-      case 'telefono':
-        if (telefono.length > 0 && telefono.length < selectedCountry.minDigits) return '#D9534F';
-        break;
-      case 'password':
-        const isPassValid = Object.values(passwordValidation).every(v => v === true);
-        if (password.length > 0 && !isPassValid) return '#D9534F';
-        break;
-      case 'confirm':
-        if (confirmPassword.length > 0 && password !== confirmPassword) return '#D9534F';
-        break;
-    }
-    return '#F5F5F5';
-  };
+  const firstName = user?.customer_first_name ?? "U";
+  const fullName = [user?.customer_first_name, user?.customer_last_name]
+    .filter(Boolean)
+    .join(" ");
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Se necesitan permisos para acceder a la galería.');
-      return;
-    }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
-  };
-
-  // Validar espacios en blanco adicionales
-  const validateInput = (text: string): string => {
-    if (text.startsWith(' ')) {
-      return text.trimStart();
-    }
-    return text;
-  };
-
-  //Valdar numero de telefono
-  const validatePhoneNumber = (phoneNumber: string) => {
-    const cleaned = validateInput(phoneNumber);
-    const onlyNumbers = cleaned.replace(/[^0-9]/g, '');
-    const limited = onlyNumbers.slice(0, selectedCountry.maxDigits);
-    setTelefono(limited.trim());
-  };
-
-
-  // Validar requisitos de contraseña mientras escribe
-  const handlePasswordChange = (pass: string) => {
-    const cleaned = validateInput(pass).trim();
-    setPassword(cleaned);
-
-    setPasswordValidation({
-      hasUpperCase: /[A-Z]/.test(cleaned),
-      hasLowerCase: /[a-z]/.test(cleaned),
-      hasNumber: /[0-9]/.test(cleaned),
-      minLength: cleaned.length >= 12,
-      hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(cleaned),
-    });
-  };
-
-  // Efecto de vlidacion y deteccion de cambios en cambio real
-  useEffect(() => {
-    const isNameValid = nombre.trim().length >= 3;
-    const isPhoneValid = telefono.length >= selectedCountry.minDigits;
-
-    let isPasswordBlockValid = true;
-    if (password.length > 0) {
-      const requirementsMet = Object.values(passwordValidation).every(v => v === true);
-      const matchesConfirm = password === confirmPassword;
-      isPasswordBlockValid = requirementsMet && matchesConfirm;
-    }
-
-    const nameChanged = nombre !== String(user?.customer_name || '');
-    const phoneChanged = telefono !== String(user?.customer_phone || '');
-    const countryChanged = selectedCountry.prefix !== user?.customer_country_code;
-    const passwordEntered = password.length > 0;
-
-    const imageChanged = !!image && (image.startsWith('file://') || image.startsWith('content://'));
-    const changed = nameChanged || phoneChanged || imageChanged || countryChanged || passwordEntered;
-
-    setHasChanges(changed);
-    setFormValid(isNameValid && isPhoneValid && isPasswordBlockValid && changed);
-  }, [image, nombre, telefono, password, confirmPassword, passwordValidation]);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      setNombre(String(user?.customer_name || ''));
-      setTelefono(String(user?.customer_phone || ''));
-      setImage(user?.customer_image);
-      setSelectedCountry(
-        countries.find(c => c.prefix === user?.customer_country_code) || countries[0]
-      );
-
-      setPassword('');
-      setConfirmPassword('');
-
-      setPasswordValidation({
-        hasUpperCase: false,
-        hasLowerCase: false,
-        hasNumber: false,
-        minLength: false,
-        hasSpecialChar: false,
-      });
-    });
-
-    return unsubscribe;
-  }, [navigation, user]);
-
-  const handleSave = async () => {
-    if (!user?.customer_id) return;
-    setLoading(true);
-
-    try {
-      const formData = new FormData();
-      let hasData = false;
-
-      if (nombre.trim() !== user.customer_name) {
-        formData.append('customer_name', nombre.trim());
-        hasData = true;
-      }
-      if (telefono !== user.customer_phone) {
-        formData.append('customer_phone', telefono);
-        hasData = true;
-      }
-      if (selectedCountry.prefix !== user.customer_country_code) {
-        formData.append('customer_country_code', selectedCountry.prefix);
-        hasData = true;
-      }
-      if (password.length > 0) {
-        formData.append('customer_password', password);
-        hasData = true;
-      }
-
-      if (image && (image.startsWith('file://') || image.startsWith('content://'))) {
-        const fileName = image.split('/').pop() || `profile_${Date.now()}.webp`;
-        const extension = fileName.split('.').pop()?.toLowerCase();
-        let type = 'image/webp';
-        if (extension === 'jpg' || extension === 'jpeg') type = 'image/jpeg';
-        if (extension === 'png') type = 'image/png';
-
-        formData.append('image', {
-          uri: Platform.OS === 'android' ? image : image.replace('file://', ''),
-          name: fileName,
-          type: type,
-        } as any);
-        hasData = true;
-      }
-
-      const response = await updateUser(user.customer_id, formData);
-
-      if (hasData) {
-        const updated = response.customer;
-        setNombre(updated.customer_name);
-        setTelefono(updated.customer_phone);
-        setImage(updated.customer_image)
-        setPassword('');
-        setConfirmPassword('');
-
-        alert("¡Perfil actualizado!");
-      }
-
-    } catch (error: any) {
-      alert(error.error || "Error al actualizar");
-    } finally {
-      setLoading(false);
-    }
+  const handleLogout = () => {
+    Alert.alert("Cerrar sesión", "¿Estás seguro de que deseas salir?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Cerrar sesión",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+          router.replace("/auth" as any);
+        },
+      },
+    ]);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.mainContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <ScrollView
+      style={[s.container, { backgroundColor: colors.surface }]}
+      contentContainerStyle={[
+        s.content,
+        { paddingTop: insets.top - 45, paddingBottom: insets.bottom + 120 },
+      ]}
+      showsVerticalScrollIndicator={false}
     >
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingTop: 0, paddingBottom: insets.bottom + 100 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.headerTitle}>Perfil</Text>
-
-        <View style={styles.header}>
-          <View style={styles.profileImageContainer}>
-            {image ? (
-              <Image source={{ uri: image }} style={styles.profileImage} />
-            ) : (
-              <View style={[styles.profileImage, styles.noneImage]}>
-                <Ionicons name="person" size={width * 0.15} color="white" />
-              </View>
-            )}
-
-            <TouchableOpacity style={styles.cameraButton} onPress={pickImage}>
-              <Ionicons name="camera" size={width * 0.05} color="white" />
-            </TouchableOpacity>
+      {/* Avatar + info */}
+      <View style={s.avatarBlock}>
+        {validPhoto(user?.customer_image) ? (
+          <Image source={{ uri: user!.customer_image! }} style={s.avatar} />
+        ) : (
+          <View
+            style={[
+              s.avatar,
+              s.avatarFallback,
+              { backgroundColor: avatarColor(firstName) },
+            ]}
+          >
+            <Text style={s.avatarInitialText}>
+              {firstName.charAt(0).toUpperCase()}
+            </Text>
           </View>
-        </View>
-
-        <View style={styles.formContainer}>
-          <InputField
-            label="Nombre Completo"
-            icon={<FontAwesome5 name="user-alt" size={16} color="black" />}
-            value={nombre}
-            placeholder='Nombre Completo'
-            onChangeText={(t) => setNombre(validateInput(t))}
-            style={[styles.input, { borderColor: getBorderColor('nombre'), borderWidth: 1 }]}
-          />
-
-          <InputField
-            label="Correo Electrónico"
-            icon={<MaterialIcons name="email" size={18} color="black" />}
-            value={email}
-            editable={false}
-            style={[styles.input, styles.disabledInput]}
-          />
-
-          <InputField
-            label="Empresa"
-            icon={<Ionicons name="business" size={18} color="black" />}
-            value={empresa}
-            editable={false}
-            style={[styles.input, styles.disabledInput]}
-          />
-
-          {/* TELÉFONO */}
-          <View style={styles.inputGroup}>
-            <View style={styles.labelContainer}>
-              <FontAwesome name="phone" size={18} color="black" />
-              <Text style={styles.label}>Teléfono</Text>
-            </View>
-            <View style={[styles.phoneInputContainer, { borderColor: getBorderColor('telefono'), borderWidth: 1 }]}>
-              <TouchableOpacity style={styles.countrySelector} onPress={() => setShowCountryPicker(true)}>
-                <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
-                <Ionicons name="chevron-down" size={14} color="black" />
-              </TouchableOpacity>
-              <TextInput
-                style={styles.phoneInput}
-                value={telefono}
-                keyboardType="phone-pad"
-                placeholder='Telefono'
-                maxLength={selectedCountry.maxDigits}
-                onChangeText={validatePhoneNumber}
-              />
-            </View>
-          </View>
-
-          {/* BLOQUE DE CONTRASEÑA NUEVA */}
-          <View style={{ marginTop: 10 }}>
-            <Text style={styles.sectionTitle}>Cambiar Contraseña (Opcional)</Text>
-
-            <View style={styles.inputGroup}>
-              <View style={[styles.passwordContainer, { borderColor: getBorderColor('password'), borderWidth: 1 }]}>
-                <TextInput
-                  style={styles.passwordInputInner}
-                  placeholder="Nueva contraseña"
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={handlePasswordChange}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Entypo name={showPassword ? 'eye' : 'eye-with-line'} size={20} color="#818896" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Visualizador de requisitos (solo si empezó a escribir) */}
-            {password.length > 0 && (
-              <View style={styles.validationBox}>
-                <Text style={[styles.valText, passwordValidation.hasUpperCase && styles.valOk]}>La contraseña debe contener una Mayúscula</Text>
-                <Text style={[styles.valText, passwordValidation.hasLowerCase && styles.valOk]}>La contraseña debe contener una Minúscula</Text>
-                <Text style={[styles.valText, passwordValidation.hasNumber && styles.valOk]}>La contraseña debe contener un Número</Text>
-                <Text style={[styles.valText, passwordValidation.hasSpecialChar && styles.valOk]}>La contraseña debe contener un carácter especial</Text>
-                <Text style={[styles.valText, passwordValidation.minLength && styles.valOk]}>La contraseña debe contener un mínimo de 12 caracteres</Text>
-              </View>
-            )}
-
-            <View style={styles.inputGroup}>
-              <View style={[styles.passwordContainer, { borderColor: getBorderColor('confirm'), borderWidth: 1 }]}>
-                <TextInput
-                  style={styles.passwordInputInner}
-                  placeholder="Confirmar nueva contraseña"
-                  secureTextEntry={!showConfirmPassword}
-                  value={confirmPassword}
-                  onChangeText={(t) => setConfirmPassword(t.replace(/\s/g, ''))}
-                />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  <Entypo name={showConfirmPassword ? 'eye' : 'eye-with-line'} size={20} color="#818896" />
-                </TouchableOpacity>
-              </View>
-            </View>
-            {password !== confirmPassword && confirmPassword.length > 0 && (
-              <Text style={styles.errorText}>Las contraseñas no coinciden</Text>
-            )}
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (!formValid || loading) && { opacity: 0.5 }
-          ]}
-          disabled={!formValid || loading}
-          onPress={handleSave}
-        >
-          <Text style={styles.saveButtonText}>
-            {loading ? "Guardando..." : "Guardar Cambios"}
-          </Text>
-        </TouchableOpacity>
-
-        {showCountryPicker && (
-          <CountryPickerModal
-            countries={countries}
-            selectedCountry={selectedCountry}
-            onSelect={(c) => { setSelectedCountry(c); setTelefono(''); setShowCountryPicker(false); }}
-            onClose={() => setShowCountryPicker(false)}
-          />
         )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Text style={[s.name, { color: colors.text }]}>{fullName}</Text>
+        <Text style={[s.email, { color: colors.textMuted }]}>
+          {user?.customer_email}
+        </Text>
+      </View>
+
+      {/* CUENTA */}
+      <Text style={[s.sectionLabel, { color: colors.textMuted }]}>CUENTA</Text>
+      <View
+        style={[
+          s.section,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
+        <MenuItem
+          colors={colors}
+          icon="person-outline"
+          title="Editar Perfil"
+          subtitle="Información personal, email"
+          onPress={() => router.push("/editar-perfil" as any)}
+        />
+        <View style={[s.divider, { backgroundColor: colors.border }]} />
+        <MenuItem
+          colors={colors}
+          icon="lock-closed-outline"
+          title="Cambiar Contraseña"
+          subtitle="Actualiza tu contraseña de acceso"
+          onPress={() => router.push("/cambiar-contrasena" as any)}
+        />
+        <View style={[s.divider, { backgroundColor: colors.border }]} />
+        <MenuItemToggle
+          colors={colors}
+          icon="notifications-outline"
+          title="Notificaciones"
+          subtitle="Activar notificaciones"
+          value={notifEnabled}
+          onValueChange={setNotifEnabled}
+        />
+        <View style={[s.divider, { backgroundColor: colors.border }]} />
+        <MenuItemToggle
+          colors={colors}
+          icon="moon-outline"
+          title="Modo Oscuro"
+          subtitle={isDark ? "Modo oscuro activado" : "Modo claro activado"}
+          value={isDark}
+          onValueChange={toggleTheme}
+        />
+      </View>
+
+      {/* POLÍTICAS */}
+      <Text style={[s.sectionLabel, { color: colors.textMuted }]}>
+        POLÍTICAS
+      </Text>
+      <View
+        style={[
+          s.section,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
+        <MenuItem
+          colors={colors}
+          icon="shield-checkmark-outline"
+          title="Políticas de Garantías"
+          subtitle="Última actualización: Marzo 2026"
+          onPress={() => router.push("/politicas-garantia" as any)}
+        />
+      </View>
+
+      {/* Cerrar sesión */}
+      <TouchableOpacity
+        style={s.logoutBtn}
+        onPress={handleLogout}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+        <Text style={s.logoutText}>Cerrar Sesión</Text>
+      </TouchableOpacity>
+
+      {/* Síguenos */}
+      <Text style={[s.siguenos, { color: colors.textMuted }]}>SÍGUENOS</Text>
+      <View style={s.socialRow}>
+        {SOCIAL_LINKS.map(({ icon, url }) => (
+          <TouchableOpacity
+            key={icon}
+            style={[
+              s.socialBtn,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+            activeOpacity={0.7}
+            onPress={() => Linking.openURL(url)}
+          >
+            <Ionicons name={icon} size={22} color={colors.textSub} />
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text style={[s.copyright, { color: colors.textMuted }]}>
+        Copyright © TBOXSA 2026 · Versión 1.0.0
+      </Text>
+    </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  mainContainer: {
+const s = StyleSheet.create({
+  container: {
     flex: 1,
-    backgroundColor: 'white'
+    backgroundColor: "#F8F9FA",
   },
-  scrollContent: {
-    paddingHorizontal: width * 0.08
+  content: {
+    paddingHorizontal: width * 0.05,
   },
-  headerTitle: {
-    fontFamily: 'Poppins-Bold',
-    fontSize: width * 0.07,
-    color: '#000',
-    marginTop: 0
+
+  avatarBlock: {
+    alignItems: "center",
+    paddingVertical: 28,
   },
-  header: {
-    alignItems: 'center',
-    paddingHorizontal: width * 0.08,
-    marginBottom: 30,
+  avatar: {
+    width: width * 0.24,
+    height: width * 0.24,
+    borderRadius: width * 0.12,
+    borderWidth: 3,
+    borderColor: "#fff",
   },
-  profileImageContainer: {
-    position: 'relative',
-    width: width * 0.3,
-    height: width * 0.3
+  avatarFallback: {
+    justifyContent: "center",
+    alignItems: "center",
   },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: (width * 0.35) / 2,
+  avatarInitialText: {
+    fontFamily: "Poppins-Bold",
+    fontSize: width * 0.1,
+    color: "#fff",
+  },
+  name: {
+    fontFamily: "Poppins-Bold",
+    fontSize: width * 0.048,
+    color: "#111",
+    marginTop: 12,
+  },
+  email: {
+    fontFamily: "Poppins-Regular",
+    fontSize: width * 0.032,
+    color: "#888",
+    marginTop: 2,
+  },
+
+  // Section
+  sectionLabel: {
+    fontFamily: "Poppins-Bold",
+    fontSize: width * 0.028,
+    color: "#9CA3AF",
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginTop: 4,
+    paddingHorizontal: 4,
+  },
+  section: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    marginBottom: 20,
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: '#eee',
-    overflow: 'hidden',
+    borderColor: "#F0F0F0",
   },
-  noneImage: {
-    backgroundColor: '#CCCCCC',
-    justifyContent: 'center',
-    alignItems: 'center',
+  divider: {
+    height: 1,
+    backgroundColor: "#F5F5F5",
+    marginHorizontal: 16,
   },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0, right: 0,
-    backgroundColor: '#3C6034',
-    padding: 8,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'white'
+
+  // Menu item
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
   },
-  formContainer: {
-    width: '100%'
+  menuIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  inputGroup: {
-    marginBottom: 15
+  menuText: { flex: 1 },
+  menuTitle: {
+    fontFamily: "Poppins-Bold",
+    fontSize: width * 0.036,
+    color: "#111",
   },
-  labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8
+  menuSub: {
+    fontFamily: "Poppins-Regular",
+    fontSize: width * 0.029,
+    color: "#9CA3AF",
+    marginTop: 1,
   },
-  label: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 15,
-    marginLeft: 8
-  },
-  input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 15,
-    padding: 12,
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14
-  },
-  disabledInput: {
-    color: '#999',
-    opacity: 0.7
-  },
-  inputError: {
+
+  // Logout
+  logoutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: "#FEF2F2",
+    borderRadius: 16,
+    paddingVertical: 16,
     borderWidth: 1,
-    borderColor: '#D9534F'
+    borderColor: "#FECACA",
+    marginBottom: 28,
   },
-  phoneInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 15,
-    overflow: 'hidden'
+  logoutText: {
+    fontFamily: "Poppins-Bold",
+    fontSize: width * 0.038,
+    color: "#DC2626",
   },
-  countrySelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    borderRightWidth: 1,
-    borderRightColor: '#ddd',
-    gap: 5
+
+  // Social
+  siguenos: {
+    fontFamily: "Poppins-Bold",
+    fontSize: width * 0.028,
+    color: "#9CA3AF",
+    letterSpacing: 1,
+    textAlign: "center",
+    marginBottom: 14,
   },
-  countryFlag: {
-    fontSize: 30
+  socialRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 18,
+    marginBottom: 20,
   },
-  phoneInput: {
-    flex: 1,
-    padding: 12,
-    fontSize: 15,
-    fontFamily: 'Poppins-Regular'
+  socialBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  sectionTitle: {
-    fontFamily: 'Poppins-Bold',
-    fontSize: 16,
-    marginVertical: 10,
-    color: '#3C6034'
+
+  copyright: {
+    fontFamily: "Poppins-Regular",
+    fontSize: width * 0.027,
+    color: "#CCC",
+    textAlign: "center",
   },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 15,
-    paddingHorizontal: 15
-  },
-  passwordInputInner: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 14
-  },
-  validationBox: {
-    marginBottom: 15,
-    paddingLeft: 5
-  },
-  valText: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 2,
-    fontFamily: 'Poppins-Regular'
-  },
-  valOk: {
-    color: '#28a745',
-    fontWeight: 'bold'
-  },
-  errorText: {
-    color: '#D9534F',
-    fontSize: 12,
-    marginTop: -10,
-    marginBottom: 10,
-    marginLeft: 5
-  },
-  saveButton: {
-    backgroundColor: '#3C6034',
-    borderRadius: 25,
-    padding: 15,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  saveButtonText: {
-    color: 'white',
-    fontFamily: 'Poppins-Bold',
-    fontSize: 16
-  }
 });

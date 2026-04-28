@@ -5,8 +5,9 @@ import * as SecureStore from 'expo-secure-store';
 interface User {
   customer_id: number;
   customer_first_name: string;
-  customer_second_name?: string;
+  customer_second_name?: string | null;
   customer_last_name: string;
+  customer_second_last_name?: string | null;
   customer_email: string;
   customer_company: string;
   customer_country_code: string;
@@ -25,7 +26,7 @@ interface AuthState {
 interface AuthContextType {
   state: AuthState;
   login: (email: string, password: string) => Promise<void>;
-  updateUser: (id: number, formData: FormData) => Promise<any>;
+  updateProfile: (data: Partial<User>, imageUri?: string | null) => Promise<any>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -102,9 +103,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const updateUser = useCallback(async (id: number, formData: FormData) => {
+  const updateProfile = useCallback(async (data: Partial<User>, imageUri?: string | null) => {
     try {
-      const response = await authService.updateCustomer(id, formData);
+      const response = await authService.updateProfile(data as any, imageUri);
       const updatedUser = response.customer;
       if (updatedUser) {
         await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
@@ -112,7 +113,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return response;
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.error || 'Error al actualizar' });
       throw error;
     }
   }, []);
@@ -127,7 +127,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return React.createElement(
     AuthContext.Provider,
-    { value: { state, login, updateUser, logout, clearError } },
+    { value: { state, login, updateProfile, logout, clearError } },
     children
   );
 };

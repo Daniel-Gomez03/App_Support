@@ -1,4 +1,6 @@
 import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 const API_URL = "http://10.10.0.84:8000/api";
 
@@ -138,18 +140,72 @@ const authService = {
   },
 
   // ============================================
-  // ACTUALIZAR CLIENTE
+  // CAMBIAR CONTRASEÑA (MÓVIL)
   // ============================================
-  updateCustomer: async (customerId: number | string, formData: any) => {
+  changePassword: async (current_password: string, new_password: string) => {
     try {
-      const response = await fetch(`${API_URL}/customers/${customerId}`, {
-        method: "PUT",
-        body: formData,
-        headers: { Accept: "application/json" },
+      const token = await SecureStore.getItemAsync("userToken");
+      const response = await fetch(`${API_URL}/mobile/change-password`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token ?? ""}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ current_password, new_password }),
       });
-      const data = await response.json();
-      if (!response.ok) throw data;
-      return data;
+      const result = await response.json();
+      if (!response.ok) throw result;
+      return result;
+    } catch (error: any) {
+      if (error.error) throw error;
+      throw { error: "Error de conexión al cambiar la contraseña" };
+    }
+  },
+
+  // ============================================
+  // ACTUALIZAR PERFIL (MÓVIL)
+  // ============================================
+  updateProfile: async (
+    data: {
+      customer_first_name?: string;
+      customer_second_name?: string | null;
+      customer_last_name?: string;
+      customer_second_last_name?: string | null;
+      customer_phone?: string;
+      customer_country_code?: string;
+    },
+    imageUri?: string | null
+  ) => {
+    try {
+      const token = await SecureStore.getItemAsync("userToken");
+      const formData = new FormData();
+
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined) formData.append(key, value ?? "");
+      });
+
+      if (imageUri) {
+        const fileName = imageUri.split("/").pop() ?? `profile_${Date.now()}.jpg`;
+        const ext = fileName.split(".").pop()?.toLowerCase() ?? "jpg";
+        formData.append("image", {
+          uri: Platform.OS === "android" ? imageUri : imageUri.replace("file://", ""),
+          name: fileName,
+          type: ext === "png" ? "image/png" : "image/jpeg",
+        } as any);
+      }
+
+      const response = await fetch(`${API_URL}/mobile/profile`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token ?? ""}`,
+          Accept: "application/json",
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      });
+      const result = await response.json();
+      if (!response.ok) throw result;
+      return result;
     } catch (error: any) {
       if (error.error) throw error;
       throw { error: "Error de conexión al actualizar el perfil" };

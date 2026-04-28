@@ -83,6 +83,7 @@ exports.mobileLogin = async (req, res) => {
                 customer_first_name: customer.customer_first_name,
                 customer_second_name: customer.customer_second_name,
                 customer_last_name: customer.customer_last_name,
+                customer_second_last_name: customer.customer_second_last_name,
                 customer_email: customer.customer_email,
                 customer_phone: customer.customer_phone,
                 customer_country_code: customer.customer_country_code,
@@ -747,6 +748,97 @@ exports.getMobileHistoryTickets = async (req, res) => {
     } catch (error) {
         console.error("Error en getMobileHistoryTickets:", error);
         res.status(500).json({ error: "Error al obtener historial." });
+    }
+};
+
+// ============================================
+// CAMBIAR CONTRASEÑA (MÓVIL)
+// ============================================
+exports.changeMobilePassword = async (req, res) => {
+    try {
+        const customer_id = req.customer.customer_id;
+        const { current_password, new_password } = req.body;
+
+        if (!current_password || !new_password)
+            return res.status(400).json({ error: 'Se requieren la contraseña actual y la nueva.' });
+
+        const customer = await Customer.findByPk(customer_id);
+
+        const isMatch = await bcrypt.compare(current_password, customer.customer_password);
+        if (!isMatch)
+            return res.status(400).json({ error: 'La contraseña actual es incorrecta.' });
+
+        const isSame = await bcrypt.compare(new_password, customer.customer_password);
+        if (isSame)
+            return res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual.' });
+
+        const pwRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{12,}$/;
+        if (!pwRegex.test(new_password))
+            return res.status(400).json({ error: 'La contraseña no cumple los requisitos de seguridad.' });
+
+        const hashed = await bcrypt.hash(new_password, 12);
+        await Customer.update({ customer_password: hashed }, { where: { customer_id } });
+
+        res.json({ message: 'Contraseña actualizada correctamente.' });
+    } catch (error) {
+        console.error('Error en changeMobilePassword:', error);
+        res.status(500).json({ error: 'Error al cambiar la contraseña.' });
+    }
+};
+
+// ============================================
+// ACTUALIZAR PERFIL DEL CLIENTE (MÓVIL)
+// ============================================
+exports.updateMobileProfile = async (req, res) => {
+    try {
+        const customer_id = req.customer.customer_id;
+        const {
+            customer_first_name,
+            customer_second_name,
+            customer_last_name,
+            customer_second_last_name,
+            customer_phone,
+            customer_country_code,
+        } = req.body;
+
+        const updates = {};
+        if (customer_first_name?.trim()) updates.customer_first_name = customer_first_name.trim();
+        if (customer_second_name !== undefined) updates.customer_second_name = customer_second_name?.trim() || null;
+        if (customer_last_name?.trim()) updates.customer_last_name = customer_last_name.trim();
+        if (customer_second_last_name !== undefined) updates.customer_second_last_name = customer_second_last_name?.trim() || null;
+        if (customer_phone) updates.customer_phone = customer_phone.replace(/[^0-9]/g, '');
+        if (customer_country_code) updates.customer_country_code = customer_country_code;
+
+        if (req.file) {
+            const processed = await processEvidence(req.file);
+            const ftpUrl = await uploadToFTP(processed.filePath, processed.fileName);
+            if (fs.existsSync(processed.filePath)) fs.unlinkSync(processed.filePath);
+            updates.customer_image = ftpUrl;
+        }
+
+        if (Object.keys(updates).length === 0)
+            return res.status(400).json({ error: 'No hay cambios para guardar.' });
+
+        await Customer.update(updates, { where: { customer_id } });
+
+        const updated = await Customer.findByPk(customer_id, {
+            attributes: [
+                'customer_id', 'customer_first_name', 'customer_second_name',
+                'customer_last_name', 'customer_second_last_name',
+                'customer_email', 'customer_phone', 'customer_country_code',
+                'customer_company', 'customer_image', 'customer_status'
+            ]
+        });
+
+        const customerData = updated.toJSON();
+
+        const io = req.app.get('io');
+        if (io) io.emit('customer_updated', customerData);
+
+        res.json({ customer: customerData });
+    } catch (error) {
+        console.error('Error en updateMobileProfile:', error);
+        res.status(500).json({ error: 'Error al actualizar el perfil.' });
     }
 };
 

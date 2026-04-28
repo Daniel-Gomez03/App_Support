@@ -20,6 +20,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import socket from "@/Services/socket";
+import { useTheme } from "@/context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 const API_URL = "http://10.10.0.84:8000/api";
@@ -164,6 +165,8 @@ export default function TicketDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const flatRef = useRef<FlatList>(null);
+
+  const { colors } = useTheme();
 
   const [ticket, setTicket] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
@@ -321,7 +324,7 @@ export default function TicketDetailScreen() {
       : "Activa";
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* ── HEADER ── */}
       <View style={[s.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
@@ -389,7 +392,15 @@ export default function TicketDetailScreen() {
         >
           {/* Técnico(s) asignado(s) */}
           {techs.length > 0 && (
-            <View style={s.techCard}>
+            <View
+              style={[
+                s.techCard,
+                {
+                  backgroundColor: colors.card,
+                  borderBottomColor: colors.border,
+                },
+              ]}
+            >
               {techs.length === 1 ? (
                 <>
                   <Avatar
@@ -398,10 +409,10 @@ export default function TicketDetailScreen() {
                     size={46}
                   />
                   <View style={{ marginLeft: 12 }}>
-                    <Text style={s.techCardName}>
+                    <Text style={[s.techCardName, { color: colors.text }]}>
                       {techs[0].nombre_completo}
                     </Text>
-                    <Text style={s.techCardRole}>
+                    <Text style={[s.techCardRole, { color: colors.textMuted }]}>
                       {techs[0].cargo ?? "Técnico"}
                     </Text>
                   </View>
@@ -426,8 +437,10 @@ export default function TicketDetailScreen() {
                     ))}
                   </View>
                   <View style={{ marginLeft: 12 }}>
-                    <Text style={s.techCardName}>Equipo de soporte</Text>
-                    <Text style={s.techCardRole}>
+                    <Text style={[s.techCardName, { color: colors.text }]}>
+                      Equipo de soporte
+                    </Text>
+                    <Text style={[s.techCardRole, { color: colors.textMuted }]}>
                       {techs.length} técnicos asignados
                     </Text>
                   </View>
@@ -471,7 +484,9 @@ export default function TicketDetailScreen() {
                   <View
                     style={[
                       s.bubble,
-                      isCustomer ? s.bubbleCustomer : s.bubbleTech,
+                      isCustomer
+                        ? s.bubbleCustomer
+                        : [s.bubbleTech, { backgroundColor: colors.card }],
                     ]}
                   >
                     {!isCustomer && (
