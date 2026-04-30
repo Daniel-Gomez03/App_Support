@@ -22,6 +22,7 @@ const seccionRoutes = require("./routes/seccionRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const historialRoutes = require("./routes/historialRoutes");
 const mobileRoutes = require("./routes/mobileRoutes");
+const ratingRoutes = require("./routes/ratingRoutes");
 const customerController = require("./Controllers/customerController");
 const { initPendingInfoJob } = require("./Utils/pendingInfoJob");
 
@@ -141,6 +142,7 @@ app.use("/api", userRoutes);
 app.use("/api", seccionRoutes);
 app.use("/api", commentRoutes);
 app.use("/api", historialRoutes);
+app.use("/api", ratingRoutes);
 
 // Conectar a BD
 sequelize
