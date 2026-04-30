@@ -13,6 +13,8 @@ const TicketEvidence = require("../models/TicketEvidence");
 const TicketComment = require("../models/TicketComment");
 const TicketCommentAttachment = require("../models/TicketCommentAttachment");
 const TicketStatus = require("../models/TicketStatus");
+const TicketAssignment = require("../models/TicketAssignment");
+const Rating = require("../models/Rating");
 const User = require("../models/User");
 const sequelize = require("../config/database");
 const { processEvidence } = require("../Middleware/ticketUpload");
@@ -201,12 +203,9 @@ exports.mobileRegister = async (req, res) => {
                 : { warranty_invoice_number: cleanValue, warranty_status: 1 };
 
         const warrantyExists = await Warranty.findOne({ where: warrantyWhere });
-
         const customerStatus = warrantyExists ? 1 : 0;
         const requiresReview = !warrantyExists;
-
         const hashedPassword = await bcrypt.hash(customer_password, 12);
-
         const verificationToken = crypto.randomBytes(32).toString("hex");
         const tokenExpires = new Date(Date.now() + 15 * 60 * 1000);
 
@@ -981,6 +980,28 @@ exports.addMobileTicketComment = async (req, res) => {
             comment_text: encrypt(comment_text.trim()),
         });
 
+        if (ticket.chat_paused) {
+            await ticket.update({ chat_paused: 0 });
+        }
+
+        const pendingInfoStatus = await TicketStatus.findOne({
+            where: sequelize.where(
+                sequelize.fn('LOWER', sequelize.col('ticket_status_name')),
+                { [Op.like]: '%pendiente%info%' }
+            )
+        });
+        if (pendingInfoStatus && Number(ticket.ticket_status_id) === Number(pendingInfoStatus.ticket_status_id)) {
+            const procesoStatus = await TicketStatus.findOne({
+                where: sequelize.where(
+                    sequelize.fn('LOWER', sequelize.col('ticket_status_name')),
+                    { [Op.like]: '%proceso%' }
+                )
+            });
+            if (procesoStatus) {
+                await ticket.update({ ticket_status_id: procesoStatus.ticket_status_id });
+            }
+        }
+
         const localFilesToCleanup = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
@@ -1028,6 +1049,8 @@ exports.addMobileTicketComment = async (req, res) => {
         if (io) {
             io.emit(`ticket_comment_${id}`, plain);
             io.emit("new_comment", { ticket_id: parseInt(id), comment: plain });
+            const updatedTicket = await Ticket.findByPk(id);
+            if (updatedTicket) io.emit('ticket_updated', updatedTicket);
         }
 
         res.status(201).json(plain);
@@ -1051,23 +1074,66 @@ exports.requestTicketCancellation = async (req, res) => {
         if (!ticket)
             return res.status(404).json({ error: "Ticket no encontrado." });
 
+        await ticket.update({
+            ticket_status_id: 8,
+            cancellation_requested: 1,
+            cancellation_prev_status_id: ticket.ticket_status_id,
+        });
+
+        const CANCEL_MSG = '🔴 El cliente ha solicitado la cancelación de este ticket.';
         const comment = await TicketComment.create({
             ticket_id: id,
             customer_id,
             user_id: null,
-            comment_text:
-                "🔴 El cliente ha solicitado la cancelación de este ticket.",
+            comment_text: encrypt(CANCEL_MSG),
         });
+        const cancelCommentPayload = {
+            ...comment.toJSON(),
+            comment_text: CANCEL_MSG,
+            attachments: [],
+            author: null,
+            customerAuthor: null,
+        };
 
         const io = req.app.get("io");
         if (io) {
-            io.emit(`ticket_comment_${id}`, comment);
+            io.emit(`ticket_comment_${id}`, cancelCommentPayload);
             io.emit("ticket_cancel_requested", { ticket_id: id, customer_id });
+            io.emit("ticket_updated", ticket);
         }
 
         res.json({ message: "Solicitud de cancelación enviada correctamente." });
     } catch (error) {
         console.error("Error en requestTicketCancellation:", error);
         res.status(500).json({ error: "Error al procesar la solicitud." });
+    }
+};
+
+// ============================================
+// CALIFICAR TICKET (CLIENTE)
+// ============================================
+exports.submitRating = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const customer_id = req.customer.customer_id;
+        const { rating_score, rating_comment } = req.body;
+
+        if (!rating_score || rating_score < 1 || rating_score > 5) {
+            return res.status(400).json({ error: 'Puntaje inválido (1-5).' });
+        }
+
+        await Rating.create({
+            ticket_id: id,
+            customer_id,
+            rating_score: parseInt(rating_score),
+            rating_comment: rating_comment?.trim() || null,
+        });
+
+        res.json({ message: 'Calificación enviada correctamente.' });
+    } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({ error: 'Ya calificaste este ticket.' });
+        }
+        res.status(500).json({ error: error.message });
     }
 };

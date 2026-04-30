@@ -10,6 +10,7 @@ import {
   TextInput,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useTheme } from "@/context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -36,6 +37,7 @@ export default function CountryPickerModal({
   onClose,
 }: Props) {
   const [search, setSearch] = useState("");
+  const { colors } = useTheme();
 
   const filtered = countries.filter(
     (c) =>
@@ -57,19 +59,19 @@ export default function CountryPickerModal({
           activeOpacity={1}
         />
 
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
+        <View style={[styles.sheet, { backgroundColor: colors.card }]}>
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-          <View style={styles.searchRow}>
+          <View style={[styles.searchRow, { backgroundColor: colors.input }]}>
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               placeholder="Buscar"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textMuted}
               value={search}
               onChangeText={setSearch}
               autoCorrect={false}
             />
-            <Ionicons name="search" size={18} color="#9ca3af" />
+            <Ionicons name="search" size={18} color={colors.textMuted} />
           </View>
 
           <FlatList
@@ -79,16 +81,24 @@ export default function CountryPickerModal({
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={styles.item}
+                style={[styles.item, { borderBottomColor: colors.border }]}
                 onPress={() => onSelect(item)}
                 activeOpacity={0.65}
               >
-                <View style={styles.flagCircle}>
+                <View
+                  style={[styles.flagCircle, { backgroundColor: colors.input }]}
+                >
                   <Text style={styles.flagEmoji}>{item.flag}</Text>
                 </View>
                 <View style={styles.itemText}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemPrefix}>{item.prefix}</Text>
+                  <Text style={[styles.itemName, { color: colors.text }]}>
+                    {item.name}
+                  </Text>
+                  <Text
+                    style={[styles.itemPrefix, { color: colors.textMuted }]}
+                  >
+                    {item.prefix}
+                  </Text>
                 </View>
                 {selectedCountry.code === item.code && (
                   <Ionicons name="checkmark" size={20} color="#3C6034" />

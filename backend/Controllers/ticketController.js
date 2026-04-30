@@ -1,6 +1,8 @@
 const Ticket = require('../models/Ticket');
 const TicketEvidence = require('../models/TicketEvidence');
 const TicketStatus = require('../models/TicketStatus');
+const TicketAssignment = require('../models/TicketAssignment');
+const Rating = require('../models/Rating');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
 const ProductModel = require('../models/ProductModel');
@@ -11,7 +13,7 @@ const sequelize = require('../config/database');
 const { processEvidence } = require('../Middleware/ticketUpload');
 const { uploadToFTP } = require('../Utils/ftpClient');
 const fs = require('fs');
-const { Op } = require('sequelize');
+const { Op, QueryTypes } = require('sequelize');
 
 // ============================================
 // CREAR TICKET (ADMIN)
@@ -107,15 +109,84 @@ exports.updateTicketStatus = async (req, res) => {
         const ticket = await Ticket.findByPk(id);
         if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
 
-        await ticket.update({ ticket_status_id });
+        const oldStatusId = ticket.ticket_status_id;
+        await ticket.update({ ticket_status_id, cancellation_requested: 0, cancellation_prev_status_id: null, chat_paused: 0 });
 
         const io = req.app.get('io');
-        if (io) io.emit('ticket_updated', ticket);
+        if (io) {
+            io.emit('ticket_updated', ticket);
+            if (ticket.customer_id) {
+                const newStatusInt = parseInt(ticket_status_id);
+                let notifType = 'status_change';
+                if (newStatusInt === 10) notifType = 'ticket_cancelled';
+                else if (newStatusInt === 9) notifType = 'ticket_finalizado';
+                else if (Number(oldStatusId) === 8) notifType = 'cancellation_rejected';
+                io.emit(`mobile_notification_${ticket.customer_id}`, {
+                    type: notifType,
+                    ticketId: ticket.ticket_id,
+                    ticketSubject: ticket.ticket_subject,
+                    oldStatusId,
+                    newStatusId: newStatusInt,
+                    timestamp: new Date().toISOString(),
+                });
+
+                if ([9, 10].includes(newStatusInt)) {
+                    const alreadyRated = await Rating.findOne({
+                        where: { ticket_id: ticket.ticket_id, customer_id: ticket.customer_id }
+                    });
+                    if (!alreadyRated) {
+                        const ticketWithTechs = await Ticket.findByPk(ticket.ticket_id, {
+                            include: [{ model: User, as: 'assignedUsers', attributes: ['user_id', 'nombre_completo', 'foto', 'cargo'], through: { attributes: [] } }]
+                        });
+                        if ((ticketWithTechs?.assignedUsers ?? []).length > 0) {
+                            io.emit(`rating_request_${ticket.customer_id}`, {
+                                ticketId: ticket.ticket_id,
+                                ticketSubject: ticket.ticket_subject,
+                                techs: ticketWithTechs.assignedUsers,
+                            });
+                        }
+                    }
+                }
+            }
+        }
 
         res.json({
             message: `Ticket movido al estado ${ticket_status_id} correctamente.`,
             ticket
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// ============================================
+// PAUSAR / REANUDAR CHAT
+// ============================================
+exports.toggleChatPause = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const ticket = await Ticket.findByPk(id);
+        if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
+
+        const newPaused = ticket.chat_paused ? 0 : 1;
+        await ticket.update({ chat_paused: newPaused });
+
+        const io = req.app.get('io');
+        if (io) {
+            const updated = await Ticket.findByPk(id);
+            io.emit('ticket_updated', updated);
+
+            if (newPaused === 1 && ticket.customer_id) {
+                io.emit(`mobile_notification_${ticket.customer_id}`, {
+                    type: 'chat_paused',
+                    ticketId: ticket.ticket_id,
+                    ticketSubject: ticket.ticket_subject,
+                    timestamp: new Date().toISOString(),
+                });
+            }
+        }
+
+        res.json({ chat_paused: newPaused });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -221,7 +292,30 @@ exports.getActiveTickets = async (req, res) => {
             order: [['created_at', 'DESC']]
         });
 
-        res.json(tickets);
+        const ticketIds = tickets.map(t => t.ticket_id);
+        let customerReplyMap = {};
+        if (ticketIds.length > 0) {
+            const rows = await sequelize.query(`
+                SELECT tc.ticket_id, tc.created_at AS customer_last_reply_at
+                FROM ticket_comments tc
+                INNER JOIN (
+                    SELECT ticket_id, MAX(created_at) AS last_at
+                    FROM ticket_comments
+                    WHERE ticket_id IN (:ticketIds)
+                    GROUP BY ticket_id
+                ) latest ON tc.ticket_id = latest.ticket_id AND tc.created_at = latest.last_at
+                WHERE tc.customer_id IS NOT NULL
+                  AND tc.user_id IS NULL
+            `, { replacements: { ticketIds }, type: QueryTypes.SELECT });
+            rows.forEach(r => { customerReplyMap[r.ticket_id] = r.customer_last_reply_at; });
+        }
+
+        const result = tickets.map(t => ({
+            ...t.toJSON(),
+            customer_last_reply_at: customerReplyMap[t.ticket_id] || null,
+        }));
+
+        res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

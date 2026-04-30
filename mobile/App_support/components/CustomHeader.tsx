@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useSegments } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/context/ThemeContext";
+import { useNotifications } from "@/context/NotificationContext";
 
 const { width } = Dimensions.get("window");
 const AVATAR_SIZE = width * 0.112;
@@ -42,6 +43,7 @@ export default function CustomHeader() {
   const segments = useSegments();
 
   const { colors } = useTheme();
+  const { unreadCount } = useNotifications();
   const user = state.user;
   const firstName = user?.customer_first_name || "Usuario";
   const initial = firstName.charAt(0).toUpperCase();
@@ -106,7 +108,7 @@ export default function CustomHeader() {
           activeOpacity={0.7}
         >
           <Ionicons name="notifications" size={width * 0.068} color="#3C6034" />
-          <View style={styles.badge} />
+          {unreadCount > 0 && <View style={styles.badge} />}
         </TouchableOpacity>
 
         <TouchableOpacity activeOpacity={0.8}>

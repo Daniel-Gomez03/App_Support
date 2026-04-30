@@ -23,6 +23,7 @@ const commentRoutes = require("./routes/commentRoutes");
 const historialRoutes = require("./routes/historialRoutes");
 const mobileRoutes = require("./routes/mobileRoutes");
 const customerController = require("./Controllers/customerController");
+const { initPendingInfoJob } = require("./Utils/pendingInfoJob");
 
 // Importar modelos
 const Faqs = require("./models/Faqs");
@@ -40,6 +41,7 @@ const Permission = require("./models/Permission");
 const TicketAssignment = require("./models/TicketAssignment");
 const TicketComment = require("./models/TicketComment");
 const TicketCommentAttachment = require("./models/TicketCommentAttachment");
+const Rating = require("./models/Rating");
 
 // Asociar modelos
 const models = {
@@ -58,6 +60,7 @@ const models = {
   TicketAssignment,
   TicketComment,
   TicketCommentAttachment,
+  Rating,
 };
 Object.values(models).forEach((model) => {
   if (model.associate) model.associate(models);
@@ -149,4 +152,5 @@ sequelize
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
+  initPendingInfoJob(io);
 });

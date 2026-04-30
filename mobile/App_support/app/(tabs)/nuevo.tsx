@@ -13,7 +13,9 @@ import {
   Modal,
   FlatList,
 } from "react-native";
-import { nuevoStyles as s } from "@/styles/nuevo.styles";
+import { makeNuevoStyles } from "@/styles/nuevo.styles";
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -42,6 +44,8 @@ function DropdownField({
   icon?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const { colors } = useTheme();
+  const s = useMemo(() => makeNuevoStyles(colors), [colors]);
   const selected = options.find((o) => o.value === value);
   const active = value !== null && value !== undefined;
 
@@ -120,6 +124,8 @@ function DropdownField({
 export default function NuevoTicketScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const s = useMemo(() => makeNuevoStyles(colors), [colors]);
 
   const [categories, setCategories] = useState<Option[]>([]);
   const [products, setProducts] = useState<Option[]>([]);
@@ -140,8 +146,13 @@ export default function NuevoTicketScreen() {
 
   const isAsuntoValid = asunto.trim().length >= 5;
   const isDescValid = descripcion.trim().length >= 20;
+  const isSerialValid = serial.trim().length > 0;
   const canSubmit =
-    selectedCat && isAsuntoValid && isDescValid && evidences.length > 0;
+    selectedCat &&
+    isAsuntoValid &&
+    isDescValid &&
+    isSerialValid &&
+    evidences.length > 0;
 
   useEffect(() => {
     const unsub = navigation.addListener("focus", reset);
@@ -236,11 +247,6 @@ export default function NuevoTicketScreen() {
   const handleSubmit = async () => {
     if (!canSubmit) return;
 
-    if (!serial.trim()) {
-      await submitTicket();
-      return;
-    }
-
     setLoading(true);
     try {
       const warranty = await nuevoService.checkWarrantyBySerial(serial.trim());
@@ -274,7 +280,7 @@ export default function NuevoTicketScreen() {
     <>
       <KeyboardAvoidingView
         style={s.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
           contentContainerStyle={[
@@ -283,6 +289,7 @@ export default function NuevoTicketScreen() {
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={true}
         >
           <View style={s.fieldWrapper}>
             <View style={s.labelRow}>

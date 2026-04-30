@@ -3,14 +3,14 @@ import styles from './TicketChatModal.module.less';
 import {
     FiArrowLeft, FiX, FiSend, FiPaperclip,
     FiCheckCircle, FiAlertCircle, FiXCircle,
-    FiChevronLeft, FiChevronRight, FiUpload, FiLock, FiShield
+    FiChevronLeft, FiChevronRight, FiUpload, FiLock, FiShield, FiPauseCircle, FiPlayCircle
 } from 'react-icons/fi';
 import { LuTag, LuBox, LuMessageSquare } from 'react-icons/lu';
 import { FaQuestion } from 'react-icons/fa';
 import { useAuth } from '../../../context/AuthContext';
 import {
     getTicketComments, addTicketComment,
-    updateTicketStatus, socket
+    updateTicketStatus, toggleChatPause, socket
 } from '../../../services/Ticketservice';
 import "flag-icons/css/flag-icons.min.css";
 
@@ -64,7 +64,9 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
     const currentStatusId = ticket.ticket_status_id;
     const isAsignado = currentStatusId === 4;
     const isEnProceso = currentStatusId === 5;
+    const isSolCancelacion = currentStatusId === 8;
     const isTerminado = currentStatusId === 9 || currentStatusId === 10;
+    const isChatPaused = !!ticket.chat_paused;
     const noInteraction = isEnProceso && comments.length === 0 && canWrite;
     const evidences = ticket.evidences || [];
 
@@ -72,7 +74,9 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
         u => parseInt(u.user_id) === parseInt(user?.user_id)
     );
     const isAdminIntervening = isAdmin && !isAssigned && !isTerminado && canWrite;
-    const chatLocked = isAsignado || isTerminado || !canWrite || (isAdminIntervening && !interventionConfirmed);
+    const chatLocked = isAsignado || isTerminado || !canWrite
+        || (isSolCancelacion && !isAdmin)
+        || (!isSolCancelacion && isAdminIntervening && !interventionConfirmed);
 
     const msgError = clientMsg.length > 0 && clientMsg !== clientMsg.trimStart()
         ? 'El mensaje no puede iniciar con espacios'
@@ -86,7 +90,10 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
     useEffect(() => {
         const onNewComment = (data) => {
             if (parseInt(data.ticket_id) === ticket.ticket_id) {
-                setComments(prev => [...prev, data.comment]);
+                setComments(prev => {
+                    if (prev.some(c => c.comment_id === data.comment.comment_id)) return prev;
+                    return [...prev, data.comment];
+                });
             }
         };
         const onDeleteComment = (data) => {
@@ -96,7 +103,6 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
         };
         socket.on('new_comment', onNewComment);
         socket.on('comment_deleted', onDeleteComment);
-        // Mensajes enviados desde la app móvil por el cliente
         socket.on(`ticket_comment_${ticket.ticket_id}`, (comment) => {
             setComments(prev => {
                 if (prev.some(c => c.comment_id === comment.comment_id)) return prev;
@@ -188,6 +194,31 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
         }
     };
 
+    const handleTogglePause = async () => {
+        try {
+            await toggleChatPause(ticket.ticket_id);
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    };
+
+    const handleRejectCancel = async () => {
+        try {
+            // Restore to exact previous status; fallback based on assignment if not stored
+            const rejectToStatus = ticket.cancellation_prev_status_id
+                ?? ((ticket.assignedUsers?.length ?? 0) > 0 ? 5 : 3);
+            await updateTicketStatus(ticket.ticket_id, rejectToStatus);
+            const rejectMsg = rejectToStatus === 3
+                ? 'Solicitud de cancelación rechazada. El ticket regresa a la cola de asignación.'
+                : 'Solicitud de cancelación rechazada. El ticket continúa en proceso.';
+            onSuccess(rejectMsg);
+            onClose();
+        } catch (e) {
+            alert('Error: ' + e.message);
+            setConfirmAction(null);
+        }
+    };
+
     const warrantyInfo = ticket.warranty;
 
     return (
@@ -207,6 +238,18 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                         <span className={styles.statusBadge}>{STATUS_LABELS[currentStatusId] || 'Activo'}</span>
                     </div>
                     {ticket.ticket_due_date && (() => {
+                        if (isTerminado) {
+                            const wasLate = new Date(ticket.updated_at || ticket.updatedAt || Date.now()) > new Date(ticket.ticket_due_date);
+                            return (
+                                <span className={`${styles.dueDateBadge} ${wasLate ? styles.dueDateLate : styles.dueDateOnTime}`}>
+                                    {wasLate ? <FiAlertCircle /> : <FiCheckCircle />}
+                                    {wasLate
+                                        ? currentStatusId === 9 ? ' Finalizado tarde' : ' Cancelado tarde'
+                                        : currentStatusId === 9 ? ' Finalizado a tiempo' : ' Cancelado a tiempo'
+                                    }
+                                </span>
+                            );
+                        }
                         const urgency = getDueDateUrgency(ticket.ticket_due_date);
                         const badgeClass = urgency === 'warning' ? styles.dueDateWarning
                             : (urgency === 'critical' || urgency === 'overdue') ? styles.dueDateCritical
@@ -330,6 +373,13 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                             </div>
                         )}
 
+                        {isChatPaused && (
+                            <div className={styles.pausedBanner}>
+                                <FiPauseCircle className={styles.pausedIcon} />
+                                <p>Chat en pausa. El cliente puede escribir para reactivarlo.</p>
+                            </div>
+                        )}
+
                         {/* Comentarios */}
                         <div className={`${styles.commentsSection} ${isAsignado ? styles.commentsFaded : ''}`}>
                             <div className={styles.sectionLabel}><LuMessageSquare /> Comentarios</div>
@@ -341,6 +391,19 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                                     <p className={styles.emptyChat}>Aún no hay mensajes. Inicia la conversación.</p>
                                 ) : (
                                     comments.map(comment => {
+                                        const isSystemMsg = comment.comment_text?.startsWith('🔴');
+                                        if (isSystemMsg) {
+                                            const displayText = comment.comment_text.replace(/^🔴\s*/, '');
+                                            return (
+                                                <div key={comment.comment_id} className={styles.sysMsg}>
+                                                    <span className={styles.sysMsgHeader}>
+                                                        <FiAlertCircle size={12} /> Sistema
+                                                    </span>
+                                                    <p className={styles.sysMsgText}>{displayText}</p>
+                                                </div>
+                                            );
+                                        }
+
                                         const isMe = parseInt(comment.author?.user_id) === parseInt(user?.user_id);
                                         const isCustomerMsg = !comment.user_id && !!comment.customer_id;
                                         const hasFoto = isCustomerMsg
@@ -439,6 +502,11 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                                         }
                                     </p>
                                 </div>
+                            ) : isSolCancelacion && !isAdmin ? (
+                                <div className={styles.closedInputBanner}>
+                                    <FiLock className={styles.closedLockIcon} />
+                                    <p>El ticket está en revisión de cancelación. Solo el administrador puede gestionar este proceso.</p>
+                                </div>
                             ) : !canWrite ? (
                                 <div className={styles.closedInputBanner}>
                                     <FiLock className={styles.closedLockIcon} />
@@ -516,9 +584,20 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                     {/* ── Ticket terminado: solo badge informativo ── */}
                     {isTerminado && (
                         <div className={styles.closedFooter}>
-                            <span className={`${styles.closedBadge} ${currentStatusId === 9 ? styles.badgeFinalizado : styles.badgeCancelado}`}>
-                                {currentStatusId === 9 ? '✓ Ticket Finalizado' : '✗ Ticket Cancelado'}
-                            </span>
+                            <div className={styles.closedBadgeRow}>
+                                <span className={`${styles.closedBadge} ${currentStatusId === 9 ? styles.badgeFinalizado : styles.badgeCancelado}`}>
+                                    {currentStatusId === 9 ? '✓ Ticket Finalizado' : '✗ Ticket Cancelado'}
+                                </span>
+                                {ticket.ticket_due_date && (() => {
+                                    const wasLate = new Date(ticket.updated_at || ticket.updatedAt || Date.now()) > new Date(ticket.ticket_due_date);
+                                    return (
+                                        <span className={`${styles.closedBadge} ${wasLate ? styles.badgeLate : styles.badgeOnTime}`}>
+                                            {wasLate ? <FiAlertCircle /> : <FiCheckCircle />}
+                                            {' '}{wasLate ? 'Fuera de plazo' : 'Dentro del plazo'}
+                                        </span>
+                                    );
+                                })()}
+                            </div>
                             <p className={styles.closedFooterNote}>Este ticket ya no puede ser modificado.</p>
                         </div>
                     )}
@@ -541,18 +620,58 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                         </div>
                     )}
 
+                    {/* ── Sol. Cancelación (status 8) — solo Admin ── */}
+                    {isSolCancelacion && isAdmin && !confirmAction && (
+                        <div className={styles.actionZoneCol}>
+                            <div className={styles.cancelRequestBanner}>
+                                <FiAlertCircle />
+                                El cliente ha solicitado la cancelación de este ticket.
+                            </div>
+                            <div className={styles.actionZone}>
+                                <button className={styles.cancelBtn} onClick={() => setConfirmAction('reject_cancel')}>
+                                    Rechazar solicitud
+                                </button>
+                                <button className={styles.dangerBtn} onClick={() => setConfirmAction('approve_cancel')}>
+                                    Aprobar cancelación
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    {isSolCancelacion && isAdmin && confirmAction === 'approve_cancel' && (
+                        <div className={styles.confirmZone}>
+                            <FiAlertCircle className={styles.dangerIcon} />
+                            <span className={styles.warningText}>¿Confirmar la cancelación del ticket definitivamente?</span>
+                            <div className={styles.confirmBtns}>
+                                <button className={styles.cancelBtn} onClick={() => setConfirmAction(null)}>No, regresar</button>
+                                <button className={styles.dangerBtn} onClick={handleForceClose}>Sí, Cancelar ticket</button>
+                            </div>
+                        </div>
+                    )}
+                    {isSolCancelacion && isAdmin && confirmAction === 'reject_cancel' && (
+                        <div className={styles.confirmZone}>
+                            <FaQuestion className={styles.questionIcon} />
+                            <span className={styles.warningText}>¿Rechazar la solicitud y continuar con el ticket?</span>
+                            <div className={styles.confirmBtns}>
+                                <button className={styles.cancelBtn} onClick={() => setConfirmAction(null)}>No, regresar</button>
+                                <button className={styles.successBtn} onClick={handleRejectCancel}>Sí, Rechazar solicitud</button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* ── Status 5+ (En Proceso o superior): botones según rol y permisos ── */}
-                    {!isTerminado && !isAsignado && (canEdit || canDelete) && !confirmAction && (
+                    {!isTerminado && !isAsignado && !isSolCancelacion && (canEdit || canDelete) && !confirmAction && (
                         <div className={styles.actionZoneCol}>
                             <div className={styles.actionZone}>
                                 {isAdmin ? (
                                     <>
-                                        {canDelete && <button className={styles.dangerBtn} onClick={() => setConfirmAction('close')}>Forzar Cierre</button>}
+                                        <button className={styles.dangerBtn} onClick={() => setConfirmAction('close')}>Forzar Cierre</button>
+                                        {canWrite && <button className={isChatPaused ? styles.resumeBtn : styles.pauseBtn} onClick={handleTogglePause}>{isChatPaused ? <><FiPlayCircle /> Reanudar</> : <><FiPauseCircle /> Pausar</>}</button>}
                                         {canEdit && <button className={styles.escalateBtn} onClick={() => setConfirmAction('escalate')} disabled={noInteraction}>Escalar Ticket</button>}
                                         {canEdit && <button className={styles.successBtn} onClick={() => setConfirmAction('finalize')} disabled={noInteraction}>Finalizar Ticket</button>}
                                     </>
                                 ) : isEnProceso && canEdit ? (
                                     <>
+                                        {canWrite && <button className={isChatPaused ? styles.resumeBtn : styles.pauseBtn} onClick={handleTogglePause}>{isChatPaused ? <><FiPlayCircle /> Reanudar</> : <><FiPauseCircle /> Pausar</>}</button>}
                                         <button className={styles.escalateBtn} onClick={() => setConfirmAction('escalate')} disabled={noInteraction}>Escalar Ticket</button>
                                         <button className={styles.successBtn} onClick={() => setConfirmAction('finalize')} disabled={noInteraction}>Finalizar Ticket</button>
                                     </>

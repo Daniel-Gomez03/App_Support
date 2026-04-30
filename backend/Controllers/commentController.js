@@ -1,17 +1,17 @@
-const TicketComment = require('../models/TicketComment');
-const TicketCommentAttachment = require('../models/TicketCommentAttachment');
-const User = require('../models/User');
-const Customer = require('../models/Customer');
-const { processEvidence } = require('../Middleware/ticketUpload');
-const { uploadToFTP } = require('../Utils/ftpClient');
-const { encrypt, decrypt } = require('../Utils/encryption');
-const fs = require('fs');
+const TicketComment = require("../models/TicketComment");
+const TicketCommentAttachment = require("../models/TicketCommentAttachment");
+const Ticket = require("../models/Ticket");
+const User = require("../models/User");
+const Customer = require("../models/Customer");
+const { processEvidence } = require("../Middleware/ticketUpload");
+const { uploadToFTP } = require("../Utils/ftpClient");
+const { encrypt, decrypt } = require("../Utils/encryption");
+const fs = require("fs");
 
 const decryptComment = (comment) => {
     try {
         comment.comment_text = decrypt(comment.comment_text);
-    } catch {
-    }
+    } catch { }
     return comment;
 };
 
@@ -27,23 +27,28 @@ exports.getComments = async (req, res) => {
             include: [
                 {
                     model: User,
-                    as: 'author',
-                    attributes: ['user_id', 'nombre_completo', 'foto', 'rol']
+                    as: "author",
+                    attributes: ["user_id", "nombre_completo", "foto", "rol"],
                 },
                 {
                     model: Customer,
-                    as: 'customerAuthor',
-                    attributes: ['customer_id', 'customer_first_name', 'customer_last_name', 'customer_image']
+                    as: "customerAuthor",
+                    attributes: [
+                        "customer_id",
+                        "customer_first_name",
+                        "customer_last_name",
+                        "customer_image",
+                    ],
                 },
                 {
                     model: TicketCommentAttachment,
-                    as: 'attachments'
-                }
+                    as: "attachments",
+                },
             ],
-            order: [['created_at', 'ASC']]
+            order: [["created_at", "ASC"]],
         });
 
-        const decrypted = comments.map(c => {
+        const decrypted = comments.map((c) => {
             const plain = c.toJSON();
             decryptComment(plain);
             return plain;
@@ -67,7 +72,9 @@ exports.addComment = async (req, res) => {
         const { user_id } = req.user;
 
         if (!comment_text || !comment_text.trim()) {
-            return res.status(400).json({ error: 'El comentario no puede estar vacío.' });
+            return res
+                .status(400)
+                .json({ error: "El comentario no puede estar vacío." });
         }
 
         const encryptedText = encrypt(comment_text.trim());
@@ -76,51 +83,75 @@ exports.addComment = async (req, res) => {
             ticket_id: id,
             user_id,
             customer_id: null,
-            comment_text: encryptedText
+            comment_text: encryptedText,
         });
 
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 const processed = await processEvidence(file);
                 localFilesToCleanup.push(processed.filePath);
-                const ftpUrl = await uploadToFTP(processed.filePath, processed.fileName);
+                const ftpUrl = await uploadToFTP(
+                    processed.filePath,
+                    processed.fileName,
+                );
 
                 await TicketCommentAttachment.create({
                     comment_id: comment.comment_id,
                     file_path: ftpUrl,
-                    file_name: file.originalname
+                    file_name: file.originalname,
                 });
             }
         }
 
-        localFilesToCleanup.forEach(p => { if (fs.existsSync(p)) fs.unlinkSync(p); });
+        localFilesToCleanup.forEach((p) => {
+            if (fs.existsSync(p)) fs.unlinkSync(p);
+        });
 
         const fullComment = await TicketComment.findByPk(comment.comment_id, {
             include: [
                 {
                     model: User,
-                    as: 'author',
-                    attributes: ['user_id', 'nombre_completo', 'foto', 'rol']
+                    as: "author",
+                    attributes: ["user_id", "nombre_completo", "foto", "rol"],
                 },
                 {
                     model: TicketCommentAttachment,
-                    as: 'attachments'
-                }
-            ]
+                    as: "attachments",
+                },
+            ],
         });
 
         const plain = fullComment.toJSON();
         decryptComment(plain);
 
-        const io = req.app.get('io');
+        const io = req.app.get("io");
         if (io) {
-            io.emit('new_comment', { ticket_id: parseInt(id), comment: plain });
+            io.emit("new_comment", { ticket_id: parseInt(id), comment: plain });
             io.emit(`ticket_comment_${id}`, plain);
+
+            const ticket = await Ticket.findByPk(id, {
+                attributes: ["customer_id", "ticket_subject"],
+            });
+            if (ticket?.customer_id) {
+                io.emit(`mobile_notification_${ticket.customer_id}`, {
+                    type: "message",
+                    ticketId: parseInt(id),
+                    ticketSubject: ticket.ticket_subject,
+                    senderName: plain.author?.nombre_completo ?? "Técnico",
+                    messagePreview: comment_text.trim().substring(0, 80),
+                    timestamp: new Date().toISOString(),
+                });
+            }
+
+            const updatedTicket = await Ticket.findByPk(id);
+            if (updatedTicket) io.emit("ticket_updated", updatedTicket);
         }
 
         res.status(201).json(plain);
     } catch (error) {
-        localFilesToCleanup.forEach(p => { if (fs.existsSync(p)) fs.unlinkSync(p); });
+        localFilesToCleanup.forEach((p) => {
+            if (fs.existsSync(p)) fs.unlinkSync(p);
+        });
         res.status(500).json({ error: error.message });
     }
 };
@@ -134,19 +165,26 @@ exports.deleteComment = async (req, res) => {
         const { user_id, rol } = req.user;
 
         const comment = await TicketComment.findByPk(commentId);
-        if (!comment) return res.status(404).json({ error: 'Comentario no encontrado.' });
+        if (!comment)
+            return res.status(404).json({ error: "Comentario no encontrado." });
 
-        if (rol !== 'Admin' && comment.user_id !== user_id) {
-            return res.status(403).json({ error: 'No tienes permiso para eliminar este comentario.' });
+        if (rol !== "Admin" && comment.user_id !== user_id) {
+            return res
+                .status(403)
+                .json({ error: "No tienes permiso para eliminar este comentario." });
         }
 
         const ticket_id = comment.ticket_id;
         await comment.destroy();
 
-        const io = req.app.get('io');
-        if (io) io.emit('comment_deleted', { ticket_id, comment_id: parseInt(commentId) });
+        const io = req.app.get("io");
+        if (io)
+            io.emit("comment_deleted", {
+                ticket_id,
+                comment_id: parseInt(commentId),
+            });
 
-        res.json({ message: 'Comentario eliminado correctamente.' });
+        res.json({ message: "Comentario eliminado correctamente." });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

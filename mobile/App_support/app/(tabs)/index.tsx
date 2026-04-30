@@ -2,14 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
   TextInput,
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
   Image,
-  Dimensions,
 } from "react-native";
 import {
   Ionicons,
@@ -21,8 +19,9 @@ import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import nuevoService from "../../Services/nuevoService";
 import { useTheme } from "@/context/ThemeContext";
-
-const { width } = Dimensions.get("window");
+import { s, width } from "@/styles/home.styles";
+import { useAuth } from "@/hooks/useAuth";
+import socket from "@/Services/socket";
 
 const MESES = [
   "Ene",
@@ -44,8 +43,6 @@ const formatDate = (iso: string) => {
   return `${d} ${MESES[parseInt(m) - 1]} ${y}`;
 };
 
-const isPendingReview = (ticket: any) => ticket.status?.ticket_status_id === 2;
-
 const AVATAR_COLORS = [
   "#3C6034",
   "#2563EB",
@@ -64,35 +61,27 @@ const validPhoto = (foto?: string | null) =>
 const isDispositivo = (ticket: any) =>
   ticket.category?.category_name?.toLowerCase().includes("dispositivo");
 
-const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  default: { bg: "#E8F5E9", text: "#2E7D32" },
-  proceso: { bg: "#FFF3E0", text: "#E65100" },
-  revisión: { bg: "#F3F4F6", text: "#6B7280" },
-  resuelto: { bg: "#EDE7F6", text: "#512DA8" },
+const getCustomerLabel = (statusId: number): string => {
+  if (statusId === 10) return "Cancelado";
+  if (statusId === 9) return "Finalizado";
+  if (statusId >= 4) return "En Proceso";
+  return "Nuevo";
 };
 
-const getStatusStyle = (name: string) => {
-  const n = name?.toLowerCase() ?? "";
-  if (n.includes("proceso") || n.includes("asign"))
-    return STATUS_COLORS.proceso;
-  if (n.includes("revis")) return STATUS_COLORS.revisión;
-  if (n.includes("resuelto") || n.includes("cerrado"))
-    return STATUS_COLORS.resuelto;
-  return STATUS_COLORS.default;
+const getCustomerStyle = (statusId: number) => {
+  if (statusId === 10) return { bg: "#FEF2F2", text: "#DC2626" };
+  if (statusId === 9) return { bg: "#F0FDF4", text: "#16A34A" };
+  if (statusId >= 4) return { bg: "#FFF3E0", text: "#E65100" };
+  return { bg: "#E8F5E9", text: "#2E7D32" };
 };
 
 function TicketCard({ ticket }: { ticket: any }) {
   const router = useRouter();
   const { colors } = useTheme();
-  const pending = isPendingReview(ticket);
   const dispositivo = isDispositivo(ticket);
-  const hasAssigned = (ticket.assignedUsers ?? []).length > 0;
-  const statusName = pending
-    ? "Pendiente de revisión"
-    : (ticket.status?.ticket_status_name ?? "Nuevo");
-  const statusStyle = pending
-    ? STATUS_COLORS.revisión
-    : getStatusStyle(statusName);
+  const statusId = ticket.status?.ticket_status_id ?? 1;
+  const statusLabel = getCustomerLabel(statusId);
+  const statusStyle = getCustomerStyle(statusId);
   const techs: any[] = ticket.assignedUsers ?? [];
 
   return (
@@ -101,10 +90,8 @@ function TicketCard({ ticket }: { ticket: any }) {
         s.card,
         { backgroundColor: colors.card, borderColor: colors.border },
       ]}
-      activeOpacity={hasAssigned ? 0.75 : 1}
-      onPress={() =>
-        hasAssigned && router.push(`/ticket/${ticket.ticket_id}` as any)
-      }
+      activeOpacity={0.75}
+      onPress={() => router.push(`/ticket/${ticket.ticket_id}` as any)}
     >
       <View style={s.cardTop}>
         <View
@@ -123,23 +110,12 @@ function TicketCard({ ticket }: { ticket: any }) {
         <Text style={[s.subject, { color: colors.text }]} numberOfLines={1}>
           {ticket.ticket_subject}
         </Text>
-        {!pending && (
-          <View style={[s.badge, { backgroundColor: statusStyle.bg }]}>
-            <Text style={[s.badgeText, { color: statusStyle.text }]}>
-              {statusName}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {pending && (
-        <View style={[s.pendingBanner, { backgroundColor: colors.input }]}>
-          <Ionicons name="time-outline" size={13} color={colors.textMuted} />
-          <Text style={[s.pendingText, { color: colors.textMuted }]}>
-            Pendiente de revisión
+        <View style={[s.badge, { backgroundColor: statusStyle.bg }]}>
+          <Text style={[s.badgeText, { color: statusStyle.text }]}>
+            {statusLabel}
           </Text>
         </View>
-      )}
+      </View>
 
       <Text
         style={[s.description, { color: colors.textSub }]}
@@ -212,6 +188,8 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
+  const { state } = useAuth();
+  const customerId = state.user?.customer_id;
 
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -233,6 +211,55 @@ export default function HomeScreen() {
   useEffect(() => {
     fetchTickets();
   }, []);
+
+  useEffect(() => {
+    if (!customerId) return;
+    const event = `mobile_notification_${customerId}`;
+
+    const handle = (data: { type: string; ticketId: number }) => {
+      if (data.type !== "message") return;
+      setTickets((prev) => {
+        const idx = prev.findIndex((t) => t.ticket_id === data.ticketId);
+        if (idx <= 0) return prev;
+        const moved = prev[idx];
+        return [moved, ...prev.filter((_, i) => i !== idx)];
+      });
+    };
+
+    socket.on(event, handle);
+    return () => {
+      socket.off(event, handle);
+    };
+  }, [customerId]);
+
+  useEffect(() => {
+    if (!customerId) return;
+
+    const handle = (data: { customer_id: number }) => {
+      if (data.customer_id !== customerId) return;
+      fetchTickets();
+    };
+
+    socket.on("new_ticket_created", handle);
+    return () => {
+      socket.off("new_ticket_created", handle);
+    };
+  }, [customerId, fetchTickets]);
+
+  // Refresh when admin changes ticket status, assigns tech, pauses chat, etc.
+  useEffect(() => {
+    if (!customerId) return;
+
+    const handle = (updatedTicket: any) => {
+      if (updatedTicket?.customer_id !== customerId) return;
+      fetchTickets();
+    };
+
+    socket.on("ticket_updated", handle);
+    return () => {
+      socket.off("ticket_updated", handle);
+    };
+  }, [customerId, fetchTickets]);
 
   const filtered = tickets.filter((t) => {
     if (!search) return true;
@@ -263,6 +290,9 @@ export default function HomeScreen() {
         keyExtractor={(t) => t.ticket_id.toString()}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.list}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -338,240 +368,3 @@ export default function HomeScreen() {
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF",
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  list: {
-    paddingHorizontal: width * 0.05,
-    paddingBottom: 120,
-  },
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#F5F5F5",
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    height: 46,
-    marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.035,
-    color: "#222",
-  },
-  title: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.07,
-    color: "#000",
-    marginBottom: 16,
-  },
-  card: {
-    backgroundColor: "#FFF",
-    borderRadius: 20,
-    marginBottom: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  cardTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 8,
-  },
-  catIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  catIconDevice: {
-    backgroundColor: "#E8F5E9",
-  },
-  catIconCode: {
-    backgroundColor: "#EFF6FF",
-  },
-  subject: {
-    flex: 1,
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.038,
-    color: "#111",
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  badgeText: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.027,
-  },
-  pendingBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginBottom: 8,
-    alignSelf: "flex-start",
-  },
-  pendingText: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.028,
-    color: "#6B7280",
-  },
-  description: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.032,
-    color: "#555",
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#F5F5F5",
-    marginBottom: 12,
-  },
-  cardBottom: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  techRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  techAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: "#FFF",
-    overflow: "hidden",
-  },
-  techImg: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 15,
-  },
-  techInitial: {
-    backgroundColor: "#3C6034",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  techInitialText: {
-    fontFamily: "Poppins-Bold",
-    fontSize: 11,
-    color: "#FFF",
-  },
-  techName: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.028,
-    color: "#555",
-  },
-  unassignedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#F3F4F6",
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  unassignedAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#E5E7EB",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  unassignedText: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.028,
-    color: "#9CA3AF",
-  },
-  dateRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  dateText: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.028,
-    color: "#9CA3AF",
-  },
-  empty: {
-    alignItems: "center",
-    paddingTop: 60,
-    gap: 10,
-  },
-  emptyIconBg: {
-    width: width * 0.35,
-    height: width * 0.35,
-    borderRadius: width * 0.175,
-    backgroundColor: "#F8F9FA",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  emptyBadge: {
-    position: "absolute",
-    bottom: 5,
-    right: 5,
-    backgroundColor: "#3C6034",
-    padding: 8,
-    borderRadius: 20,
-  },
-  emptyTitle: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.045,
-    color: "#333",
-    textAlign: "center",
-  },
-  emptySub: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.033,
-    color: "#8A8A8A",
-    textAlign: "center",
-    paddingHorizontal: 30,
-  },
-  createBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#3C6034",
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    marginTop: 16,
-    elevation: 4,
-  },
-  createBtnText: {
-    fontFamily: "Poppins-Bold",
-    fontSize: 15,
-    color: "#FFF",
-  },
-});

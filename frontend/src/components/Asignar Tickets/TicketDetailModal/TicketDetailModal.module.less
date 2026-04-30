@@ -134,6 +134,7 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
+            min-width: 0;
 
             .label {
                 font-size: 12px;
@@ -156,11 +157,25 @@
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                min-width: 0;
+                overflow: hidden;
+
+                svg {
+                    flex-shrink: 0;
+                }
 
                 .flagIcon {
                     font-size: 16px;
                     border-radius: 3px;
                     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                    flex-shrink: 0;
+                }
+
+                .valueText {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    min-width: 0;
                 }
             }
         }

@@ -100,7 +100,7 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
             };
 
             await assignTicket(ticket.ticket_id, finalData);
-            onSuccess(`Ve a Tickets Activos para poder verlo e interactuar con el`);
+            onSuccess('Ticket asignado correctamente. Ya puedes gestionarlo desde Tickets Activos.');
             onClose();
         } catch (error) {
             alert("Error al asignar: " + error.message);

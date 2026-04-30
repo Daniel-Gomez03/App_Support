@@ -2,17 +2,18 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TextInput,
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Dimensions,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Alert,
   FlatList,
+  Modal,
+  StatusBar,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,10 +21,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import socket from "@/Services/socket";
+import ticketService from "@/Services/ticketService";
+import { s } from "@/styles/ticket.styles";
 import { useTheme } from "@/context/ThemeContext";
-
-const { width } = Dimensions.get("window");
-const API_URL = "http://10.10.0.84:8000/api";
 
 const AVATAR_COLORS = [
   "#3C6034",
@@ -69,18 +69,28 @@ const fmtTime = (iso: string) => {
   });
 };
 
-const getStep = (name: string): number => {
-  const n = name?.toLowerCase() ?? "";
-  if (n.includes("finaliz") || n.includes("resuelt") || n.includes("cerrad"))
-    return 3;
-  if (n.includes("proceso") || n.includes("asign") || n.includes("progres"))
-    return 2;
+const getStep = (statusId: number): number => {
+  if (statusId === 9 || statusId === 10) return 3;
+  if (statusId >= 3) return 2;
   return 1;
 };
 
-const authHeader = async (): Promise<Record<string, string>> => {
-  const token = await SecureStore.getItemAsync("userToken");
-  return { Authorization: `Bearer ${token ?? ""}` };
+const getCustomerLabel = (statusId: number): string => {
+  if (statusId === 10) return "Cancelado";
+  if (statusId === 9) return "Finalizado";
+  if (statusId >= 3) return "En Proceso";
+  return "Nuevo";
+};
+
+const isOutsideBusinessHours = (): boolean => {
+  const now = new Date();
+  const day = now.getDay();
+  const total = now.getHours() * 60 + now.getMinutes();
+
+  if (day === 0 || day === 6) return true;
+  if (day >= 1 && day <= 4) return total < 8 * 60 + 30 || total >= 17 * 60 + 30;
+  if (day === 5) return total < 9 * 60 || total >= 17 * 60;
+  return true;
 };
 
 function Avatar({
@@ -176,6 +186,21 @@ export default function TicketDetailScreen() {
   const [pendingFiles, setPendingFiles] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"chat" | "info">("chat");
   const [customerId, setCustomerId] = useState<number | null>(null);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState(false);
+  // Stable keyboard height — only updates on show/hide, not on suggestion bar changes
+  const [kbHeight, setKbHeight] = useState(0);
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    const show = Keyboard.addListener("keyboardDidShow", (e) =>
+      setKbHeight(e.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener("keyboardDidHide", () => setKbHeight(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   useEffect(() => {
     SecureStore.getItemAsync("userToken").then((t) => setCustomerId(Number(t)));
@@ -183,16 +208,15 @@ export default function TicketDetailScreen() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const h = await authHeader();
-      const [tRes, cRes] = await Promise.all([
-        fetch(`${API_URL}/mobile/tickets/${id}`, { headers: h }),
-        fetch(`${API_URL}/mobile/tickets/${id}/comments`, { headers: h }),
+      const [tData, cData] = await Promise.all([
+        ticketService.getTicketById(id),
+        ticketService.getTicketComments(id),
       ]);
-      const [tData, cData] = await Promise.all([tRes.json(), cRes.json()]);
       setTicket(tData);
-      setComments(Array.isArray(cData) ? cData : []);
+      setComments(cData);
     } catch (e) {
       console.error(e);
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -200,15 +224,25 @@ export default function TicketDetailScreen() {
 
   useEffect(() => {
     fetchAll();
-    const handler = (comment: any) =>
+
+    const commentHandler = (comment: any) =>
       setComments((prev) =>
         prev.some((c) => c.comment_id === comment.comment_id)
           ? prev
           : [...prev, comment],
       );
-    socket.on(`ticket_comment_${id}`, handler);
+
+    const ticketHandler = (updated: any) => {
+      if (Number(updated.ticket_id) === Number(id)) {
+        setTicket((prev: any) => (prev ? { ...prev, ...updated } : prev));
+      }
+    };
+
+    socket.on(`ticket_comment_${id}`, commentHandler);
+    socket.on("ticket_updated", ticketHandler);
     return () => {
-      socket.off(`ticket_comment_${id}`, handler);
+      socket.off(`ticket_comment_${id}`, commentHandler);
+      socket.off("ticket_updated", ticketHandler);
     };
   }, [id]);
 
@@ -239,34 +273,7 @@ export default function TicketDetailScreen() {
     if (!canSend || sending) return;
     setSending(true);
     try {
-      const token = await SecureStore.getItemAsync("userToken");
-      const formData = new FormData();
-      formData.append("comment_text", msg.trim() || "📎 Archivo adjunto");
-      pendingFiles.forEach((file) => {
-        const uri = file.uri;
-        const fileName = uri.split("/").pop() ?? "file";
-        const ext = fileName.split(".").pop()?.toLowerCase() ?? "jpg";
-        const type =
-          file.type === "video"
-            ? "video/mp4"
-            : `image/${ext === "png" ? "png" : "jpeg"}`;
-        formData.append("attachments", {
-          uri: Platform.OS === "android" ? uri : uri.replace("file://", ""),
-          name: fileName,
-          type,
-        } as any);
-      });
-      const res = await fetch(`${API_URL}/mobile/tickets/${id}/comments`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "multipart/form-data",
-        },
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      await ticketService.sendComment(id, msg.trim(), pendingFiles);
       setMsg("");
       setPendingFiles([]);
     } catch (e: any) {
@@ -287,15 +294,8 @@ export default function TicketDetailScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              const h = await authHeader();
-              await fetch(`${API_URL}/mobile/tickets/${id}/cancel`, {
-                method: "PATCH",
-                headers: h,
-              });
-              Alert.alert(
-                "Solicitud enviada",
-                "Un agente revisará tu solicitud de cancelación.",
-              );
+              await ticketService.requestCancellation(id);
+              await fetchAll();
             } catch {}
           },
         },
@@ -303,7 +303,7 @@ export default function TicketDetailScreen() {
     );
   };
 
-  if (loading || !ticket) {
+  if (loading) {
     return (
       <View style={s.center}>
         <ActivityIndicator size="large" color="#3C6034" />
@@ -311,11 +311,51 @@ export default function TicketDetailScreen() {
     );
   }
 
-  const step = getStep(ticket.status?.ticket_status_name ?? "");
+  if (fetchError || !ticket) {
+    return (
+      <View style={s.center}>
+        <Ionicons name="cloud-offline-outline" size={52} color="#9CA3AF" />
+        <Text style={s.errorTitle}>No se pudo cargar el ticket</Text>
+        <Text style={s.errorSub}>Verifica tu conexión e intenta de nuevo.</Text>
+        <TouchableOpacity
+          style={s.retryBtn}
+          onPress={() => {
+            setFetchError(false);
+            setLoading(true);
+            fetchAll();
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={s.retryBtnText}>Reintentar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const statusId = ticket.status?.ticket_status_id ?? 0;
+  const step = getStep(statusId);
   const isClosed = statusId === 9 || statusId === 10;
   const isCancelled = statusId === 10;
+  const cancelCommentIdx = comments.reduce(
+    (acc: number, c: any, i: number) =>
+      !c.user_id &&
+      c.comment_text?.startsWith("🔴") &&
+      c.comment_text?.includes("cancelaci")
+        ? i
+        : acc,
+    -1,
+  );
+  const adminWroteAfterCancel =
+    cancelCommentIdx >= 0 &&
+    comments
+      .slice(cancelCommentIdx + 1)
+      .some((c: any) => !!c.user_id && c.author?.rol === "Admin");
+  const cancellationPending = statusId === 8 && !adminWroteAfterCancel;
+  const isChatPaused = !!ticket?.chat_paused;
   const techs: any[] = ticket.assignedUsers ?? [];
+  const techHasWritten = comments.some(
+    (c) => !!c.user_id && !c.comment_text?.startsWith("🔴"),
+  );
   const warranty = ticket.warranty;
   const warrantyLabel = !ticket.ticket_serial_number
     ? null
@@ -341,9 +381,7 @@ export default function TicketDetailScreen() {
           <Text style={s.headerSub}>ID:{ticket.ticket_id}</Text>
         </View>
         <View style={s.headerBadge}>
-          <Text style={s.headerBadgeText}>
-            {ticket.status?.ticket_status_name ?? "Nuevo"}
-          </Text>
+          <Text style={s.headerBadgeText}>{getCustomerLabel(statusId)}</Text>
         </View>
       </View>
 
@@ -388,237 +426,494 @@ export default function TicketDetailScreen() {
       {activeTab === "chat" && (
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          {/* Técnico(s) asignado(s) */}
-          {techs.length > 0 && (
-            <View
-              style={[
-                s.techCard,
-                {
-                  backgroundColor: colors.card,
-                  borderBottomColor: colors.border,
-                },
-              ]}
-            >
-              {techs.length === 1 ? (
-                <>
-                  <Avatar
-                    uri={techs[0].foto}
-                    name={techs[0].nombre_completo}
-                    size={46}
-                  />
-                  <View style={{ marginLeft: 12 }}>
-                    <Text style={[s.techCardName, { color: colors.text }]}>
-                      {techs[0].nombre_completo}
-                    </Text>
-                    <Text style={[s.techCardRole, { color: colors.textMuted }]}>
-                      {techs[0].cargo ?? "Técnico"}
-                    </Text>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <View style={s.techAvatarStack}>
-                    {techs.slice(0, 3).map((t, i) => (
-                      <View
-                        key={t.user_id}
-                        style={[
-                          s.techStackItem,
-                          { marginLeft: i > 0 ? -14 : 0, zIndex: 10 - i },
-                        ]}
-                      >
-                        <Avatar
-                          uri={t.foto}
-                          name={t.nombre_completo}
-                          size={40}
-                        />
-                      </View>
-                    ))}
-                  </View>
-                  <View style={{ marginLeft: 12 }}>
-                    <Text style={[s.techCardName, { color: colors.text }]}>
-                      Equipo de soporte
-                    </Text>
-                    <Text style={[s.techCardRole, { color: colors.textMuted }]}>
-                      {techs.length} técnicos asignados
-                    </Text>
-                  </View>
-                </>
-              )}
-            </View>
-          )}
-
-          {/* Mensajes */}
-          <FlatList
-            ref={flatRef}
-            data={comments}
-            keyExtractor={(c) => c.comment_id.toString()}
-            contentContainerStyle={s.chatList}
-            style={{ flex: 1 }}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => {
-              const isCustomer =
-                !!item.customer_id && item.customer_id === customerId;
-              const isSystem = item.comment_text?.startsWith("🔴");
-              const hasAttachments = (item.attachments?.length ?? 0) > 0;
-              const showText =
-                !hasAttachments || item.comment_text !== "📎 Archivo adjunto";
-
-              if (isSystem) {
-                return (
-                  <View style={s.sysMsg}>
-                    <Text style={s.sysMsgText}>{item.comment_text}</Text>
-                  </View>
-                );
-              }
-              return (
-                <View style={[s.msgRow, isCustomer && s.msgRowRight]}>
-                  {!isCustomer && (
+          <View
+            style={{
+              flex: 1,
+              paddingBottom: Platform.OS === "android" ? kbHeight : 0,
+            }}
+          >
+            {/* Técnico(s) asignado(s) */}
+            {techs.length > 0 && (
+              <View
+                style={[
+                  s.techCard,
+                  {
+                    backgroundColor: colors.card,
+                    borderBottomColor: colors.border,
+                  },
+                ]}
+              >
+                {techs.length === 1 ? (
+                  <>
                     <Avatar
-                      uri={item.author?.foto}
-                      name={item.author?.nombre_completo}
-                      size={28}
+                      uri={techs[0].foto}
+                      name={techs[0].nombre_completo}
+                      size={46}
                     />
-                  )}
-                  <View
-                    style={[
-                      s.bubble,
-                      isCustomer
-                        ? s.bubbleCustomer
-                        : [s.bubbleTech, { backgroundColor: colors.card }],
-                    ]}
-                  >
-                    {!isCustomer && (
-                      <View style={s.bubbleAuthorRow}>
-                        <Text style={s.bubbleAuthor}>
-                          {item.author?.nombre_completo ?? "Técnico"}
+                    <View style={{ marginLeft: 12 }}>
+                      <Text style={[s.techCardName, { color: colors.text }]}>
+                        {techs[0].nombre_completo}
+                      </Text>
+                      <Text
+                        style={[s.techCardRole, { color: colors.textMuted }]}
+                      >
+                        {techs[0].cargo ?? "Técnico"}
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <View style={s.techAvatarStack}>
+                      {techs.slice(0, 3).map((t, i) => (
+                        <View
+                          key={t.user_id}
+                          style={[
+                            s.techStackItem,
+                            { marginLeft: i > 0 ? -14 : 0, zIndex: 10 - i },
+                          ]}
+                        >
+                          <Avatar
+                            uri={t.foto}
+                            name={t.nombre_completo}
+                            size={40}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                    <View style={{ marginLeft: 12 }}>
+                      <Text style={[s.techCardName, { color: colors.text }]}>
+                        Equipo de soporte
+                      </Text>
+                      <Text
+                        style={[s.techCardRole, { color: colors.textMuted }]}
+                      >
+                        {techs.length} técnicos asignados
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </View>
+            )}
+
+            {/* Mensajes */}
+            <FlatList
+              ref={flatRef}
+              data={comments}
+              keyExtractor={(c) => c.comment_id.toString()}
+              contentContainerStyle={s.chatList}
+              style={{ flex: 1 }}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => {
+                const isCustomer =
+                  !!item.customer_id && item.customer_id === customerId;
+                const isSystem = item.comment_text?.startsWith("🔴");
+                const hasAttachments = (item.attachments?.length ?? 0) > 0;
+                const showText =
+                  !hasAttachments || item.comment_text !== "📎 Archivo adjunto";
+
+                if (isSystem) {
+                  const displayText = (item.comment_text as string).replace(
+                    /^🔴\s*/,
+                    "",
+                  );
+                  return (
+                    <View
+                      style={[
+                        s.sysMsg,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <View style={s.sysMsgHeader}>
+                        <Ionicons
+                          name="information-circle"
+                          size={13}
+                          color={colors.primary}
+                        />
+                        <Text
+                          style={[s.sysMsgLabel, { color: colors.primary }]}
+                        >
+                          Sistema
                         </Text>
-                        {item.author?.rol === "Admin" && (
-                          <View style={s.supportBadge}>
-                            <Text style={s.supportBadgeText}>Admin</Text>
-                          </View>
-                        )}
                       </View>
+                      <Text style={[s.sysMsgText, { color: colors.textSub }]}>
+                        {displayText}
+                      </Text>
+                    </View>
+                  );
+                }
+                return (
+                  <View style={[s.msgRow, isCustomer && s.msgRowRight]}>
+                    {!isCustomer && (
+                      <Avatar
+                        uri={item.author?.foto}
+                        name={item.author?.nombre_completo}
+                        size={28}
+                      />
                     )}
-                    {showText && (
+                    <View
+                      style={[
+                        s.bubble,
+                        isCustomer
+                          ? s.bubbleCustomer
+                          : [s.bubbleTech, { backgroundColor: colors.card }],
+                      ]}
+                    >
+                      {!isCustomer && (
+                        <View style={s.bubbleAuthorRow}>
+                          <Text
+                            style={[s.bubbleAuthor, { color: colors.textSub }]}
+                          >
+                            {item.author?.nombre_completo ?? "Técnico"}
+                          </Text>
+                          {item.author?.rol === "Admin" && (
+                            <View
+                              style={[
+                                s.supportBadge,
+                                { backgroundColor: colors.primarySoft },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  s.supportBadgeText,
+                                  { color: colors.primary },
+                                ]}
+                              >
+                                Admin
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+                      {showText && (
+                        <Text
+                          style={[
+                            s.bubbleText,
+                            isCustomer
+                              ? s.bubbleTextCustomer
+                              : { color: colors.text },
+                          ]}
+                        >
+                          {item.comment_text}
+                        </Text>
+                      )}
+                      {hasAttachments &&
+                        item.attachments.map((a: any) => (
+                          <TouchableOpacity
+                            key={a.attachment_id}
+                            onPress={() => setViewingImage(a.file_path)}
+                            activeOpacity={0.85}
+                          >
+                            <Image
+                              source={{ uri: a.file_path }}
+                              style={s.attachImg}
+                              resizeMode="cover"
+                            />
+                          </TouchableOpacity>
+                        ))}
                       <Text
                         style={[
-                          s.bubbleText,
-                          isCustomer && s.bubbleTextCustomer,
+                          s.bubbleTime,
+                          isCustomer && s.bubbleTimeCustomer,
+                          !isCustomer && { color: colors.textMuted },
                         ]}
                       >
-                        {item.comment_text}
+                        {fmtTime(item.created_at)}
                       </Text>
-                    )}
-                    {hasAttachments &&
-                      item.attachments.map((a: any) => (
-                        <Image
-                          key={a.attachment_id}
-                          source={{ uri: a.file_path }}
-                          style={s.attachImg}
-                          resizeMode="cover"
-                        />
-                      ))}
-                    <Text
-                      style={[s.bubbleTime, isCustomer && s.bubbleTimeCustomer]}
-                    >
-                      {fmtTime(item.created_at)}
-                    </Text>
+                    </View>
                   </View>
+                );
+              }}
+              ListEmptyComponent={
+                <View style={s.chatEmpty}>
+                  <Text style={[s.chatEmptyText, { color: colors.textMuted }]}>
+                    Aún no hay mensajes. Escribe algo para iniciar la
+                    conversación.
+                  </Text>
                 </View>
-              );
-            }}
-            ListEmptyComponent={
-              <View style={s.chatEmpty}>
-                <Text style={s.chatEmptyText}>
-                  Aún no hay mensajes. Escribe algo para iniciar la
-                  conversación.
+              }
+            />
+
+            {/* Banner fuera de horario laboral */}
+            {!isClosed && isOutsideBusinessHours() && (
+              <View
+                style={[
+                  s.offHoursBanner,
+                  {
+                    backgroundColor: colors.surface,
+                    borderTopColor: colors.border,
+                  },
+                ]}
+              >
+                <Ionicons name="time-outline" size={16} color="#D97706" />
+                <Text style={[s.offHoursText, { color: colors.textSub }]}>
+                  Estás fuera del horario laboral (L–J 8:30–17:30, V
+                  9:00–17:00). Tu mensaje será atendido en el próximo horario
+                  hábil.
                 </Text>
               </View>
-            }
-          />
+            )}
 
-          {/* Preview de adjuntos pendientes */}
-          {!isClosed && pendingFiles.length > 0 && (
-            <View style={s.pendingRow}>
-              {pendingFiles.map((f, i) => (
-                <View key={i} style={s.pendingThumb}>
-                  <Image source={{ uri: f.uri }} style={s.pendingImg} />
+            {/* Preview de adjuntos pendientes */}
+            {!isClosed && pendingFiles.length > 0 && (
+              <View
+                style={[
+                  s.pendingRow,
+                  {
+                    backgroundColor: colors.card,
+                    borderTopColor: colors.border,
+                  },
+                ]}
+              >
+                {pendingFiles.map((f, i) => (
+                  <View key={i} style={s.pendingThumb}>
+                    <Image source={{ uri: f.uri }} style={s.pendingImg} />
+                    <TouchableOpacity
+                      style={[
+                        s.pendingRemove,
+                        { backgroundColor: colors.card },
+                      ]}
+                      onPress={() =>
+                        setPendingFiles((prev) =>
+                          prev.filter((_, j) => j !== i),
+                        )
+                      }
+                    >
+                      <Ionicons name="close-circle" size={18} color="#E53E3E" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {isChatPaused && !isClosed && !cancellationPending && (
+              <View
+                style={[
+                  s.pausedBanner,
+                  { backgroundColor: "#FFF7ED", borderTopColor: "#FED7AA" },
+                ]}
+              >
+                <Ionicons
+                  name="pause-circle-outline"
+                  size={16}
+                  color="#EA580C"
+                />
+                <Text style={[s.pausedBannerText, { color: "#EA580C" }]}>
+                  El equipo ha pausado la atención. Puedes escribir para
+                  reactivar la conversación.
+                </Text>
+              </View>
+            )}
+
+            {isClosed ? (
+              <View
+                style={[
+                  s.chatClosedBanner,
+                  {
+                    paddingBottom: Math.max(insets.bottom, 12),
+                    backgroundColor: colors.surface,
+                    borderTopColor: colors.border,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name={
+                    isCancelled
+                      ? "close-circle-outline"
+                      : "checkmark-circle-outline"
+                  }
+                  size={18}
+                  color={isCancelled ? "#DC2626" : colors.primary}
+                />
+                <Text style={[s.chatClosedText, { color: colors.textMuted }]}>
+                  {isCancelled
+                    ? "Este ticket fue cancelado. No puedes enviar mensajes."
+                    : "Este ticket está finalizado. No puedes enviar mensajes."}
+                </Text>
+              </View>
+            ) : cancellationPending ? (
+              <View style={{ flex: 1 }}>
+                <View
+                  style={[
+                    s.cancelJustifyHint,
+                    {
+                      backgroundColor: "#FFF7ED",
+                      borderBottomColor: "#FED7AA",
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={16}
+                    color="#EA580C"
+                  />
+                  <Text style={[s.cancelJustifyText, { color: "#EA580C" }]}>
+                    Cancelación solicitada. Puedes escribir el motivo para que
+                    el equipo lo revise.
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    s.inputRow,
+                    {
+                      paddingBottom: Math.max(insets.bottom, 8),
+                      backgroundColor: colors.card,
+                      borderTopColor: colors.border,
+                    },
+                  ]}
+                >
+                  <TextInput
+                    style={[
+                      s.chatInput,
+                      { backgroundColor: colors.input, color: colors.text },
+                    ]}
+                    placeholder="Escribe el motivo de tu cancelación..."
+                    placeholderTextColor={colors.textMuted}
+                    value={msg}
+                    onChangeText={setMsg}
+                    multiline
+                  />
                   <TouchableOpacity
-                    style={s.pendingRemove}
-                    onPress={() =>
-                      setPendingFiles((prev) => prev.filter((_, j) => j !== i))
-                    }
+                    style={[s.sendBtn, !canSend && s.sendBtnDisabled]}
+                    onPress={sendComment}
+                    disabled={!canSend || sending}
+                    activeOpacity={0.8}
                   >
-                    <Ionicons name="close-circle" size={18} color="#E53E3E" />
+                    {sending ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Ionicons name="send" size={18} color="#fff" />
+                    )}
                   </TouchableOpacity>
                 </View>
-              ))}
-            </View>
-          )}
-
-          {/* Input / aviso de ticket cerrado */}
-          {isClosed ? (
-            <View
-              style={[
-                s.chatClosedBanner,
-                { paddingBottom: Math.max(insets.bottom, 12) },
-              ]}
-            >
-              <Ionicons
-                name={
-                  isCancelled
-                    ? "close-circle-outline"
-                    : "checkmark-circle-outline"
-                }
-                size={18}
-                color={isCancelled ? "#DC2626" : "#3C6034"}
-              />
-              <Text style={s.chatClosedText}>
-                {isCancelled
-                  ? "Este ticket fue cancelado. No puedes enviar mensajes."
-                  : "Este ticket está finalizado. No puedes enviar mensajes."}
-              </Text>
-            </View>
-          ) : (
-            <View
-              style={[
-                s.inputRow,
-                { paddingBottom: Math.max(insets.bottom, 8) },
-              ]}
-            >
-              <TouchableOpacity
-                style={s.attachBtn}
-                onPress={pickFiles}
-                activeOpacity={0.7}
+              </View>
+            ) : techs.length === 0 ? (
+              <View
+                style={[
+                  s.chatClosedBanner,
+                  {
+                    paddingBottom: Math.max(insets.bottom, 12),
+                    backgroundColor: colors.surface,
+                    borderTopColor: colors.border,
+                  },
+                ]}
               >
-                <Ionicons name="attach" size={22} color="#9CA3AF" />
-              </TouchableOpacity>
-              <TextInput
-                style={s.chatInput}
-                placeholder="Escribe un mensaje..."
-                placeholderTextColor="#999"
-                value={msg}
-                onChangeText={setMsg}
-                multiline
-              />
-              <TouchableOpacity
-                style={[s.sendBtn, !canSend && s.sendBtnDisabled]}
-                onPress={sendComment}
-                disabled={!canSend || sending}
-                activeOpacity={0.8}
+                <Ionicons
+                  name="hourglass-outline"
+                  size={18}
+                  color={colors.textMuted}
+                />
+                <Text style={[s.chatClosedText, { color: colors.textMuted }]}>
+                  Tu ticket aún no tiene un técnico asignado. Podrás chatear una
+                  vez que sea asignado.
+                </Text>
+              </View>
+            ) : techs.length > 0 && !techHasWritten ? (
+              <View
+                style={[
+                  s.chatClosedBanner,
+                  {
+                    paddingBottom: Math.max(insets.bottom, 12),
+                    backgroundColor: colors.surface,
+                    borderTopColor: colors.border,
+                  },
+                ]}
               >
-                {sending ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Ionicons name="send" size={18} color="#fff" />
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
+                <Ionicons
+                  name="hourglass-outline"
+                  size={18}
+                  color={colors.textMuted}
+                />
+                <Text style={[s.chatClosedText, { color: colors.textMuted }]}>
+                  El técnico iniciará la conversación en breve.
+                </Text>
+              </View>
+            ) : (
+              <View
+                style={[
+                  s.inputRow,
+                  {
+                    paddingBottom: Math.max(insets.bottom, 8),
+                    backgroundColor: colors.card,
+                    borderTopColor: colors.border,
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={s.attachBtn}
+                  onPress={pickFiles}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="attach" size={22} color={colors.textMuted} />
+                </TouchableOpacity>
+                <TextInput
+                  style={[
+                    s.chatInput,
+                    { backgroundColor: colors.input, color: colors.text },
+                  ]}
+                  placeholder="Escribe un mensaje..."
+                  placeholderTextColor={colors.textMuted}
+                  value={msg}
+                  onChangeText={setMsg}
+                  multiline
+                />
+                <TouchableOpacity
+                  style={[s.sendBtn, !canSend && s.sendBtnDisabled]}
+                  onPress={sendComment}
+                  disabled={!canSend || sending}
+                  activeOpacity={0.8}
+                >
+                  {sending ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name="send" size={18} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </KeyboardAvoidingView>
       )}
+
+      {/* ── IMAGE VIEWER MODAL ── */}
+      <Modal
+        visible={!!viewingImage}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setViewingImage(null)}
+      >
+        <StatusBar backgroundColor="#000" barStyle="light-content" />
+        <View style={s.imgModalBg}>
+          <TouchableOpacity
+            style={s.imgModalClose}
+            onPress={() => setViewingImage(null)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="close" size={26} color="#fff" />
+          </TouchableOpacity>
+          <ScrollView
+            contentContainerStyle={s.imgModalScroll}
+            maximumZoomScale={4}
+            minimumZoomScale={1}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            centerContent
+          >
+            {viewingImage && (
+              <Image
+                source={{ uri: viewingImage }}
+                style={s.imgModalImg}
+                resizeMode="contain"
+              />
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* ── INFO TAB ── */}
       {activeTab === "info" && (
@@ -630,8 +925,15 @@ export default function TicketDetailScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Estado del ticket */}
-          <View style={s.infoCard}>
-            <Text style={s.infoCardTitle}>Estado del ticket</Text>
+          <View
+            style={[
+              s.infoCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[s.infoCardTitle, { color: colors.text }]}>
+              Estado del ticket
+            </Text>
             <View style={s.stepsRow}>
               {["Nuevo", "En Proceso", "Finalizado"].map((label, i) => {
                 const num = i + 1;
@@ -640,19 +942,42 @@ export default function TicketDetailScreen() {
                   <React.Fragment key={label}>
                     <View style={s.stepItem}>
                       <View
-                        style={[s.stepCircle, active && s.stepCircleActive]}
+                        style={[
+                          s.stepCircle,
+                          active && s.stepCircleActive,
+                          !active && {
+                            backgroundColor: colors.input,
+                            borderColor: colors.border,
+                          },
+                        ]}
                       >
-                        <Text style={[s.stepNum, active && s.stepNumActive]}>
+                        <Text
+                          style={[
+                            s.stepNum,
+                            active && s.stepNumActive,
+                            !active && { color: colors.textMuted },
+                          ]}
+                        >
                           {num}
                         </Text>
                       </View>
-                      <Text style={[s.stepLabel, active && s.stepLabelActive]}>
+                      <Text
+                        style={[
+                          s.stepLabel,
+                          active && s.stepLabelActive,
+                          !active && { color: colors.textMuted },
+                        ]}
+                      >
                         {label}
                       </Text>
                     </View>
                     {i < 2 && (
                       <View
-                        style={[s.stepLine, step > num && s.stepLineActive]}
+                        style={[
+                          s.stepLine,
+                          step > num && s.stepLineActive,
+                          !active && { backgroundColor: colors.border },
+                        ]}
                       />
                     )}
                   </React.Fragment>
@@ -662,8 +987,15 @@ export default function TicketDetailScreen() {
           </View>
 
           {/* Detalles */}
-          <View style={s.infoCard}>
-            <Text style={s.infoCardTitle}>Detalles del ticket</Text>
+          <View
+            style={[
+              s.infoCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[s.infoCardTitle, { color: colors.text }]}>
+              Detalles del ticket
+            </Text>
             {[
               { label: "Asunto", value: ticket.ticket_subject },
               { label: "Categoría", value: ticket.category?.category_name },
@@ -682,15 +1014,24 @@ export default function TicketDetailScreen() {
             ]
               .filter(Boolean)
               .map((row: any) => (
-                <View key={row.label} style={s.detailRow}>
-                  <Text style={s.detailLabel}>{row.label}</Text>
-                  <Text style={s.detailValue}>{row.value}</Text>
+                <View
+                  key={row.label}
+                  style={[s.detailRow, { borderBottomColor: colors.border }]}
+                >
+                  <Text style={[s.detailLabel, { color: colors.textMuted }]}>
+                    {row.label}
+                  </Text>
+                  <Text style={[s.detailValue, { color: colors.text }]}>
+                    {row.value}
+                  </Text>
                 </View>
               ))}
 
             {warrantyLabel && (
-              <View style={s.detailRow}>
-                <Text style={s.detailLabel}>Garantía</Text>
+              <View style={[s.detailRow, { borderBottomColor: colors.border }]}>
+                <Text style={[s.detailLabel, { color: colors.textMuted }]}>
+                  Garantía
+                </Text>
                 <View
                   style={[
                     s.warrantyBadge,
@@ -723,28 +1064,52 @@ export default function TicketDetailScreen() {
               </View>
             )}
 
-            <View style={s.detailRow}>
-              <Text style={s.detailLabel}>Creado</Text>
-              <Text style={s.detailValue}>{fmtDate(ticket.created_at)}</Text>
+            <View style={[s.detailRow, { borderBottomColor: colors.border }]}>
+              <Text style={[s.detailLabel, { color: colors.textMuted }]}>
+                Creado
+              </Text>
+              <Text style={[s.detailValue, { color: colors.text }]}>
+                {fmtDate(ticket.created_at)}
+              </Text>
             </View>
           </View>
 
           {/* Descripción */}
-          <View style={s.infoCard}>
-            <Text style={s.infoCardTitle}>Descripción</Text>
-            <Text style={s.infoDesc}>{ticket.ticket_description}</Text>
+          <View
+            style={[
+              s.infoCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[s.infoCardTitle, { color: colors.text }]}>
+              Descripción
+            </Text>
+            <Text style={[s.infoDesc, { color: colors.textSub }]}>
+              {ticket.ticket_description}
+            </Text>
           </View>
 
           {/* Técnicos */}
           {techs.length > 0 && (
-            <View style={s.infoCard}>
-              <Text style={s.infoCardTitle}>Técnicos asignados</Text>
+            <View
+              style={[
+                s.infoCard,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[s.infoCardTitle, { color: colors.text }]}>
+                Técnicos asignados
+              </Text>
               {techs.map((t) => (
                 <View key={t.user_id} style={s.techRow}>
                   <Avatar uri={t.foto} name={t.nombre_completo} size={44} />
                   <View style={{ marginLeft: 12 }}>
-                    <Text style={s.techName}>{t.nombre_completo}</Text>
-                    <Text style={s.techRole}>{t.cargo ?? "Técnico"}</Text>
+                    <Text style={[s.techName, { color: colors.text }]}>
+                      {t.nombre_completo}
+                    </Text>
+                    <Text style={[s.techRole, { color: colors.textMuted }]}>
+                      {t.cargo ?? "Técnico"}
+                    </Text>
                   </View>
                 </View>
               ))}
@@ -780,6 +1145,18 @@ export default function TicketDetailScreen() {
                 </Text>
               </View>
             </View>
+          ) : cancellationPending ? (
+            <View style={[s.closedInfoBanner, s.closedInfoBannerRed]}>
+              <Ionicons name="time-outline" size={28} color="#DC2626" />
+              <View style={{ flex: 1 }}>
+                <Text style={[s.closedInfoTitle, { color: "#DC2626" }]}>
+                  Cancelación en revisión
+                </Text>
+                <Text style={s.closedInfoSub}>
+                  Tu solicitud fue enviada. Un administrador la atenderá pronto.
+                </Text>
+              </View>
+            </View>
           ) : (
             <TouchableOpacity
               style={s.cancelBtn}
@@ -794,508 +1171,3 @@ export default function TicketDetailScreen() {
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  header: {
-    backgroundColor: "#1B3A1F",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    gap: 10,
-  },
-  backBtn: {
-    padding: 4,
-  },
-  headerCenter: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.042,
-    color: "#fff",
-  },
-  headerSub: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.028,
-    color: "rgba(255,255,255,0.6)",
-  },
-  headerBadge: {
-    backgroundColor: "rgba(255,255,255,0.15)",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  headerBadgeText: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.028,
-    color: "#fff",
-  },
-  progressWrapper: {
-    backgroundColor: "#1B3A1F",
-    paddingBottom: 14,
-    paddingHorizontal: 16,
-  },
-  progress: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  progressStep: {
-    alignItems: "center",
-    gap: 4,
-  },
-  progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "rgba(255,255,255,0.3)",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.4)",
-  },
-  progressDotActive: {
-    backgroundColor: "rgba(255,255,255,0.6)",
-    borderColor: "#fff",
-  },
-  progressDotCurrent: {
-    backgroundColor: "#fff",
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  progressDotInner: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#1B3A1F",
-  },
-  progressLine: {
-    flex: 1,
-    height: 1.5,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    marginBottom: 16,
-  },
-  progressLineActive: {
-    backgroundColor: "rgba(255,255,255,0.6)",
-  },
-  progressLabel: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.025,
-    color: "rgba(255,255,255,0.5)",
-  },
-  progressLabelActive: {
-    color: "#fff",
-  },
-  tabsRow: {
-    flexDirection: "row",
-    backgroundColor: "#1B3A1F",
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 8,
-  },
-  tabBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  tabBtnActive: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
-  tabLabel: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.033,
-    color: "#ccc",
-  },
-  tabLabelActive: {
-    color: "#fff",
-    fontFamily: "Poppins-Bold",
-  },
-  techCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F5F5F5",
-  },
-  techCardName: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.038,
-    color: "#111",
-  },
-  techCardRole: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.03,
-    color: "#888",
-  },
-  techAvatarStack: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  techStackItem: {
-    borderRadius: 23,
-    borderWidth: 2,
-    borderColor: "#fff",
-    overflow: "hidden",
-  },
-  chatList: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
-  },
-  chatEmpty: {
-    alignItems: "center",
-    paddingTop: 40,
-  },
-  chatEmptyText: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.033,
-    color: "#aaa",
-    textAlign: "center",
-    paddingHorizontal: 30,
-  },
-  msgRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
-  },
-  msgRowRight: {
-    flexDirection: "row-reverse",
-  },
-  bubble: {
-    maxWidth: width * 0.65,
-    borderRadius: 16,
-    padding: 12,
-  },
-  bubbleTech: {
-    backgroundColor: "#F5F5F5",
-    borderBottomLeftRadius: 4,
-  },
-  bubbleCustomer: {
-    backgroundColor: "#3C6034",
-    borderBottomRightRadius: 4,
-  },
-  bubbleAuthorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 4,
-  },
-  bubbleAuthor: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.028,
-    color: "#444",
-  },
-  supportBadge: {
-    backgroundColor: "#E8F5E9",
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  supportBadgeText: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.023,
-    color: "#3C6034",
-  },
-  bubbleText: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.034,
-    color: "#222",
-  },
-  bubbleTextCustomer: {
-    color: "#fff",
-  },
-  bubbleTime: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.026,
-    color: "#aaa",
-    marginTop: 4,
-    textAlign: "right",
-  },
-  bubbleTimeCustomer: {
-    color: "rgba(255,255,255,0.6)",
-  },
-  sysMsg: {
-    alignSelf: "center",
-    backgroundColor: "#FEF3C7",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginVertical: 4,
-  },
-  sysMsgText: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.03,
-    color: "#92400E",
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
-    backgroundColor: "#fff",
-  },
-  attachBtn: {
-    padding: 6,
-  },
-  chatInput: {
-    flex: 1,
-    backgroundColor: "#F5F5F5",
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.034,
-    maxHeight: 100,
-    color: "#222",
-  },
-  sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#3C6034",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  sendBtnDisabled: {
-    backgroundColor: "#B0C4B1",
-  },
-  attachImg: {
-    width: width * 0.5,
-    height: width * 0.4,
-    borderRadius: 10,
-    marginTop: 6,
-  },
-  pendingRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
-    backgroundColor: "#fff",
-  },
-  pendingThumb: {
-    position: "relative",
-  },
-  pendingImg: {
-    width: 56,
-    height: 56,
-    borderRadius: 8,
-  },
-  pendingRemove: {
-    position: "absolute",
-    top: -6,
-    right: -6,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-  },
-  infoScroll: {
-    padding: 16,
-    gap: 14,
-  },
-  infoCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  infoCardTitle: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.04,
-    color: "#111",
-    marginBottom: 14,
-  },
-  stepsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  stepItem: {
-    alignItems: "center",
-    gap: 6,
-    width: 70,
-  },
-  stepCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#F0F0F0",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#E0E0E0",
-  },
-  stepCircleActive: {
-    backgroundColor: "#3C6034",
-    borderColor: "#3C6034",
-  },
-  stepNum: {
-    fontFamily: "Poppins-Bold",
-    fontSize: 15,
-    color: "#aaa",
-  },
-  stepNumActive: {
-    color: "#fff",
-  },
-  stepLabel: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.028,
-    color: "#aaa",
-    textAlign: "center",
-  },
-  stepLabelActive: {
-    color: "#3C6034",
-    fontFamily: "Poppins-Bold",
-  },
-  stepLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: "#E8E8E8",
-    marginBottom: 20,
-  },
-  stepLineActive: {
-    backgroundColor: "#3C6034",
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F5F5F5",
-  },
-  detailLabel: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.033,
-    color: "#888",
-  },
-  detailValue: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.033,
-    color: "#111",
-    textAlign: "right",
-    flex: 1,
-    paddingLeft: 20,
-  },
-  warrantyBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  warrantyActive: {
-    backgroundColor: "#F0FDF4",
-  },
-  warrantyExpired: {
-    backgroundColor: "#FEF2F2",
-  },
-  warrantyDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
-  warrantyText: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.03,
-  },
-  infoDesc: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.034,
-    color: "#444",
-    lineHeight: 22,
-  },
-  techRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 6,
-  },
-  techName: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.036,
-    color: "#111",
-  },
-  techRole: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.03,
-    color: "#888",
-  },
-  cancelBtn: {
-    backgroundColor: "#FEF2F2",
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#FECACA",
-  },
-  cancelBtnText: {
-    fontFamily: "Poppins-Bold",
-    fontSize: 15,
-    color: "#DC2626",
-  },
-  chatClosedBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
-    backgroundColor: "#FAFAFA",
-  },
-  chatClosedText: {
-    flex: 1,
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.031,
-    color: "#6B7280",
-  },
-  closedInfoBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-  },
-  closedInfoBannerGreen: {
-    backgroundColor: "#F0FDF4",
-    borderColor: "#BBF7D0",
-  },
-  closedInfoBannerRed: {
-    backgroundColor: "#FEF2F2",
-    borderColor: "#FECACA",
-  },
-  closedInfoTitle: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.038,
-    marginBottom: 2,
-  },
-  closedInfoSub: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.03,
-    color: "#6B7280",
-    lineHeight: 18,
-  },
-});

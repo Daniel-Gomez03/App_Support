@@ -62,7 +62,12 @@ function PasswordField({
   return (
     <View style={s.field}>
       <Text style={[s.label, { color: colors.textSub }]}>{label}</Text>
-      <View style={[s.inputWrap, { borderColor: colors.border }]}>
+      <View
+        style={[
+          s.inputWrap,
+          { borderColor: colors.border, backgroundColor: colors.card },
+        ]}
+      >
         <TextInput
           style={[
             s.input,
@@ -167,6 +172,7 @@ export default function CambiarContrasenaScreen() {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
       >
         <Text style={[s.description, { color: colors.textMuted }]}>
           Restablece tu contraseña por una nueva. Tu contraseña debe ser

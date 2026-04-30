@@ -75,6 +75,10 @@ router.patch('/mobile/tickets/:id/cancel',
     mobileAuth,
     mobileController.requestTicketCancellation
 );
+router.post('/mobile/tickets/:id/rating',
+    mobileAuth,
+    mobileController.submitRating
+);
 
 router.get('/mobile/categories',
     mobileAuth,
@@ -82,12 +86,12 @@ router.get('/mobile/categories',
 );
 
 router.get('/mobile/categories/:category_id/products',
-    mobileAuth, 
+    mobileAuth,
     mobileController.getMobileProductsByCategory
 );
 
 router.get('/mobile/products/:product_id/models',
-    mobileAuth, 
+    mobileAuth,
     mobileController.getMobileModelsByProduct
 );
 

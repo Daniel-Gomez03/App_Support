@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://10.10.0.84:8000/api';
+const API_URL = 'http://192.168.1.18:8000/api';
 
 const authHeader = async (): Promise<Record<string, string>> => {
     const token = await SecureStore.getItemAsync('userToken');
@@ -105,6 +105,18 @@ const nuevoService = {
         const res = await fetch(`${API_URL}/mobile/tickets/history`, { headers });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'Error al obtener historial');
+        return result;
+    },
+
+    submitRating: async (ticketId: number, score: number, comment: string) => {
+        const headers = await authHeader();
+        const res = await fetch(`${API_URL}/mobile/tickets/${ticketId}/rating`, {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating_score: score, rating_comment: comment }),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Error al enviar calificación');
         return result;
     },
 };

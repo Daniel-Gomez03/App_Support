@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
+import { Animated } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 export interface ThemeColors {
@@ -17,49 +25,54 @@ export interface ThemeColors {
 }
 
 export const LIGHT: ThemeColors = {
-  background:  "#FFFFFF",
-  surface:     "#F8F9FA",
-  card:        "#FFFFFF",
-  input:       "#F5F5F5",
-  border:      "#F0F0F0",
-  text:        "#111111",
-  textSub:     "#555555",
-  textMuted:   "#9CA3AF",
-  primary:     "#3C6034",
+  background: "#FFFFFF",
+  surface: "#F8F9FA",
+  card: "#FFFFFF",
+  input: "#F5F5F5",
+  border: "#F0F0F0",
+  text: "#111111",
+  textSub: "#555555",
+  textMuted: "#9CA3AF",
+  primary: "#3C6034",
   primarySoft: "#E8F5E9",
-  headerBg:    "#FFFFFF",
-  tabBg:       "#111111",
+  headerBg: "#FFFFFF",
+  tabBg: "#111111",
 };
 
 export const DARK: ThemeColors = {
-  background:  "#0D1117",
-  surface:     "#161B22",
-  card:        "#1C2128",
-  input:       "#21262D",
-  border:      "#2D333B",
-  text:        "#CDD9E5",
-  textSub:     "#8B949E",
-  textMuted:   "#636E7B",
-  primary:     "#4CAF50",
+  background: "#0D1117",
+  surface: "#161B22",
+  card: "#1C2128",
+  input: "#21262D",
+  border: "#2D333B",
+  text: "#CDD9E5",
+  textSub: "#8B949E",
+  textMuted: "#636E7B",
+  primary: "#4CAF50",
   primarySoft: "#0D2211",
-  headerBg:    "#161B22",
-  tabBg:       "#111111",
+  headerBg: "#161B22",
+  tabBg: "#111111",
 };
 
 interface ThemeContextType {
   isDark: boolean;
   colors: ThemeColors;
+  fadeAnim: Animated.Value;
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
   isDark: false,
   colors: LIGHT,
+  fadeAnim: new Animated.Value(1),
   toggleTheme: () => {},
 });
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [isDark, setIsDark] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     SecureStore.getItemAsync("darkMode").then((v) => {
@@ -73,10 +86,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       SecureStore.setItemAsync("darkMode", next ? "true" : "false");
       return next;
     });
-  }, []);
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   return (
-    <ThemeContext.Provider value={{ isDark, colors: isDark ? DARK : LIGHT, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{ isDark, colors: isDark ? DARK : LIGHT, fadeAnim, toggleTheme }}
+    >
       {children}
     </ThemeContext.Provider>
   );

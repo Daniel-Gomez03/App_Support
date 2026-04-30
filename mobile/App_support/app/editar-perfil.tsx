@@ -31,12 +31,17 @@ export default function EditarPerfilScreen() {
   const user = state.user;
 
   const [firstName, setFirstName] = useState(user?.customer_first_name ?? "");
-  const [secondName, setSecondName] = useState(user?.customer_second_name ?? "");
+  const [secondName, setSecondName] = useState(
+    user?.customer_second_name ?? "",
+  );
   const [lastName, setLastName] = useState(user?.customer_last_name ?? "");
-  const [secondLastName, setSecondLastName] = useState(user?.customer_second_last_name ?? "");
+  const [secondLastName, setSecondLastName] = useState(
+    user?.customer_second_last_name ?? "",
+  );
   const [phone, setPhone] = useState(user?.customer_phone ?? "");
   const [selectedCountry, setSelectedCountry] = useState(
-    countries.find((c) => c.prefix === user?.customer_country_code) ?? countries[0]
+    countries.find((c) => c.prefix === user?.customer_country_code) ??
+      countries[0],
   );
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
@@ -44,8 +49,13 @@ export default function EditarPerfilScreen() {
 
   const currentPhoto = photoUri ?? user?.customer_image ?? null;
   const validPhoto = (uri?: string | null) =>
-    !!uri && (uri.startsWith("http") || uri.startsWith("file") || uri.startsWith("content"));
-  const avatarInitial = (user?.customer_first_name ?? "U").charAt(0).toUpperCase();
+    !!uri &&
+    (uri.startsWith("http") ||
+      uri.startsWith("file") ||
+      uri.startsWith("content"));
+  const avatarInitial = (user?.customer_first_name ?? "U")
+    .charAt(0)
+    .toUpperCase();
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -63,7 +73,9 @@ export default function EditarPerfilScreen() {
   };
 
   const handlePhoneChange = (text: string) => {
-    const onlyNums = text.replace(/[^0-9]/g, "").slice(0, selectedCountry.maxDigits);
+    const onlyNums = text
+      .replace(/[^0-9]/g, "")
+      .slice(0, selectedCountry.maxDigits);
     setPhone(onlyNums);
   };
 
@@ -94,11 +106,13 @@ export default function EditarPerfilScreen() {
           customer_phone: phone,
           customer_country_code: selectedCountry.prefix,
         },
-        photoUri
+        photoUri,
       );
-      Alert.alert("Perfil actualizado", "Tus datos se guardaron correctamente.", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      Alert.alert(
+        "Perfil actualizado",
+        "Tus datos se guardaron correctamente.",
+        [{ text: "OK", onPress: () => router.back() }],
+      );
     } catch (e: any) {
       Alert.alert("Error", e.error ?? "No se pudo actualizar el perfil.");
     } finally {
@@ -114,15 +128,38 @@ export default function EditarPerfilScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       {/* Header */}
-      <View style={[s.header, { paddingTop: insets.top + 8, backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn} activeOpacity={0.7}>
+      <View
+        style={[
+          s.header,
+          {
+            paddingTop: insets.top + 8,
+            backgroundColor: colors.headerBg,
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={s.backBtn}
+          activeOpacity={0.7}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[s.headerTitle, { color: colors.text }]}>Editar Perfil</Text>
+        <Text style={[s.headerTitle, { color: colors.text }]}>
+          Editar Perfil
+        </Text>
         <View style={{ width: 36 }} />
       </View>
 
-      <ScrollView contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[
+          s.scroll,
+          { paddingBottom: insets.bottom + 40 },
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+      >
         {/* Foto de perfil */}
         <View style={s.avatarBlock}>
           <View style={s.avatarWrap}>
@@ -133,25 +170,67 @@ export default function EditarPerfilScreen() {
                 <Text style={s.avatarInitialText}>{avatarInitial}</Text>
               </View>
             )}
-            <TouchableOpacity style={s.cameraBtn} onPress={pickImage} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={s.cameraBtn}
+              onPress={pickImage}
+              activeOpacity={0.8}
+            >
               <Ionicons name="camera" size={16} color="#fff" />
             </TouchableOpacity>
           </View>
-          <Text style={[s.avatarHint, { color: colors.textMuted }]}>Toca para cambiar foto</Text>
+          <Text style={[s.avatarHint, { color: colors.textMuted }]}>
+            Toca para cambiar foto
+          </Text>
         </View>
 
         {[
-          { label: "Primer nombre", req: true, value: firstName, onChange: setFirstName, placeholder: "Primer nombre" },
-          { label: "Segundo nombre", optional: true, value: secondName, onChange: setSecondName, placeholder: "Segundo nombre" },
-          { label: "Primer apellido", req: true, value: lastName, onChange: setLastName, placeholder: "Primer apellido" },
-          { label: "Segundo apellido", optional: true, value: secondLastName, onChange: setSecondLastName, placeholder: "Segundo apellido" },
+          {
+            label: "Primer nombre",
+            req: true,
+            value: firstName,
+            onChange: setFirstName,
+            placeholder: "Primer nombre",
+          },
+          {
+            label: "Segundo nombre",
+            optional: true,
+            value: secondName,
+            onChange: setSecondName,
+            placeholder: "Segundo nombre",
+          },
+          {
+            label: "Primer apellido",
+            req: true,
+            value: lastName,
+            onChange: setLastName,
+            placeholder: "Primer apellido",
+          },
+          {
+            label: "Segundo apellido",
+            optional: true,
+            value: secondLastName,
+            onChange: setSecondLastName,
+            placeholder: "Segundo apellido",
+          },
         ].map(({ label, req, optional, value, onChange, placeholder }) => (
           <View key={label} style={s.field}>
             <Text style={[s.label, { color: colors.textSub }]}>
-              {label} {req && <Text style={s.req}>*</Text>}{optional && <Text style={[s.optional, { color: colors.textMuted }]}>(opcional)</Text>}
+              {label} {req && <Text style={s.req}>*</Text>}
+              {optional && (
+                <Text style={[s.optional, { color: colors.textMuted }]}>
+                  (opcional)
+                </Text>
+              )}
             </Text>
             <TextInput
-              style={[s.input, { backgroundColor: colors.input, borderColor: colors.border, color: colors.text }]}
+              style={[
+                s.input,
+                {
+                  backgroundColor: colors.input,
+                  borderColor: colors.border,
+                  color: colors.text,
+                },
+              ]}
               value={value}
               onChangeText={onChange}
               placeholder={placeholder}
@@ -162,15 +241,36 @@ export default function EditarPerfilScreen() {
 
         {/* Teléfono */}
         <View style={s.field}>
-          <Text style={[s.label, { color: colors.textSub }]}>Teléfono <Text style={s.req}>*</Text></Text>
+          <Text style={[s.label, { color: colors.textSub }]}>
+            Teléfono <Text style={s.req}>*</Text>
+          </Text>
           <View style={[s.phoneRow, { borderColor: colors.border }]}>
-            <TouchableOpacity style={[s.flagBtn, { backgroundColor: colors.surface, borderRightColor: colors.border }]} onPress={() => setShowCountryPicker(true)} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={[
+                s.flagBtn,
+                {
+                  backgroundColor: colors.surface,
+                  borderRightColor: colors.border,
+                },
+              ]}
+              onPress={() => setShowCountryPicker(true)}
+              activeOpacity={0.7}
+            >
               <Text style={s.flagText}>{selectedCountry.flag}</Text>
-              <Text style={[s.prefixText, { color: colors.text }]}>{selectedCountry.prefix}</Text>
-              <Ionicons name="chevron-down" size={14} color={colors.textMuted} />
+              <Text style={[s.prefixText, { color: colors.text }]}>
+                {selectedCountry.prefix}
+              </Text>
+              <Ionicons
+                name="chevron-down"
+                size={14}
+                color={colors.textMuted}
+              />
             </TouchableOpacity>
             <TextInput
-              style={[s.phoneInput, { color: colors.text, backgroundColor: colors.input }]}
+              style={[
+                s.phoneInput,
+                { color: colors.text, backgroundColor: colors.input },
+              ]}
               value={phone}
               onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
@@ -183,19 +283,57 @@ export default function EditarPerfilScreen() {
 
         {/* Correo (solo lectura) */}
         <View style={s.field}>
-          <Text style={[s.label, { color: colors.textSub }]}>Correo Electrónico <Text style={s.req}>*</Text></Text>
-          <TextInput style={[s.input, s.inputReadonly, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textMuted }]} value={user?.customer_email ?? ""} editable={false} />
+          <Text style={[s.label, { color: colors.textSub }]}>
+            Correo Electrónico <Text style={s.req}>*</Text>
+          </Text>
+          <TextInput
+            style={[
+              s.input,
+              s.inputReadonly,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                color: colors.textMuted,
+              },
+            ]}
+            value={user?.customer_email ?? ""}
+            editable={false}
+          />
         </View>
 
         {/* Empresa (solo lectura) */}
         <View style={s.field}>
           <Text style={[s.label, { color: colors.textSub }]}>Empresa</Text>
-          <TextInput style={[s.input, s.inputReadonly, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textMuted }]} value={user?.customer_company ?? ""} editable={false} />
+          <TextInput
+            style={[
+              s.input,
+              s.inputReadonly,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                color: colors.textMuted,
+              },
+            ]}
+            value={user?.customer_company ?? ""}
+            editable={false}
+          />
         </View>
 
         {!showCountryPicker && (
-          <TouchableOpacity style={[s.saveBtn, (!isValid || !hasChanges || saving) && s.saveBtnDisabled]} onPress={handleSave} disabled={!isValid || !hasChanges || saving} activeOpacity={0.85}>
-            {saving ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.saveBtnText}>Guardar cambios</Text>}
+          <TouchableOpacity
+            style={[
+              s.saveBtn,
+              (!isValid || !hasChanges || saving) && s.saveBtnDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={!isValid || !hasChanges || saving}
+            activeOpacity={0.85}
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={s.saveBtnText}>Guardar cambios</Text>
+            )}
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -227,23 +365,38 @@ const s = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
   },
-  backBtn: { width: 36, height: 36, justifyContent: "center" },
+  backBtn: {
+    width: 36,
+    height: 36,
+    justifyContent: "center",
+  },
   headerTitle: {
     fontFamily: "Poppins-Bold",
     fontSize: width * 0.045,
     color: "#111",
   },
-  scroll: { paddingHorizontal: width * 0.055, paddingTop: 24, gap: 4 },
+  scroll: {
+    paddingHorizontal: width * 0.055,
+    paddingTop: 24,
+    gap: 4,
+  },
 
-  field: { marginBottom: 18 },
+  field: {
+    marginBottom: 18,
+  },
   label: {
     fontFamily: "Poppins-Regular",
     fontSize: width * 0.034,
     color: "#333",
     marginBottom: 8,
   },
-  req: { color: "#DC2626" },
-  optional: { color: "#9CA3AF", fontStyle: "italic" },
+  req: {
+    color: "#DC2626",
+  },
+  optional: {
+    color: "#9CA3AF",
+    fontStyle: "italic",
+  },
 
   input: {
     borderWidth: 1,
@@ -278,7 +431,9 @@ const s = StyleSheet.create({
     borderRightColor: "#E5E7EB",
     backgroundColor: "#F9FAFB",
   },
-  flagText: { fontSize: 22 },
+  flagText: {
+    fontSize: 22,
+  },
   prefixText: {
     fontFamily: "Poppins-Regular",
     fontSize: width * 0.034,
@@ -293,9 +448,13 @@ const s = StyleSheet.create({
     color: "#111",
   },
 
-  // Avatar
-  avatarBlock: { alignItems: "center", paddingVertical: 24 },
-  avatarWrap: { position: "relative" },
+  avatarBlock: {
+    alignItems: "center",
+    paddingVertical: 24,
+  },
+  avatarWrap: {
+    position: "relative",
+  },
   avatar: {
     width: width * 0.26,
     height: width * 0.26,
@@ -333,7 +492,6 @@ const s = StyleSheet.create({
     marginTop: 8,
   },
 
-  // Save
   saveBtn: {
     backgroundColor: "#3C6034",
     borderRadius: 14,
@@ -341,7 +499,9 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
-  saveBtnDisabled: { backgroundColor: "#A8C5A0" },
+  saveBtnDisabled: {
+    backgroundColor: "#A8C5A0",
+  },
   saveBtnText: {
     fontFamily: "Poppins-Bold",
     fontSize: width * 0.04,

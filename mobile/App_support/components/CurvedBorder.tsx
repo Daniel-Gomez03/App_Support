@@ -30,7 +30,7 @@ export default function CurvedBorder({ children }: { children: ReactNode }) {
       >
         <Path
           // NO TOCAR AQUI QUE NI ME ACUERDO COMO LO HICE XD
-          d={`M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`}
+          d={`M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`} //Estas seguro de tocar aqui?
           fill="#ffffff"
         />
       </Svg>

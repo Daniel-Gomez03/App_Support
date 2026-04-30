@@ -53,13 +53,24 @@ const ActiveTicket = () => {
 
         const refresh = () => loadTickets();
 
+        // Also update the open chatTicket if it matches the updated ticket
+        const onTicketUpdated = (updatedTicket) => {
+            refresh();
+            if (updatedTicket?.ticket_id) {
+                setChatTicket(prev => prev && prev.ticket_id === updatedTicket.ticket_id
+                    ? { ...prev, ...updatedTicket }
+                    : prev
+                );
+            }
+        };
+
         socket.on('new_ticket_created', refresh);
-        socket.on('ticket_updated', refresh);
+        socket.on('ticket_updated', onTicketUpdated);
         socket.on('ticket_status_changed', refresh);
 
         return () => {
             socket.off('new_ticket_created', refresh);
-            socket.off('ticket_updated', refresh);
+            socket.off('ticket_updated', onTicketUpdated);
             socket.off('ticket_status_changed', refresh);
         };
     }, [canRead]);

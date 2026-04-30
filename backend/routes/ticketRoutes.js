@@ -50,6 +50,11 @@ router.patch('/tickets/:id/status',
     ticketController.updateTicketStatus
 );
 
+router.patch('/tickets/:id/pause',
+    authorize('Tickets Activos', 'permissions_edit'),
+    ticketController.toggleChatPause
+);
+
 router.patch('/tickets/toggle/:id',
     authorize('Crear Ticket', 'permissions_edit'),
     ticketController.toggleTicketActive

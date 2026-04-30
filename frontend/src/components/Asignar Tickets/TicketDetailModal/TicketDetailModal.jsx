@@ -81,13 +81,13 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess, readOnly = false, onMan
                             </div>
                             <div className={styles.infoGroup}>
                                 <span className={styles.label}>Correo Electrónico</span>
-                                <span className={styles.value}><LuMail /> {ticket.customer?.customer_email}</span>
+                                <span className={styles.value}><LuMail /><span className={styles.valueText}>{ticket.customer?.customer_email}</span></span>
                             </div>
                             <div className={styles.infoGroup}>
                                 <span className={styles.label}>Teléfono</span>
                                 <span className={styles.value}>
                                     <span className={`fi fi-${currentFlagIso} ${styles.flagIcon}`}></span>
-                                    {ticket.customer?.customer_country_code} {ticket.customer?.customer_phone}
+                                    <span className={styles.valueText}>{ticket.customer?.customer_country_code} {ticket.customer?.customer_phone}</span>
                                 </span>
                             </div>
                         </div>

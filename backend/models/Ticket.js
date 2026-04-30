@@ -58,6 +58,21 @@ const Ticket = sequelize.define('Ticket', {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: 1
+    },
+    cancellation_requested: {
+        type: DataTypes.TINYINT,
+        allowNull: false,
+        defaultValue: 0
+    },
+    cancellation_prev_status_id: {
+        type: DataTypes.BIGINT(20).UNSIGNED,
+        allowNull: true,
+        defaultValue: null
+    },
+    chat_paused: {
+        type: DataTypes.TINYINT,
+        allowNull: false,
+        defaultValue: 0
     }
 }, {
     tableName: 'tickets',

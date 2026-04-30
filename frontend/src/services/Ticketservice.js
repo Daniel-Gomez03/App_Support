@@ -229,6 +229,19 @@ export const getHistorialTickets = async () => {
 };
 
 // ============================================
+// PAUSAR / REANUDAR CHAT
+// ============================================
+export const toggleChatPause = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/tickets/${id}/pause`, fetchConfig('PATCH'));
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Error en toggleChatPause:", error);
+        throw error;
+    }
+};
+
+// ============================================
 // HISTORIAL - ACTUALIZAR TICKET
 // ============================================
 export const updateHistorialTicket = async (id, data) => {

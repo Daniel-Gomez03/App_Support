@@ -5,6 +5,43 @@
     border: 1px solid fade(darken(@secondary-color, 20%), 20%);
     border-radius: 16px;
     padding: 16px;
+    overflow: hidden;
+
+    &.cardCancellation {
+        border-color: #FECACA;
+    }
+
+    &.cardCustomerReplied {
+        border-color: #FED7AA;
+        border-left: 3px solid #F97316;
+    }
+
+    .cancellationBanner {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: #FEF2F2;
+        color: #DC2626;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 5px 12px;
+        margin: -16px -16px 12px -16px;
+        border-bottom: 1px solid #FECACA;
+    }
+
+    .customerReplyBanner {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: #FFF7ED;
+        color: #EA580C;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 5px 12px;
+        margin: -16px -16px 12px -16px;
+        border-bottom: 1px solid #FED7AA;
+    }
+
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
@@ -105,6 +142,17 @@
                 color: #dc2626;
                 font-weight: 700;
                 animation: urgentPulse 1.6s ease-in-out infinite;
+            }
+
+            &.dateLate {
+                color: #dc2626;
+                font-weight: 700;
+                animation: urgentPulse 1.6s ease-in-out infinite;
+            }
+
+            &.dateOnTime {
+                color: #16a34a;
+                font-weight: 600;
             }
         }
 

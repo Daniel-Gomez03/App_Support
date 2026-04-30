@@ -28,11 +28,12 @@ import { useNavigation } from "@react-navigation/native";
 import { getFAQs } from "@/Services/qaService";
 import socket from "@/Services/socket";
 import {
-  faqStyles as s,
-  dropdownStyles as dd,
-  paginationStyles as pag,
+  makeFaqStyles,
+  makeDropdownStyles,
+  makePaginationStyles,
   width,
 } from "@/styles/faq.styles";
+import { useTheme } from "@/context/ThemeContext";
 const PAGE_SIZE = 10;
 
 interface Faq {
@@ -76,6 +77,8 @@ function Dropdown({
   placeholder,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
+  const { colors } = useTheme();
+  const dd = useMemo(() => makeDropdownStyles(colors), [colors]);
   const selectedLabel =
     options.find((o) => o.value === selected)?.label ?? placeholder;
   return (
@@ -145,6 +148,8 @@ interface PaginationProps {
   onPage: (p: number) => void;
 }
 function Pagination({ current, total, onPage }: PaginationProps) {
+  const { colors } = useTheme();
+  const pag = useMemo(() => makePaginationStyles(colors), [colors]);
   if (total <= 1) return null;
 
   const getPages = () => {
@@ -200,6 +205,8 @@ function Pagination({ current, total, onPage }: PaginationProps) {
 export default function FAQScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
+  const s = useMemo(() => makeFaqStyles(colors), [colors]);
 
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [loading, setLoading] = useState(true);
@@ -475,7 +482,7 @@ export default function FAQScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
         ref={scrollRef}
         style={s.scroll}
@@ -485,6 +492,8 @@ export default function FAQScreen() {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets={true}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >

@@ -1,24 +1,23 @@
-import React, { useState } from "react";
+import React, { useRef, useEffect } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Image,
   Switch,
-  Dimensions,
   Alert,
   Linking,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/context/ThemeContext";
+import { s } from "@/styles/perfil.styles";
+import { useNotifications } from "@/context/NotificationContext";
 
-const { width } = Dimensions.get("window");
-// ── URLs de redes sociales — edita aquí ──────────────────────
 const SOCIAL_LINKS = [
   { icon: "logo-facebook", url: "https://www.facebook.com/tboxsahn/" },
   { icon: "logo-instagram", url: "https://www.instagram.com/tboxsahn/" },
@@ -26,7 +25,6 @@ const SOCIAL_LINKS = [
   { icon: "logo-tiktok", url: "https://www.tiktok.com/@tboxsa?lang=es-419" },
   { icon: "logo-linkedin", url: "https://www.linkedin.com/company/tboxsahn/" },
 ] as const;
-// ─────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = [
   "#3C6034",
@@ -85,11 +83,34 @@ function MenuItemToggle({
   onValueChange: (v: boolean) => void;
   colors: import("@/context/ThemeContext").ThemeColors;
 }) {
+  const iconScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(iconScale, {
+        toValue: 0.55,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+      Animated.spring(iconScale, {
+        toValue: 1,
+        friction: 4,
+        tension: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [value]);
+
   return (
     <View style={s.menuItem}>
-      <View style={[s.menuIconWrap, { backgroundColor: colors.input }]}>
+      <Animated.View
+        style={[
+          s.menuIconWrap,
+          { backgroundColor: colors.input, transform: [{ scale: iconScale }] },
+        ]}
+      >
         <Ionicons name={icon as any} size={20} color={colors.textSub} />
-      </View>
+      </Animated.View>
       <View style={s.menuText}>
         <Text style={[s.menuTitle, { color: colors.text }]}>{title}</Text>
         <Text style={[s.menuSub, { color: colors.textMuted }]}>{subtitle}</Text>
@@ -111,7 +132,7 @@ export default function PerfilScreen() {
   const user = state.user;
 
   const { colors, isDark, toggleTheme } = useTheme();
-  const [notifEnabled, setNotifEnabled] = useState(false);
+  const { notificationsEnabled, setNotificationsEnabled } = useNotifications();
 
   const firstName = user?.customer_first_name ?? "U";
   const fullName = [user?.customer_first_name, user?.customer_last_name]
@@ -193,8 +214,8 @@ export default function PerfilScreen() {
           icon="notifications-outline"
           title="Notificaciones"
           subtitle="Activar notificaciones"
-          value={notifEnabled}
-          onValueChange={setNotifEnabled}
+          value={notificationsEnabled}
+          onValueChange={setNotificationsEnabled}
         />
         <View style={[s.divider, { backgroundColor: colors.border }]} />
         <MenuItemToggle
@@ -260,151 +281,3 @@ export default function PerfilScreen() {
     </ScrollView>
   );
 }
-
-const s = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  content: {
-    paddingHorizontal: width * 0.05,
-  },
-
-  avatarBlock: {
-    alignItems: "center",
-    paddingVertical: 28,
-  },
-  avatar: {
-    width: width * 0.24,
-    height: width * 0.24,
-    borderRadius: width * 0.12,
-    borderWidth: 3,
-    borderColor: "#fff",
-  },
-  avatarFallback: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarInitialText: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.1,
-    color: "#fff",
-  },
-  name: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.048,
-    color: "#111",
-    marginTop: 12,
-  },
-  email: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.032,
-    color: "#888",
-    marginTop: 2,
-  },
-
-  // Section
-  sectionLabel: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.028,
-    color: "#9CA3AF",
-    letterSpacing: 1,
-    marginBottom: 8,
-    marginTop: 4,
-    paddingHorizontal: 4,
-  },
-  section: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    marginBottom: 20,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#F5F5F5",
-    marginHorizontal: 16,
-  },
-
-  // Menu item
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-  },
-  menuIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "#F5F5F5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  menuText: { flex: 1 },
-  menuTitle: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.036,
-    color: "#111",
-  },
-  menuSub: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.029,
-    color: "#9CA3AF",
-    marginTop: 1,
-  },
-
-  // Logout
-  logoutBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    backgroundColor: "#FEF2F2",
-    borderRadius: 16,
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: "#FECACA",
-    marginBottom: 28,
-  },
-  logoutText: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.038,
-    color: "#DC2626",
-  },
-
-  // Social
-  siguenos: {
-    fontFamily: "Poppins-Bold",
-    fontSize: width * 0.028,
-    color: "#9CA3AF",
-    letterSpacing: 1,
-    textAlign: "center",
-    marginBottom: 14,
-  },
-  socialRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 18,
-    marginBottom: 20,
-  },
-  socialBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  copyright: {
-    fontFamily: "Poppins-Regular",
-    fontSize: width * 0.027,
-    color: "#CCC",
-    textAlign: "center",
-  },
-});

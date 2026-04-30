@@ -7,8 +7,6 @@ import {
   Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Octicons from "@expo/vector-icons/Octicons";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import * as shape from "d3-shape";
@@ -146,12 +144,16 @@ export default function TabBar({
               switch (route.name) {
                 case "index":
                   return (
-                    <Octicons name="home-fill" size={ICON_SIZE} color="#FFF" />
+                    <Ionicons
+                      name={isFocused ? "home" : "home-outline"}
+                      size={ICON_SIZE}
+                      color="#FFF"
+                    />
                   );
                 case "faq":
                   return (
                     <Ionicons
-                      name="help-circle"
+                      name={isFocused ? "help-circle" : "help-circle-outline"}
                       size={ICON_SIZE + 2}
                       color="#FFF"
                     />
@@ -159,16 +161,16 @@ export default function TabBar({
                 case "historial":
                   return (
                     <Ionicons
-                      name="time-outline"
+                      name={isFocused ? "time" : "time-outline"}
                       size={ICON_SIZE}
                       color="#FFF"
                     />
                   );
                 case "perfil":
                   return (
-                    <FontAwesome5
-                      name="user-alt"
-                      size={ICON_SIZE - 3}
+                    <Ionicons
+                      name={isFocused ? "person" : "person-outline"}
+                      size={ICON_SIZE}
                       color="#FFF"
                     />
                   );
