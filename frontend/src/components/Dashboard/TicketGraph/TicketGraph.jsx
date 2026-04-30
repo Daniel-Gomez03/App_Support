@@ -2,13 +2,13 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import styles from './TicketGraph.module.less';
 
-const TicketGraph = () => {
-    
-    const data = [
-        { name: 'Alta', value: 0, color: '#DC2626' },   
-        { name: 'Media', value: 0, color: '#EAB308' },  
-        { name: 'Baja', value: 0, color: '#105030' },   
-    ];
+const DEFAULT = [
+    { name: 'Alta',  value: 0, color: '#DC2626' },
+    { name: 'Media', value: 0, color: '#EAB308' },
+    { name: 'Baja',  value: 0, color: '#105030' },
+];
+
+const TicketGraph = ({ data = DEFAULT }) => {
 
     const total = data.reduce((sum, item) => sum + item.value, 0);
 

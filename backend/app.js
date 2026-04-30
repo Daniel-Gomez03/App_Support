@@ -23,6 +23,8 @@ const commentRoutes = require("./routes/commentRoutes");
 const historialRoutes = require("./routes/historialRoutes");
 const mobileRoutes = require("./routes/mobileRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
+const salidaRoutes     = require("./routes/salidaRoutes");
+const dashboardRoutes  = require("./routes/dashboardRoutes");
 const customerController = require("./Controllers/customerController");
 const { initPendingInfoJob } = require("./Utils/pendingInfoJob");
 
@@ -43,6 +45,7 @@ const TicketAssignment = require("./models/TicketAssignment");
 const TicketComment = require("./models/TicketComment");
 const TicketCommentAttachment = require("./models/TicketCommentAttachment");
 const Rating = require("./models/Rating");
+const Salida = require("./models/Salida");
 
 // Asociar modelos
 const models = {
@@ -62,6 +65,7 @@ const models = {
   TicketComment,
   TicketCommentAttachment,
   Rating,
+  Salida,
 };
 Object.values(models).forEach((model) => {
   if (model.associate) model.associate(models);
@@ -143,6 +147,8 @@ app.use("/api", seccionRoutes);
 app.use("/api", commentRoutes);
 app.use("/api", historialRoutes);
 app.use("/api", ratingRoutes);
+app.use("/api", salidaRoutes);
+app.use("/api", dashboardRoutes);
 
 // Conectar a BD
 sequelize
