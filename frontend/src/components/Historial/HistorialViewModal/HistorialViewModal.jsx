@@ -195,6 +195,20 @@ const HistorialViewModal = ({ ticket, onClose }) => {
                                 <p className={styles.emptyChat}>No hubo interacción en este ticket.</p>
                             ) : (
                                 comments.map(comment => {
+                                    const isSystemMsg = comment.comment_text?.startsWith('🔴');
+
+                                    if (isSystemMsg) {
+                                        const displayText = comment.comment_text.replace(/^🔴\s*/, '');
+                                        return (
+                                            <div key={comment.comment_id} className={styles.sysMsg}>
+                                                <span className={styles.sysMsgHeader}>
+                                                    <FiAlertCircle size={12} /> Sistema
+                                                </span>
+                                                <p className={styles.sysMsgText}>{displayText}</p>
+                                            </div>
+                                        );
+                                    }
+
                                     const isUser = !!comment.author;
                                     const authorName = isUser
                                         ? (comment.author?.nombre_completo || 'Técnico')
