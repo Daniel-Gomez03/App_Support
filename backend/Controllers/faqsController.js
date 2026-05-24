@@ -1,20 +1,43 @@
+// ============================================
+// CONTROLADOR DE FAQS
+// CRUD completo para las preguntas frecuentes.
+// Cada FAQ está asociada a una categoría, un
+// producto y opcionalmente a un modelo. Los
+// enlaces de video se validan contra dominios
+// de YouTube y Vimeo antes de persistir.
+// Cada operación de escritura emite un evento
+// Socket.io para sincronizar el panel en tiempo
+// real sin recargar la vista.
+// ============================================
+
 const Faq = require('../models/Faqs');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
-const ProductModel = require('../models/ProductModel')
+const ProductModel = require('../models/ProductModel');
 
 // ============================================
-// OBTENER TODOS LAS FAQS ACTIVAS
+// INCLUDE ESTÁNDAR DE RELACIONES
+// Reutilizado en todas las consultas para
+// devolver categoría, producto y modelo junto
+// con cada FAQ.
+// ============================================
+const FAQ_INCLUDE = [
+    { model: Category, as: 'category' },
+    { model: Product, as: 'product' },
+    { model: ProductModel, as: 'product_model' },
+];
+
+// ============================================
+// OBTENER TODAS LAS FAQS ACTIVAS
+// Ordenadas por pregunta para una presentación
+// consistente en la vista de administración.
 // ============================================
 exports.getAllFaqs = async (req, res) => {
     try {
         const faqs = await Faq.findAll({
             where: { faq_status: true },
-            include: [
-                { model: Category, as: 'category' },
-                { model: Product, as: 'product' },
-                { model: ProductModel, as: 'product_model' }
-            ]
+            include: FAQ_INCLUDE,
+            order: [['faq_question', 'ASC']],
         });
         res.json(faqs);
     } catch (error) {
@@ -23,17 +46,16 @@ exports.getAllFaqs = async (req, res) => {
 };
 
 // ============================================
-// OBTENER TODOS LAS FAQS INACTIVAS
+// OBTENER TODAS LAS FAQS INACTIVAS
+// Usadas para mostrar el historial de elementos
+// desactivados en las vistas de administración.
 // ============================================
 exports.getAllFaqsInactives = async (req, res) => {
     try {
         const faqs = await Faq.findAll({
             where: { faq_status: false },
-            include: [
-                { model: Category, as: 'category' },
-                { model: Product, as: 'product' },
-                { model: ProductModel, as: 'product_model' }
-            ]
+            include: FAQ_INCLUDE,
+            order: [['faq_question', 'ASC']],
         });
         res.json(faqs);
     } catch (error) {
@@ -42,17 +64,11 @@ exports.getAllFaqsInactives = async (req, res) => {
 };
 
 // ============================================
-// OBTENER TODOS FAQ POR ID
+// OBTENER FAQ POR ID
 // ============================================
 exports.getFaqById = async (req, res) => {
     try {
-        const faq = await Faq.findByPk(req.params.id, {
-            include: [
-                { model: Category, as: 'category' },
-                { model: Product, as: 'product' },
-                { model: ProductModel, as: 'product_model' }
-            ]
-        });
+        const faq = await Faq.findByPk(req.params.id, { include: FAQ_INCLUDE });
         if (!faq) return res.status(404).json({ error: 'FAQ no encontrada' });
         res.json(faq);
     } catch (error) {
@@ -62,6 +78,14 @@ exports.getFaqById = async (req, res) => {
 
 // ============================================
 // CREAR UNA FAQ
+// Valida campos obligatorios, longitud mínima
+// de pregunta y respuesta, y que la URL de
+// video sea de YouTube o Vimeo. Verifica que
+// la categoría y el producto existan en
+// paralelo para reducir round-trips a la BD.
+// Emite 'faq_created' con las relaciones ya
+// cargadas para que el panel agregue la tarjeta
+// sin recargar la lista completa.
 // ============================================
 exports.createFaq = async (req, res) => {
     try {
@@ -91,8 +115,11 @@ exports.createFaq = async (req, res) => {
             return res.status(422).json({ error: 'Solo se aceptan enlaces válidos de YouTube o Vimeo.' });
         }
 
-        const category = await Category.findByPk(category_id);
-        const product = await Product.findByPk(product_id);
+        // Verificar existencia de categoría y producto en paralelo
+        const [category, product] = await Promise.all([
+            Category.findByPk(category_id),
+            Product.findByPk(product_id),
+        ]);
 
         if (!category || !product) {
             return res.status(404).json({ error: 'La categoría o el producto seleccionados no existen.' });
@@ -112,16 +139,10 @@ exports.createFaq = async (req, res) => {
             faq_question: cleanQuestion,
             faq_answer: cleanAnswer,
             faq_video_url: cleanVideoUrl,
-            faq_status: true
+            faq_status: true,
         });
 
-        const faqWithRelations = await Faq.findByPk(faq.faq_id, {
-            include: [
-                { model: Category, as: 'category' },
-                { model: Product, as: 'product' },
-                { model: ProductModel, as: 'product_model' }
-            ]
-        });
+        const faqWithRelations = await Faq.findByPk(faq.faq_id, { include: FAQ_INCLUDE });
 
         const io = req.app.get('io');
         if (io) io.emit('faq_created', faqWithRelations);
@@ -136,6 +157,9 @@ exports.createFaq = async (req, res) => {
 
 // ============================================
 // ACTUALIZAR UNA FAQ
+// Aplica las mismas validaciones que el alta.
+// Emite 'faq_updated' con las relaciones para
+// que el panel reemplace la tarjeta existente.
 // ============================================
 exports.updateFaq = async (req, res) => {
     try {
@@ -173,16 +197,10 @@ exports.updateFaq = async (req, res) => {
             product_model_id: product_model_id || null,
             faq_question: cleanQuestion,
             faq_answer: cleanAnswer,
-            faq_video_url: cleanVideoUrl
+            faq_video_url: cleanVideoUrl,
         });
 
-        const faqWithRelations = await Faq.findByPk(id, {
-            include: [
-                { model: Category, as: 'category' },
-                { model: Product, as: 'product' },
-                { model: ProductModel, as: 'product_model' }
-            ]
-        });
+        const faqWithRelations = await Faq.findByPk(id, { include: FAQ_INCLUDE });
 
         const io = req.app.get('io');
         if (io) io.emit('faq_updated', faqWithRelations);
@@ -197,6 +215,9 @@ exports.updateFaq = async (req, res) => {
 
 // ============================================
 // ELIMINAR UNA FAQ
+// Eliminación física. Emite 'faq_deleted' con
+// el ID para que el panel retire la tarjeta
+// sin recargar la lista completa.
 // ============================================
 exports.deleteFaq = async (req, res) => {
     try {
@@ -207,7 +228,7 @@ exports.deleteFaq = async (req, res) => {
         await faq.destroy();
 
         const io = req.app.get('io');
-        io.emit('faq_deleted', { faq_id: faqId });
+        if (io) io.emit('faq_deleted', { faq_id: faqId });
 
         res.json({ message: 'FAQ eliminada' });
     } catch (error) {
@@ -216,26 +237,26 @@ exports.deleteFaq = async (req, res) => {
 };
 
 // ============================================
-// CAMBIAR DE ESTADO UNA FAQ
+// CAMBIAR ESTADO DE UNA FAQ (toggle)
+// Invierte el estado activo/inactivo usando
+// update() en lugar de save() para seguir el
+// patrón estándar de Sequelize.
+// Emite 'faq_toggled' con el nuevo estado.
 // ============================================
 exports.toggleFaqStatus = async (req, res) => {
     try {
         const faq = await Faq.findByPk(req.params.id);
         if (!faq) return res.status(404).json({ error: 'FAQ no encontrada' });
 
-        faq.faq_status = !faq.faq_status;
-        await faq.save();
+        await faq.update({ faq_status: !faq.faq_status });
 
         const io = req.app.get('io');
-        io.emit('faq_toggled', {
-            faq_id: faq.faq_id,
-            new_status: faq.faq_status
-        });
+        if (io) io.emit('faq_toggled', { faq_id: faq.faq_id, new_status: faq.faq_status });
 
         res.json({
             message: 'Estado actualizado',
             faq_question: faq.faq_question,
-            new_status: faq.faq_status
+            new_status: faq.faq_status,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });

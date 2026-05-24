@@ -1,37 +1,52 @@
-const { QueryTypes } = require('sequelize');
-const sequelize = require('../config/database');
+// ============================================
+// CONTROLADOR DE SALIDAS
+// Gestiona las solicitudes de desplazamiento de
+// campo realizadas por los técnicos. Cada salida
+// está vinculada a un ticket activo y requiere
+// aprobación o rechazo por parte del Admin.
+// ============================================
+
+const { Op } = require('sequelize');
 const Salida = require('../models/Salida');
+const Ticket = require('../models/Ticket');
+const Customer = require('../models/Customer');
+const User = require('../models/User');
 
 // ============================================
 // OBTENER TODAS LAS SALIDAS
+// Devuelve cada solicitud con el ticket y su
+// empresa cliente anidados, el técnico solicitante
+// y el usuario que la aprobó o rechazó (nullable).
+// Ordenado por fecha de creación DESC.
 // ============================================
 exports.getAllSalidas = async (req, res) => {
     try {
-        const salidas = await sequelize.query(`
-            SELECT
-                s.salida_id,
-                s.salida_destination,
-                s.salida_date,
-                s.salida_time,
-                s.salida_status,
-                s.rejection_reason,
-                s.created_at,
-                s.ticket_id,
-                t.ticket_subject,
-                c.customer_company,
-                s.user_id,
-                u.nombre_completo,
-                u.rol,
-                u.cargo,
-                u.foto,
-                au.nombre_completo AS approved_by_name
-            FROM salidas s
-            JOIN tickets   t  ON s.ticket_id   = t.ticket_id
-            JOIN customers c  ON t.customer_id = c.customer_id
-            JOIN users     u  ON s.user_id     = u.user_id
-            LEFT JOIN users au ON s.approved_by = au.user_id
-            ORDER BY s.created_at DESC
-        `, { type: QueryTypes.SELECT });
+        const salidas = await Salida.findAll({
+            include: [
+                {
+                    model: Ticket,
+                    as: 'ticket',
+                    attributes: ['ticket_id', 'ticket_subject'],
+                    include: [{
+                        model: Customer,
+                        as: 'customer',
+                        attributes: ['customer_company'],
+                    }],
+                },
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['user_id', 'nombre_completo', 'rol', 'cargo', 'foto'],
+                },
+                {
+                    model: User,
+                    as: 'approvedBy',
+                    attributes: ['user_id', 'nombre_completo'],
+                    required: false,
+                },
+            ],
+            order: [['created_at', 'DESC']],
+        });
 
         res.json(salidas);
     } catch (error) {
@@ -42,23 +57,38 @@ exports.getAllSalidas = async (req, res) => {
 
 // ============================================
 // TICKETS ACTIVOS ASIGNADOS A UN USUARIO
+// Devuelve los tickets en curso (estados 1-8)
+// asignados al técnico indicado, con la empresa
+// del cliente para mostrarla en el formulario
+// de creación de salida.
 // ============================================
 exports.getTicketsByUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        const tickets = await sequelize.query(`
-            SELECT
-                t.ticket_id,
-                t.ticket_subject,
-                c.customer_company
-            FROM tickets t
-            JOIN ticket_assignments ta ON t.ticket_id  = ta.ticket_id
-            JOIN customers         c  ON t.customer_id = c.customer_id
-            WHERE ta.user_id          = :userId
-              AND t.ticket_status_id NOT IN (9, 10)
-              AND t.ticket_status     = 1
-            ORDER BY t.created_at DESC
-        `, { replacements: { userId }, type: QueryTypes.SELECT });
+
+        const tickets = await Ticket.findAll({
+            attributes: ['ticket_id', 'ticket_subject'],
+            where: {
+                ticket_status: 1,
+                ticket_status_id: { [Op.notIn]: [9, 10] },
+            },
+            include: [
+                {
+                    model: User,
+                    as: 'assignedUsers',
+                    where: { user_id: userId },
+                    attributes: [],
+                    through: { attributes: [] },
+                    required: true,
+                },
+                {
+                    model: Customer,
+                    as: 'customer',
+                    attributes: ['customer_company'],
+                },
+            ],
+            order: [['created_at', 'DESC']],
+        });
 
         res.json(tickets);
     } catch (error) {
@@ -69,6 +99,9 @@ exports.getTicketsByUser = async (req, res) => {
 
 // ============================================
 // CREAR SALIDA
+// Registra la solicitud con estado 0 (Pendiente).
+// Emite 'salida_created' para que el panel Admin
+// muestre la nueva solicitud en tiempo real.
 // ============================================
 exports.createSalida = async (req, res) => {
     try {
@@ -88,7 +121,7 @@ exports.createSalida = async (req, res) => {
         });
 
         const io = req.app.get('io');
-        io.emit('salida_created', { salidaId: salida.salida_id });
+        if (io) io.emit('salida_created', { salidaId: salida.salida_id });
 
         res.status(201).json(salida);
     } catch (error) {
@@ -99,6 +132,11 @@ exports.createSalida = async (req, res) => {
 
 // ============================================
 // APROBAR O RECHAZAR SALIDA
+// Solo se pueden procesar solicitudes en estado 0
+// (Pendiente). Registra el usuario que resolvió
+// la solicitud en el campo approved_by.
+// Emite 'salida_status_updated' con el nuevo
+// estado para sincronizar el panel en tiempo real.
 // ============================================
 exports.updateSalidaStatus = async (req, res) => {
     try {
@@ -108,6 +146,7 @@ exports.updateSalidaStatus = async (req, res) => {
 
         const salida = await Salida.findByPk(id);
         if (!salida) return res.status(404).json({ message: 'Salida no encontrada.' });
+
         if (salida.salida_status !== 0) {
             return res.status(400).json({ message: 'Esta salida ya fue procesada.' });
         }
@@ -119,7 +158,10 @@ exports.updateSalidaStatus = async (req, res) => {
         });
 
         const io = req.app.get('io');
-        io.emit('salida_status_updated', { salidaId: salida.salida_id, status: salida_status });
+        if (io) io.emit('salida_status_updated', {
+            salidaId: salida.salida_id,
+            status: salida_status,
+        });
 
         res.json(salida);
     } catch (error) {

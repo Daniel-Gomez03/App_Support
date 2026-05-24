@@ -1,5 +1,34 @@
+// ============================================
+// UTIL: PENDING INFO JOB
+// Cron que corre cada 15 min y detecta tickets
+// donde el técnico hizo la última pregunta
+// y el cliente no ha respondido en más de
+// THRESHOLD_MINUTES minutos.
+//
+// Cuando detecta un ticket elegible:
+//   1. Cambia el estado a "Pendiente de info".
+//   2. Inserta un comentario de sistema cifrado
+//      (user_id = null, customer_id = null
+//      indica mensaje automático del sistema).
+//   3. Emite eventos Socket para actualizar el
+//      panel web y notificar la app móvil.
+//
+// Detección en dos pasos para evitar SQL crudo:
+//   a. Carga tickets activos con todos sus
+//      comentarios mediante include 'comments'.
+//   b. Filtra en JS: el comentario más reciente
+//      debe ser de técnico y anterior al umbral.
+//   Esto reproduce la lógica del NOT EXISTS
+//   original sin raw SQL ni Sequelize.literal.
+//
+// EXCLUDED_STATUS_IDS: estados terminales que
+// nunca deben procesarse (Cerrado, Cancelado,
+// Rechazado). El estado "Pendiente de info"
+// se excluye dinámicamente tras resolverse.
+// ============================================
+
 const cron = require('node-cron');
-const { QueryTypes, Op } = require('sequelize');
+const { Op } = require('sequelize');
 const sequelize = require('../config/database');
 const Ticket = require('../models/Ticket');
 const TicketStatus = require('../models/TicketStatus');
@@ -7,6 +36,7 @@ const TicketComment = require('../models/TicketComment');
 const { encrypt } = require('../Utils/encryption');
 
 const THRESHOLD_MINUTES = 60;
+const EXCLUDED_STATUS_IDS = [8, 9, 10]; // Cerrado, Cancelado, Rechazado
 
 const AUTO_MSG = '🔴 Tu ticket ha quedado pendiente de tu respuesta. Para retomar la atención escribe nuevamente.';
 
@@ -17,7 +47,7 @@ const initPendingInfoJob = (io) => {
                 where: sequelize.where(
                     sequelize.fn('LOWER', sequelize.col('ticket_status_name')),
                     { [Op.like]: '%pendiente%info%' }
-                )
+                ),
             });
 
             if (!pendingStatus) {
@@ -28,24 +58,43 @@ const initPendingInfoJob = (io) => {
             const pendingStatusId = Number(pendingStatus.ticket_status_id);
             const threshold = new Date(Date.now() - THRESHOLD_MINUTES * 60 * 1000);
 
-            // user_id IS NOT NULL already excludes system messages (user_id = null)
-            const rows = await sequelize.query(`
-                SELECT t.ticket_id, t.customer_id, t.ticket_subject, t.ticket_status_id AS old_status_id
-                FROM tickets t
-                INNER JOIN ticket_comments tc ON tc.ticket_id = t.ticket_id
-                WHERE tc.user_id IS NOT NULL
-                  AND tc.customer_id IS NULL
-                  AND tc.created_at < :threshold
-                  AND t.ticket_status_id NOT IN (8, 9, 10, :pendingStatusId)
-                  AND NOT EXISTS (
-                      SELECT 1 FROM ticket_comments tc2
-                      WHERE tc2.ticket_id = tc.ticket_id
-                        AND tc2.created_at > tc.created_at
-                  )
-            `, {
-                replacements: { threshold, pendingStatusId },
-                type: QueryTypes.SELECT,
+            const candidates = await Ticket.findAll({
+                attributes: ['ticket_id', 'customer_id', 'ticket_subject', 'ticket_status_id'],
+                where: {
+                    ticket_status_id: {
+                        [Op.notIn]: [...EXCLUDED_STATUS_IDS, pendingStatusId],
+                    },
+                },
+                include: [{
+                    model: TicketComment,
+                    as: 'comments',
+                    attributes: ['user_id', 'customer_id', 'created_at'],
+                    required: true,
+                }],
             });
+
+            // El último comentario del ticket debe ser de técnico (user_id != null,
+            // customer_id = null) y anterior al umbral para ser elegible.
+            const rows = candidates.reduce((acc, ticket) => {
+                const lastComment = ticket.comments
+                    .slice()
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+                if (
+                    lastComment &&
+                    lastComment.user_id !== null &&
+                    lastComment.customer_id === null &&
+                    new Date(lastComment.created_at) < threshold
+                ) {
+                    acc.push({
+                        ticket_id: ticket.ticket_id,
+                        customer_id: ticket.customer_id,
+                        ticket_subject: ticket.ticket_subject,
+                        old_status_id: ticket.ticket_status_id,
+                    });
+                }
+                return acc;
+            }, []);
 
             for (const row of rows) {
                 await Ticket.update(

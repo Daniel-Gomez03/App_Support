@@ -1,4 +1,26 @@
+// ============================================
+// UTIL: ENCRYPTION
+// Cifrado simétrico AES-256-CBC para los
+// mensajes del chat. Los comentarios se guardan
+// cifrados en BD; se descifran al leerlos para
+// que un volcado de base de datos no exponga
+// conversaciones en texto plano.
+//
+// Formato del texto cifrado: "<iv_hex>:<cipher_hex>"
+// El IV (vector de inicialización) se genera
+// aleatoriamente en cada cifrado y se antepone
+// al resultado para que el mismo texto plano
+// produzca salidas distintas cada vez.
+//
+// La clave se lee del entorno en cada operación
+// para detectar configuraciones inválidas de
+// inmediato en lugar de fallar silenciosamente.
+// CHAT_ENCRYPTION_KEY debe ser una cadena hex
+// de 64 caracteres (= 32 bytes = 256 bits).
+// ============================================
+
 const crypto = require('crypto');
+
 const ALGORITHM = 'aes-256-cbc';
 const IV_LENGTH = 16;
 

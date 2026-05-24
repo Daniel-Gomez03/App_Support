@@ -1,6 +1,23 @@
+// ============================================
+// RUTAS: PRODUCTOS
+// CRUD completo para el catálogo de productos
+// del módulo Q&A. Incluye carga masiva desde
+// archivo Excel/CSV para importar productos
+// en lote sin crearlos uno a uno.
+//
+// GET    /products              → getAllProducts         (read)
+// GET    /products/inactives    → getAllProductsInactives (read)
+// GET    /products/:id          → getProductById         (read)
+// POST   /products              → createProduct          (write)
+// PUT    /products/:id          → updateProduct          (edit)
+// DELETE /products/:id          → deleteProduct          (edit)
+// PATCH  /products/:id/toggle   → toggleProductStatus    (edit)
+// POST   /products/bulk-upload  → bulkUploadProducts     (write) + upload
+// ============================================
+
 const express = require('express');
 const router = express.Router();
-const productController = require('../Controllers/productController')
+const productController = require('../Controllers/productController');
 const upload = require('../Middleware/upload');
 const authorize = require('../Middleware/authorize');
 
@@ -41,7 +58,8 @@ router.patch('/products/:id/toggle',
 
 router.post('/products/bulk-upload',
     authorize('Q&A', 'permissions_write'),
-    upload.single('file'), productController.bulkUploadProducts
+    upload.single('file'),
+    productController.bulkUploadProducts
 );
 
 module.exports = router;

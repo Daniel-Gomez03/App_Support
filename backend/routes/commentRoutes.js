@@ -1,3 +1,15 @@
+// ============================================
+// RUTAS: COMENTARIOS DE TICKET (CHAT INTERNO)
+// Gestiona los mensajes del chat de un ticket
+// entre técnicos y el cliente. El POST admite
+// hasta 5 archivos adjuntos procesados por
+// ticketUpload antes de llegar al controlador.
+//
+// GET    /tickets/:id/comments                          → getComments  (read)
+// POST   /tickets/:id/comments                          → addComment   (write) + upload
+// DELETE /tickets/:ticketId/comments/:commentId         → deleteComment (delete)
+// ============================================
+
 const express = require('express');
 const router = express.Router();
 const commentController = require('../Controllers/commentController');

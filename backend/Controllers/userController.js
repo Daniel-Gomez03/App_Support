@@ -1,19 +1,45 @@
+// ============================================
+// CONTROLADOR DE USUARIOS
+// Gestiona los técnicos y administradores del
+// panel de soporte. Incluye actualización de
+// rol/cargo/área con permisos granulares,
+// eliminación física y cambio de estado.
+// Al desactivar una cuenta se emite force_logout
+// a la sala privada del usuario para expulsarlo
+// de la sesión activa en tiempo real.
+// ============================================
+
 const User = require('../models/User');
-const permissionsController = require('./permissionsController');
 const Permissions = require('../models/Permission');
+const Seccion = require('../models/Seccion');
+const permissionsController = require('./permissionsController');
+
+// ============================================
+// INCLUDE ESTÁNDAR CON PERMISOS
+// Carga los permisos del usuario junto con el
+// nombre de cada módulo (Seccion). Reutilizado
+// en getAllUsers, getUserById y updateUser.
+// ============================================
+const USER_INCLUDE = [{
+    model: Permissions,
+    as: 'Permissions',
+    include: [{
+        model: Seccion,
+        as: 'Seccion',
+    }],
+}];
 
 // ============================================
 // OBTENER TODOS LOS USUARIOS
+// Devuelve técnicos y admins con sus permisos
+// y módulos asociados, ordenados por fecha de
+// creación DESC.
 // ============================================
 exports.getAllUsers = async (req, res) => {
     try {
         const users = await User.findAll({
-            include: [{
-                model: Permissions,
-                as: 'Permissions',
-                include: ['Seccion']
-            }],
-            order: [['created_at', 'DESC']]
+            include: USER_INCLUDE,
+            order: [['created_at', 'DESC']],
         });
         res.json(users);
     } catch (error) {
@@ -28,18 +54,9 @@ exports.getAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findByPk(id, {
-            include: [{
-                model: Permissions,
-                as: 'Permissions',
-                include: ['Seccion']
-            }]
-        });
+        const user = await User.findByPk(id, { include: USER_INCLUDE });
 
-        if (!user) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-
+        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
         res.json(user);
     } catch (error) {
         console.error("Error en getUserById:", error);
@@ -48,7 +65,14 @@ exports.getUserById = async (req, res) => {
 };
 
 // ============================================
-// ACTUALIZAR USUARIO 
+// ACTUALIZAR USUARIO
+// Actualiza rol, cargo y área usando ?? para
+// conservar el valor actual en campos no
+// enviados. Si se incluye el array de permisos,
+// delega en saveUserPermissions (helper) que
+// ejecuta upsert en paralelo por cada módulo
+// y notifica al usuario en tiempo real.
+// Emite 'user_updated' al finalizar.
 // ============================================
 exports.updateUser = async (req, res) => {
     try {
@@ -59,26 +83,21 @@ exports.updateUser = async (req, res) => {
         if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
         await user.update({
-            rol: rol !== undefined ? rol : user.rol,
-            cargo: cargo !== undefined ? cargo : user.cargo,
-            area: area !== undefined ? area : user.area
+            rol: rol ?? user.rol,
+            cargo: cargo ?? user.cargo,
+            area: area ?? user.area,
         });
 
         if (permisos && Array.isArray(permisos)) {
             await permissionsController.saveUserPermissions(id, permisos, req);
         }
 
-        const updatedUser = await User.findByPk(id, {
-            include: [{ model: Permissions, as: 'Permissions' }]
-        });
+        const updatedUser = await User.findByPk(id, { include: USER_INCLUDE });
 
         const io = req.app.get('io');
         if (io) io.emit('user_updated', updatedUser);
 
-        res.json({
-            message: 'Usuario y permisos actualizados con éxito',
-            user: updatedUser
-        });
+        res.json({ message: 'Usuario y permisos actualizados con éxito', user: updatedUser });
     } catch (error) {
         console.error("Error en updateUser:", error);
         res.status(500).json({ error: error.message });
@@ -87,6 +106,9 @@ exports.updateUser = async (req, res) => {
 
 // ============================================
 // ELIMINAR USUARIO
+// Eliminación física. Emite 'user_deleted'
+// con el ID para que el panel retire la fila
+// sin recargar la lista completa.
 // ============================================
 exports.deleteUser = async (req, res) => {
     try {
@@ -108,7 +130,14 @@ exports.deleteUser = async (req, res) => {
 };
 
 // ============================================
-// CAMBIAR ESTADO 
+// CAMBIAR ESTADO DE USUARIO (toggle)
+// Activo ↔ Inactivo. Cuando se desactiva una
+// cuenta activa, emite 'force_logout' a la sala
+// privada del usuario (io.to(id)) para que el
+// frontend cierre la sesión inmediatamente sin
+// esperar a que expire el JWT.
+// Emite 'user_status_toggled' globalmente para
+// actualizar la vista de usuarios en el panel.
 // ============================================
 exports.toggleUserStatus = async (req, res) => {
     try {
@@ -126,15 +155,14 @@ exports.toggleUserStatus = async (req, res) => {
 
             if (nuevoEstado === 0) {
                 io.to(id.toString()).emit('force_logout', {
-                    message: 'Tu cuenta ha sido desactivada por un administrador.'
+                    message: 'Tu cuenta ha sido desactivada por un administrador.',
                 });
-                console.log(`Socket: Usuario ${id} expulsado del sistema.`);
             }
         }
 
         res.json({
             message: `Usuario ${nuevoEstado === 1 ? 'activado' : 'desactivado'} correctamente`,
-            estado: nuevoEstado
+            estado: nuevoEstado,
         });
     } catch (error) {
         console.error("Error en toggleUserStatus:", error);

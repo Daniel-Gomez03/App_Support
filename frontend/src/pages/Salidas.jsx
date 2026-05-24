@@ -60,10 +60,10 @@ const Salidas = () => {
         if (!searchTerm) return salidas;
         const lower = searchTerm.toLowerCase();
         return salidas.filter(s =>
-            s.nombre_completo?.toLowerCase().includes(lower) ||
+            s.user?.nombre_completo?.toLowerCase().includes(lower) ||
             s.salida_destination?.toLowerCase().includes(lower) ||
-            s.ticket_subject?.toLowerCase().includes(lower) ||
-            s.customer_company?.toLowerCase().includes(lower) ||
+            s.ticket?.ticket_subject?.toLowerCase().includes(lower) ||
+            s.ticket?.customer?.customer_company?.toLowerCase().includes(lower) ||
             `T-${s.ticket_id?.toString().padStart(4, '0')}`.toLowerCase().includes(lower) ||
             `#${s.salida_id}`.includes(lower)
         );

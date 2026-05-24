@@ -58,10 +58,10 @@ const Comentarios = () => {
     const filteredRatings = useMemo(() => {
         return ratings.filter(r => {
             const searchLower = searchTerm.toLowerCase();
-            const clientName = `${r.customer_first_name || ''} ${r.customer_last_name || ''}`.toLowerCase();
-            const company = (r.customer_company || '').toLowerCase();
-            const techName = (r.tech_name || '').toLowerCase();
-            const ticketNum = `T-${r.ticket_id?.toString().padStart(4, '0')}`;
+            const clientName = `${r.customer?.customer_first_name || ''} ${r.customer?.customer_last_name || ''}`.toLowerCase();
+            const company    = (r.customer?.customer_company || '').toLowerCase();
+            const techName   = (r.ticket?.assignedUsers ?? []).map(u => u.nombre_completo).join(' ').toLowerCase();
+            const ticketNum  = `T-${r.ticket_id?.toString().padStart(4, '0')}`;
 
             const matchesSearch = !searchTerm || (
                 ticketNum.toLowerCase().includes(searchLower) ||

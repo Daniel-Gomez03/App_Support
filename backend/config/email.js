@@ -1,5 +1,17 @@
+// ============================================
+// CONFIGURACIÓN DEL SERVICIO DE CORREO
+// Utiliza Nodemailer con las credenciales SMTP
+// definidas en las variables de entorno (.env).
+// Exporta las funciones de envío de emails
+// utilizadas en el flujo de autenticación de
+// clientes en la app móvil.
+// ============================================
+
 const nodemailer = require('nodemailer');
 
+// ============================================
+// TRANSPORTER — CONEXIÓN SMTP
+// ============================================
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
@@ -10,6 +22,12 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+// ============================================
+// EMAIL DE VERIFICACIÓN DE CUENTA
+// Se envía al registrar un nuevo cliente.
+// Contiene el enlace de un solo uso para
+// activar el correo electrónico.
+// ============================================
 const sendVerificationEmail = async (email, verificationToken, fullName, expiryText = '6 horas') => {
     try {
         const baseUrl = process.env.APP_URL || 'http://localhost:8000';
@@ -84,6 +102,13 @@ const sendVerificationEmail = async (email, verificationToken, fullName, expiryT
     }
 };
 
+// ============================================
+// EMAIL DE RESTABLECIMIENTO DE CONTRASEÑA
+// Se envía cuando el cliente solicita recuperar
+// su contraseña desde la app móvil.
+// El enlace redirige al flujo de reset y expira
+// en 15 minutos.
+// ============================================
 const sendPasswordResetEmail = async (email, resetToken, fullName) => {
     try {
         const baseUrl = process.env.APP_URL || 'http://localhost:8000';
@@ -158,6 +183,13 @@ const sendPasswordResetEmail = async (email, resetToken, fullName) => {
     }
 };
 
+// ============================================
+// EMAIL DE REGISTRO EN REVISIÓN PENDIENTE
+// Se envía cuando el cliente se registra pero
+// el número de serie o factura no pudo ser
+// verificado automáticamente. La cuenta queda
+// en espera de activación manual por un admin.
+// ============================================
 const sendPendingReviewEmail = async (email, verificationToken, fullName, validationType) => {
     try {
         const baseUrl = process.env.APP_URL || 'http://localhost:8000';
@@ -238,6 +270,12 @@ const sendPendingReviewEmail = async (email, verificationToken, fullName, valida
     }
 };
 
+// ============================================
+// EMAIL DE CUENTA ACTIVADA
+// Se envía cuando un administrador activa
+// manualmente la cuenta de un cliente que
+// estaba en revisión pendiente.
+// ============================================
 const sendAccountActivatedEmail = async (email, fullName) => {
     try {
         const mailOptions = {

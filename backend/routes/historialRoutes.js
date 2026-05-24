@@ -1,3 +1,14 @@
+// ============================================
+// RUTAS: HISTORIAL DE TICKETS
+// Expone los tickets cerrados o archivados para
+// consulta y corrección de datos históricos.
+// El PUT permite editar un ticket del historial
+// sin reabrirlo (ej. corregir campos de registro).
+//
+// GET /historial      → getHistorialTickets  (read)
+// PUT /historial/:id  → updateHistorialTicket (edit)
+// ============================================
+
 const express = require('express');
 const router = express.Router();
 const historialController = require('../Controllers/historialController');

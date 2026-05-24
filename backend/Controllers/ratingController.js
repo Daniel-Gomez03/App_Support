@@ -1,40 +1,52 @@
-const { QueryTypes } = require('sequelize');
-const sequelize = require('../config/database');
+// ============================================
+// CONTROLADOR DE CALIFICACIONES
+// Devuelve el historial completo de valoraciones
+// realizadas por clientes al cierre de sus
+// tickets. Cada fila incluye los datos del
+// cliente, el asunto del ticket y los técnicos
+// asignados como array via assignedUsers.
+// ============================================
+
+const Rating = require('../models/Rating');
+const Ticket = require('../models/Ticket');
+const Customer = require('../models/Customer');
+const User = require('../models/User');
 
 // ============================================
 // OBTENER TODAS LAS CALIFICACIONES
+// Devuelve cada rating con su ticket (incluyendo
+// los técnicos asignados via assignedUsers) y
+// su cliente. Ordenado por fecha DESC.
 // ============================================
 exports.getRatings = async (req, res) => {
     try {
-        const ratings = await sequelize.query(`
-            SELECT
-                r.rating_id,
-                r.rating_score,
-                r.rating_comment,
-                r.rating_createdAt,
-                r.ticket_id,
-                t.ticket_subject,
-                c.customer_first_name,
-                c.customer_last_name,
-                c.customer_image,
-                c.customer_company,
-                (
-                    SELECT GROUP_CONCAT(u2.nombre_completo ORDER BY u2.nombre_completo SEPARATOR '|||')
-                    FROM ticket_assignments ta2
-                    JOIN users u2 ON ta2.user_id = u2.user_id
-                    WHERE ta2.ticket_id = t.ticket_id
-                ) AS tech_names,
-                (
-                    SELECT GROUP_CONCAT(COALESCE(u2.foto, '') ORDER BY u2.nombre_completo SEPARATOR '|||')
-                    FROM ticket_assignments ta2
-                    JOIN users u2 ON ta2.user_id = u2.user_id
-                    WHERE ta2.ticket_id = t.ticket_id
-                ) AS tech_fotos
-            FROM ratings r
-            JOIN tickets  t ON r.ticket_id   = t.ticket_id
-            JOIN customers c ON r.customer_id = c.customer_id
-            ORDER BY r.rating_createdAt DESC
-        `, { type: QueryTypes.SELECT });
+        const ratings = await Rating.findAll({
+            include: [
+                {
+                    model: Ticket,
+                    as: 'ticket',
+                    attributes: ['ticket_id', 'ticket_subject'],
+                    include: [{
+                        model: User,
+                        as: 'assignedUsers',
+                        attributes: ['user_id', 'nombre_completo', 'foto'],
+                        through: { attributes: [] },
+                    }],
+                },
+                {
+                    model: Customer,
+                    as: 'customer',
+                    attributes: [
+                        'customer_id',
+                        'customer_first_name',
+                        'customer_last_name',
+                        'customer_image',
+                        'customer_company',
+                    ],
+                },
+            ],
+            order: [['rating_createdAt', 'DESC']],
+        });
 
         res.json(ratings);
     } catch (error) {

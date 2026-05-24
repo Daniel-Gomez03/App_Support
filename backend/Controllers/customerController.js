@@ -1,3 +1,13 @@
+// ============================================
+// CONTROLADOR DE CLIENTES
+// Gestiona el registro, consulta, actualización
+// y cambio de estado de los clientes del sistema.
+// El registro valida número y correo únicos,
+// verifica la garantía (serie o factura) y sube
+// la foto de perfil al FTP. La verificación de
+// email usa tokens de un solo uso con expiración.
+// ============================================
+
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -8,12 +18,21 @@ const { sendVerificationEmail, sendAccountActivatedEmail } = require('../config/
 const Warranty = require('../models/Warranty');
 const WarrantyPolicy = require('../models/WarrantyPolicy');
 
+// ============================================
+// HELPER — ELIMINAR ARCHIVO TEMPORAL LOCAL
+// Usado en todos los flujos con req.file para
+// garantizar limpieza tanto en éxito como error.
+// ============================================
 const cleanupFile = (path) => {
     if (path && fs.existsSync(path)) fs.unlinkSync(path);
 };
 
 // ============================================
 // ENVIAR CORREO DE VERIFICACIÓN (Admin)
+// Genera un token aleatorio de 32 bytes con
+// vigencia de 6 horas. Si ya existe un token
+// vigente responde 429 con el tiempo restante
+// para evitar spam de correos.
 // ============================================
 exports.sendVerificationEmailAdmin = async (req, res) => {
     try {
@@ -25,7 +44,9 @@ exports.sendVerificationEmailAdmin = async (req, res) => {
         }
 
         if (customer.verification_token && customer.verification_token_expires > new Date()) {
-            const remainingTime = Math.ceil((customer.verification_token_expires - new Date()) / (1000 * 60)); // Minutos restantes
+            const remainingTime = Math.ceil(
+                (customer.verification_token_expires - new Date()) / (1000 * 60)
+            );
             return res.status(429).json({
                 error: `Ya existe un correo de verificación vigente. Intente de nuevo en ${remainingTime} minutos.`
             });
@@ -37,11 +58,10 @@ exports.sendVerificationEmailAdmin = async (req, res) => {
 
         await customer.update({
             verification_token: newToken,
-            verification_token_expires: expires
+            verification_token_expires: expires,
         });
 
         const fullName = `${customer.customer_first_name} ${customer.customer_last_name}`;
-
         await sendVerificationEmail(customer.customer_email, newToken, fullName);
 
         res.status(200).json({
@@ -55,7 +75,12 @@ exports.sendVerificationEmailAdmin = async (req, res) => {
 };
 
 // ============================================
-// VALIDAR TOKEN DE EMAIL 
+// VALIDAR TOKEN DE EMAIL
+// Acepta el token vía query string. Si el
+// cliente tenía status 0 (pendiente revisión)
+// muestra un mensaje de espera en lugar del
+// de bienvenida, ya que aún no puede ingresar
+// hasta que un Admin active la cuenta.
 // ============================================
 exports.verifyEmail = async (req, res) => {
     try {
@@ -68,8 +93,8 @@ exports.verifyEmail = async (req, res) => {
         const customer = await Customer.findOne({
             where: {
                 verification_token: token,
-                verification_token_expires: { [Op.gt]: new Date() }
-            }
+                verification_token_expires: { [Op.gt]: new Date() },
+            },
         });
 
         if (!customer) {
@@ -127,6 +152,16 @@ exports.verifyEmail = async (req, res) => {
 
 // ============================================
 // REGISTRO DE CLIENTE (Panel Administrativo)
+// Flujo:
+//  1. Sanitiza y valida los campos del body.
+//  2. Verifica unicidad de email y teléfono en
+//     paralelo con Promise.all para reducir RTTs.
+//  3. Valida la garantía (serie o factura) y
+//     obtiene la política activa también en
+//     paralelo; si no hay garantía el cliente
+//     queda en status 0 (pendiente revisión).
+//  4. Sube la foto al FTP si se adjuntó.
+//  5. Crea el cliente y emite 'customer_created'.
 // ============================================
 exports.registerAdmin = async (req, res) => {
     const tempFilePath = req.file?.path;
@@ -142,18 +177,16 @@ exports.registerAdmin = async (req, res) => {
             customer_phone,
             customer_company,
             validation_type,
-            validation_value
+            validation_value,
         } = req.body;
 
-
+        // Sanitización de campos de texto
         const cleanFirstName = customer_first_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '');
         const cleanSecondName = customer_second_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || null;
         const cleanLastName = customer_last_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '');
         const cleanSecondLastName = customer_second_last_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || null;
-
         const cleanEmail = customer_email?.replace(/\s+/g, '').toLowerCase();
         const cleanValidationValue = validation_value?.replace(/\s+/g, '');
-
         const cleanPhone = customer_phone?.replace(/[^0-9]/g, '');
 
         if (!cleanFirstName || !cleanLastName || !cleanEmail || !cleanPhone || !customer_country_code || !customer_company || !validation_type || !cleanValidationValue) {
@@ -161,11 +194,14 @@ exports.registerAdmin = async (req, res) => {
             return res.status(400).json({ error: 'Faltan campos obligatorios para procesar el registro.' });
         }
 
+        // Validación de longitud de teléfono por código de país
         const countryRules = { '+504': 8, '+505': 8, '+503': 8, '+502': 8 };
         const expectedLength = countryRules[customer_country_code];
         if (expectedLength && cleanPhone.length !== expectedLength) {
             cleanupFile(tempFilePath);
-            return res.status(400).json({ error: `El número de teléfono para ${customer_country_code} debe tener exactamente ${expectedLength} dígitos.` });
+            return res.status(400).json({
+                error: `El número de teléfono para ${customer_country_code} debe tener exactamente ${expectedLength} dígitos.`
+            });
         }
 
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -179,32 +215,41 @@ exports.registerAdmin = async (req, res) => {
             return res.status(400).json({ error: 'El primer nombre debe tener mínimo 3 caracteres.' });
         }
 
-        const existingEmail = await Customer.findOne({ where: { customer_email: cleanEmail } });
+        // Verificar unicidad de email y teléfono en paralelo
+        const [existingEmail, existingPhone] = await Promise.all([
+            Customer.findOne({ where: { customer_email: cleanEmail } }),
+            Customer.findOne({ where: { customer_phone: cleanPhone } }),
+        ]);
+
         if (existingEmail) {
             cleanupFile(tempFilePath);
             return res.status(400).json({ error: 'El email ya está registrado.' });
         }
-
-        const existingPhone = await Customer.findOne({ where: { customer_phone: cleanPhone } });
         if (existingPhone) {
             cleanupFile(tempFilePath);
             return res.status(400).json({ error: 'Este número de teléfono ya está registrado.' });
         }
 
+        // Consultar garantía y política activa en paralelo
         const warrantyQuery = validation_type === 'serie'
             ? { warranty_serial_number: cleanValidationValue }
             : { warranty_invoice_number: cleanValidationValue };
 
-        const warrantyExists = await Warranty.findOne({ where: warrantyQuery });
+        const [warrantyExists, activePolicy] = await Promise.all([
+            Warranty.findOne({ where: warrantyQuery }),
+            WarrantyPolicy.findOne({
+                where: { policy_is_active: 1 },
+                order: [['created_at', 'DESC']],
+            }),
+        ]);
 
-        let initialStatus = 1;
-        let responseMessage = 'Cliente registrado exitosamente.';
+        // Si no hay garantía, el cliente queda pendiente de revisión manual
+        const initialStatus = warrantyExists ? 1 : 0;
+        const responseMessage = warrantyExists
+            ? 'Cliente registrado exitosamente.'
+            : `Cliente creado (Inactivo). La ${validation_type} no existe en nuestra base de datos y requiere revisión manual.`;
 
-        if (!warrantyExists) {
-            initialStatus = 0;
-            responseMessage = `Cliente creado (Inactivo). La ${validation_type} no existe en nuestra base de datos y requiere revisión manual.`;
-        }
-
+        // Subir foto al FTP si se adjuntó
         let customer_image = null;
         if (req.file) {
             try {
@@ -215,11 +260,6 @@ exports.registerAdmin = async (req, res) => {
             }
             cleanupFile(tempFilePath);
         }
-
-        const activePolicy = await WarrantyPolicy.findOne({
-            where: { policy_is_active: 1 },
-            order: [['created_at', 'DESC']],
-        });
 
         const newCustomer = await Customer.create({
             customer_first_name: cleanFirstName,
@@ -246,14 +286,14 @@ exports.registerAdmin = async (req, res) => {
             io.emit('customer_created', {
                 customer_id: newCustomer.customer_id,
                 full_name: `${newCustomer.customer_first_name} ${newCustomer.customer_last_name}`,
-                status: initialStatus
+                status: initialStatus,
             });
         }
 
         res.status(201).json({
             message: responseMessage,
             customer_id: newCustomer.customer_id,
-            requires_manual_review: !warrantyExists
+            requires_manual_review: !warrantyExists,
         });
 
     } catch (error) {
@@ -265,6 +305,11 @@ exports.registerAdmin = async (req, res) => {
 
 // ============================================
 // OBTENER TODOS LOS CLIENTES
+// Devuelve campos clave con dos columnas
+// calculadas por Sequelize: full_name (nombre
+// completo con CONCAT_WS) y full_phone (código
+// de país + número). Ordenado por fecha de
+// registro descendente.
 // ============================================
 exports.getAllCustomers = async (req, res) => {
     try {
@@ -286,15 +331,16 @@ exports.getAllCustomers = async (req, res) => {
                 'customer_registration_value',
                 'customer_status',
                 'customer_image',
-                'created_at'
+                'created_at',
             ],
-            order: [['created_at', 'DESC']]
+            order: [['created_at', 'DESC']],
         });
         res.status(200).json(customers);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
 // ============================================
 // OBTENER CLIENTE POR ID
 // ============================================
@@ -307,8 +353,8 @@ exports.getCustomerById = async (req, res) => {
                 'customer_last_name', 'customer_second_last_name', 'customer_email',
                 'customer_country_code', 'customer_phone', 'customer_company',
                 'customer_registration_type', 'customer_registration_value',
-                'customer_status', 'customer_image', 'email_verified', 'created_at'
-            ]
+                'customer_status', 'customer_image', 'email_verified', 'created_at',
+            ],
         });
 
         if (!customer) return res.status(404).json({ error: 'Cliente no encontrado' });
@@ -320,6 +366,10 @@ exports.getCustomerById = async (req, res) => {
 
 // ============================================
 // ACTUALIZAR CLIENTE (Panel Administrativo)
+// Si cambia el correo electrónico se resetea
+// email_verified a 0, obligando al cliente a
+// reverificar. La foto nueva se sube al FTP y
+// la anterior se elimina del servidor remoto.
 // ============================================
 exports.updateCustomer = async (req, res) => {
     const tempFilePath = req.file?.path;
@@ -333,7 +383,6 @@ exports.updateCustomer = async (req, res) => {
         }
 
         const body = req.body || {};
-
         const {
             customer_first_name,
             customer_second_name,
@@ -342,15 +391,16 @@ exports.updateCustomer = async (req, res) => {
             customer_email,
             customer_phone,
             customer_company,
-            customer_country_code
+            customer_country_code,
         } = body;
 
         const cleanEmail = customer_email?.replace(/\s+/g, '').toLowerCase();
         const cleanPhone = customer_phone?.replace(/[^0-9]/g, '');
 
+        // Verificar que el nuevo correo no esté en uso por otro cliente
         if (cleanEmail && cleanEmail !== customer.customer_email) {
             const emailExists = await Customer.findOne({
-                where: { customer_email: cleanEmail, customer_id: { [Op.ne]: id } }
+                where: { customer_email: cleanEmail, customer_id: { [Op.ne]: id } },
             });
             if (emailExists) {
                 cleanupFile(tempFilePath);
@@ -359,6 +409,7 @@ exports.updateCustomer = async (req, res) => {
             customer.email_verified = 0;
         }
 
+        // Reemplazar foto: eliminar la anterior del FTP y subir la nueva
         let customer_image = customer.customer_image;
         if (req.file) {
             try {
@@ -385,7 +436,7 @@ exports.updateCustomer = async (req, res) => {
             customer_country_code: customer_country_code || customer.customer_country_code,
             customer_company: customer_company?.trim() || customer.customer_company,
             customer_image,
-            email_verified: customer.email_verified
+            email_verified: customer.email_verified,
         });
 
         res.status(200).json({ message: 'Cliente actualizado correctamente.' });
@@ -399,6 +450,11 @@ exports.updateCustomer = async (req, res) => {
 
 // ============================================
 // CAMBIAR ESTADO DEL CLIENTE (Toggle)
+// Activo ↔ Inactivo. Cuando se activa por
+// primera vez desde inactivo se envía un correo
+// de bienvenida al cliente. Emite el evento
+// 'customer_status_updated' para actualizar la
+// vista del panel sin recargar.
 // ============================================
 exports.toggleCustomerStatus = async (req, res) => {
     try {

@@ -71,19 +71,20 @@ const Stars = ({ score }) => (
 );
 
 const RatingCard = ({ r }) => {
-    const clientName = `${r.customer_first_name} ${r.customer_last_name}`.trim();
-    const label = getLabel(r.rating_score);
-    const techNames = r.tech_names ? r.tech_names.split('|||') : [];
-    const techFotos = r.tech_fotos ? r.tech_fotos.split('|||') : [];
-    const techLabel = techNames.length > 0 ? techNames.join(', ') : 'Sin asignar';
+    const clientName = `${r.customer?.customer_first_name || ''} ${r.customer?.customer_last_name || ''}`.trim();
+    const label      = getLabel(r.rating_score);
+    const techs      = r.ticket?.assignedUsers ?? [];
+    const techNames  = techs.map(u => u.nombre_completo);
+    const techFotos  = techs.map(u => u.foto || '');
+    const techLabel  = techNames.length > 0 ? techNames.join(', ') : 'Sin asignar';
 
     return (
         <div className={styles.card}>
             <div className={styles.cardHeader}>
-                <ClientAvatar src={r.customer_image} name={clientName} />
+                <ClientAvatar src={r.customer?.customer_image} name={clientName} />
                 <div className={styles.clientInfo}>
                     <h4>{clientName || '—'}</h4>
-                    <span>{r.customer_company || '—'}</span>
+                    <span>{r.customer?.customer_company || '—'}</span>
                 </div>
                 <div className={styles.ratingArea}>
                     <Stars score={r.rating_score} />
@@ -92,7 +93,7 @@ const RatingCard = ({ r }) => {
             </div>
 
             <p className={styles.ticketRef}>
-                <strong>{formatID(r.ticket_id)}</strong> · {r.ticket_subject}
+                <strong>{formatID(r.ticket_id)}</strong> · {r.ticket?.ticket_subject}
             </p>
 
             {r.rating_comment?.trim()

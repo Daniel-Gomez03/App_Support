@@ -1,3 +1,27 @@
+// ============================================
+// RUTAS: TICKETS (PANEL WEB)
+// Gestiona el ciclo de vida completo de los
+// tickets desde el panel. Los permisos están
+// distribuidos entre tres módulos según el
+// rol en el flujo: 'Crear Ticket' para alta
+// y baja, 'Asignar Tickets' para asignación
+// y edición general, y 'Tickets Activos' para
+// el seguimiento y cambio de estado.
+//
+// GET    /tickets                   → getAllTickets           (Asignar Tickets - read)
+// GET    /tickets/unassigned        → getUnassignedTicketCount (Asignar Tickets - read)
+// GET    /tickets/active/count      → getActiveTicketCount    (Tickets Activos - read)
+// GET    /tickets/active/list       → getActiveTickets        (Tickets Activos - read)
+// GET    /tickets/:id               → getTicketById           (Asignar Tickets - read)
+// POST   /tickets                   → createTicketAdmin       (Crear Ticket - write) + upload
+// PUT    /tickets/:id               → updateTicket            (Asignar Tickets - edit)
+// PUT    /tickets/:id/assign        → assignTicket            (Asignar Tickets - edit)
+// PATCH  /tickets/:id/status        → updateTicketStatus      (Tickets Activos - edit)
+// PATCH  /tickets/:id/pause         → toggleChatPause         (Tickets Activos - edit)
+// PATCH  /tickets/toggle/:id        → toggleTicketActive      (Crear Ticket - edit)
+// DELETE /tickets/:id               → deleteTicket            (Crear Ticket - delete)
+// ============================================
+
 const express = require('express');
 const router = express.Router();
 const ticketController = require('../Controllers/ticketController');

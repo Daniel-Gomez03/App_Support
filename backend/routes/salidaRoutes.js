@@ -1,3 +1,17 @@
+// ============================================
+// RUTAS: SALIDAS DE EQUIPO
+// Gestiona las solicitudes de salida de equipos
+// asociadas a tickets. El flujo es: el técnico
+// consulta sus tickets disponibles, crea la
+// solicitud y el supervisor cambia el estado
+// (Pendiente → Aprobada/Rechazada).
+//
+// GET   /salidas                    → getAllSalidas       (read)
+// GET   /salidas/tickets/:userId    → getTicketsByUser   (read)
+// POST  /salidas                    → createSalida       (write)
+// PATCH /salidas/:id/status         → updateSalidaStatus (edit)
+// ============================================
+
 const express = require('express');
 const router = express.Router();
 const salidaController = require('../Controllers/salidaController');

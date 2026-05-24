@@ -15,19 +15,21 @@ const STATUS_MAP = {
 
 const UserCell = ({ row }) => {
     const [imgOk, setImgOk] = useState(true);
-    const hasImg = row.foto && row.foto !== 'default.jpg' && imgOk;
-    const initial = (row.nombre_completo || '?').charAt(0).toUpperCase();
+    const foto    = row.user?.foto;
+    const name    = row.user?.nombre_completo;
+    const hasImg  = foto && foto !== 'default.jpg' && imgOk;
+    const initial = (name || '?').charAt(0).toUpperCase();
     return (
         <div className={styles.userCell}>
             <div className={styles.avatar}>
                 {hasImg
-                    ? <img src={`http://localhost:8000/uploads/profiles/${row.foto}`} alt={row.nombre_completo} onError={() => setImgOk(false)} />
+                    ? <img src={`http://localhost:8000/uploads/profiles/${foto}`} alt={name} onError={() => setImgOk(false)} />
                     : initial
                 }
             </div>
             <div>
-                <p className={styles.userName}>{row.nombre_completo}</p>
-                <p className={styles.userRole}>{row.cargo || row.rol}</p>
+                <p className={styles.userName}>{name}</p>
+                <p className={styles.userRole}>{row.user?.cargo || row.user?.rol}</p>
             </div>
         </div>
     );
@@ -44,7 +46,7 @@ const SalidasTable = ({ data, onView, onApprove, onReject, isAdmin }) => {
         },
         {
             name: 'Solicitante',
-            selector: row => row.nombre_completo,
+            selector: row => row.user?.nombre_completo,
             sortable: true,
             minWidth: '180px',
             cell: row => <UserCell row={row} />,
@@ -57,7 +59,7 @@ const SalidasTable = ({ data, onView, onApprove, onReject, isAdmin }) => {
             cell: row => (
                 <div className={styles.ticketCell}>
                     <span className={styles.ticketId}>{formatID(row.ticket_id)}</span>
-                    <span className={styles.ticketSubject}>{row.ticket_subject}</span>
+                    <span className={styles.ticketSubject}>{row.ticket?.ticket_subject}</span>
                 </div>
             ),
         },

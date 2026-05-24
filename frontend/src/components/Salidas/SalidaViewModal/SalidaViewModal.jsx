@@ -51,10 +51,10 @@ const SalidaViewModal = ({ salida, onClose }) => {
                     <div className={styles.section}>
                         <p className={styles.sectionLabel}><FiUser /> Técnico Solicitante</p>
                         <div className={styles.userRow}>
-                            <Avatar src={salida.foto} name={salida.nombre_completo} />
+                            <Avatar src={salida.user?.foto} name={salida.user?.nombre_completo} />
                             <div>
-                                <p className={styles.userName}>{salida.nombre_completo}</p>
-                                <p className={styles.userSub}>{salida.cargo || salida.rol}</p>
+                                <p className={styles.userName}>{salida.user?.nombre_completo}</p>
+                                <p className={styles.userSub}>{salida.user?.cargo || salida.user?.rol}</p>
                             </div>
                         </div>
                     </div>
@@ -64,8 +64,8 @@ const SalidaViewModal = ({ salida, onClose }) => {
                         <p className={styles.sectionLabel}><LuTicket /> Ticket Relacionado</p>
                         <div className={styles.infoCard}>
                             <span className={styles.ticketId}>{formatID(salida.ticket_id)}</span>
-                            <span className={styles.ticketSubject}>{salida.ticket_subject}</span>
-                            <span className={styles.ticketCompany}>{salida.customer_company}</span>
+                            <span className={styles.ticketSubject}>{salida.ticket?.ticket_subject}</span>
+                            <span className={styles.ticketCompany}>{salida.ticket?.customer?.customer_company}</span>
                         </div>
                     </div>
 
@@ -90,12 +90,12 @@ const SalidaViewModal = ({ salida, onClose }) => {
                     </div>
 
                     {/* Procesada por */}
-                    {salida.approved_by_name && (
+                    {salida.approvedBy?.nombre_completo && (
                         <div className={styles.section}>
                             <p className={styles.sectionLabel}>
                                 {salida.salida_status === 1 ? 'Aprobada por' : 'Rechazada por'}
                             </p>
-                            <p className={styles.detailValue}>{salida.approved_by_name}</p>
+                            <p className={styles.detailValue}>{salida.approvedBy.nombre_completo}</p>
                         </div>
                     )}
 

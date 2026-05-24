@@ -1,3 +1,24 @@
+// ============================================
+// RUTAS: GARANTÍAS
+// Gestiona el registro de garantías de equipos
+// y la política de garantía que los clientes
+// aceptan en la app. Incluye carga masiva desde
+// archivo para importar garantías en lote.
+// La ruta /warranty/check/:serial está bajo el
+// módulo 'Crear Ticket' porque se usa al crear
+// un ticket para verificar si el equipo tiene
+// garantía vigente.
+//
+// GET   /warranty                  → getAllWarranties      (Garantias - read)
+// GET   /warranty/check/:serial    → checkWarrantyBySerial (Crear Ticket - read)
+// POST  /warranty                  → createWarranty        (Garantias - write)
+// POST  /warranty/bulk-upload      → bulkUploadWarranties  (Garantias - write) + upload
+// GET   /warranty/policy           → getPolicy             (Garantias - read)
+// PUT   /warranty/policy           → updatePolicy          (Garantias - edit)
+// PUT   /warranty/:id              → updateWarranty        (Garantias - edit)
+// PATCH /warranty/:id/toggle       → toggleWarrantyStatus  (Garantias - edit)
+// ============================================
+
 const express = require('express');
 const router = express.Router();
 const warrantyController = require('../Controllers/warrantyController');
