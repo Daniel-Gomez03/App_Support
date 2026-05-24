@@ -1,3 +1,29 @@
+// ============================================
+// PAGE: ACTIVE TICKET
+// Tablero kanban de seguimiento en tiempo real.
+// Cada columna representa un estado del flujo
+// y se actualiza vía Socket.io sin recargar.
+//
+// COLUMNAS POR ROL:
+//   Admin ve las 10 columnas (statusId 1-10).
+//   Otros roles solo ven desde statusId 4 en
+//   adelante (estados ya asignados); los estados
+//   iniciales los gestiona el área de soporte.
+//
+// DOS MODALES SEGÚN ESTADO:
+//   statusId ≤ 3 → TicketDetailModal en modo
+//   readOnly: el ticket aún no está asignado,
+//   solo se puede ver para redirigir a asignación.
+//   statusId > 3 → TicketChatModal: el ticket
+//   está activo y se puede gestionar desde aquí.
+//
+// SINCRONIZACIÓN DEL CHAT ABIERTO:
+//   onTicketUpdated actualiza también chatTicket
+//   si el ticket modificado es el que está abierto,
+//   para evitar datos obsoletos en el modal
+//   mientras llegan eventos de Socket.
+// ============================================
+
 import React, { useEffect, useState, useMemo } from "react";
 import styles from "./ActiveTIcket.module.less";
 import { LuCheck, LuX, LuCircleAlert, LuFilter, LuUser, LuCalendar, LuArrowUpDown, LuTag } from "react-icons/lu";
@@ -8,6 +34,8 @@ import ActiveTicketCard from "../components/Tickets Activos/ActiveTicketCard/Act
 import TicketDetailModal from "../components/Asignar Tickets/TicketDetailModal/TicketDetailModal";
 import TicketChatModal from "../components/Tickets Activos/TicketChatModal/TicketChatModal";
 
+// Definición estática del tablero. El orden determina
+// el orden visual de las columnas de izquierda a derecha.
 const COLUMNS = [
     { statusId: 1, label: 'Nuevo', dotClass: 'dotNuevo' },
     { statusId: 2, label: 'Revisión Garantía', dotClass: 'dotRevision' },
@@ -24,12 +52,16 @@ const COLUMNS = [
 const ActiveTicket = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+
     const canRead = user?.Permissions?.some(p => p.Seccion?.module_name === "Tickets Activos" && p.permissions_read === 1);
     const canWrite = user?.Permissions?.some(p => p.Seccion?.module_name === "Tickets Activos" && p.permissions_write === 1);
     const canEdit = user?.Permissions?.some(p => p.Seccion?.module_name === "Tickets Activos" && p.permissions_edit === 1);
 
-    const isAdmin = user?.rol === 'Admin';
-    const columns = isAdmin ? COLUMNS : COLUMNS.filter(c => c.statusId >= 4);
+    // Los no-Admin solo gestionan tickets ya asignados (statusId ≥ 4).
+    const columns = useMemo(
+        () => user?.rol === 'Admin' ? COLUMNS : COLUMNS.filter(c => c.statusId >= 4),
+        [user?.rol]
+    );
 
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -53,13 +85,15 @@ const ActiveTicket = () => {
 
         const refresh = () => loadTickets();
 
-        // Also update the open chatTicket if it matches the updated ticket
         const onTicketUpdated = (updatedTicket) => {
             refresh();
+            // Si el modal de chat está abierto con este ticket, sincroniza
+            // los datos para que el header del modal no muestre estado obsoleto.
             if (updatedTicket?.ticket_id) {
-                setChatTicket(prev => prev && prev.ticket_id === updatedTicket.ticket_id
-                    ? { ...prev, ...updatedTicket }
-                    : prev
+                setChatTicket(prev =>
+                    prev?.ticket_id === updatedTicket.ticket_id
+                        ? { ...prev, ...updatedTicket }
+                        : prev
                 );
             }
         };
@@ -87,6 +121,8 @@ const ActiveTicket = () => {
         }
     };
 
+    // Opciones de filtro construidas desde los tickets cargados
+    // para mostrar solo usuarios y categorías que realmente aparecen.
     const userOptions = useMemo(() => {
         const seen = new Set();
         const opts = [];
@@ -110,15 +146,13 @@ const ActiveTicket = () => {
         return opts;
     }, [tickets]);
 
-    const filteredTickets = useMemo(() => {
-        return tickets.filter(t => {
-            if (filterUser && !t.assignedUsers?.some(u => u.user_id === parseInt(filterUser))) return false;
-            if (filterDate && !t.created_at?.startsWith(filterDate)) return false;
-            if (filterPriority && t.ticket_priority !== filterPriority) return false;
-            if (filterCategory && t.category?.category_id !== parseInt(filterCategory)) return false;
-            return true;
-        });
-    }, [tickets, filterUser, filterDate, filterPriority, filterCategory]);
+    const filteredTickets = useMemo(() => tickets.filter(t => {
+        if (filterUser && !t.assignedUsers?.some(u => u.user_id === parseInt(filterUser))) return false;
+        if (filterDate && !t.created_at?.startsWith(filterDate)) return false;
+        if (filterPriority && t.ticket_priority !== filterPriority) return false;
+        if (filterCategory && t.category?.category_id !== parseInt(filterCategory)) return false;
+        return true;
+    }), [tickets, filterUser, filterDate, filterPriority, filterCategory]);
 
     const clearFilters = () => {
         setFilterUser('');
@@ -230,9 +264,12 @@ const ActiveTicket = () => {
                                                 key={ticket.ticket_id}
                                                 ticket={ticket}
                                                 statusId={col.statusId}
-                                                onClick={col.statusId <= 3
-                                                    ? (t) => setSelectedTicket(t)
-                                                    : (t) => setChatTicket(t)
+                                                onClick={
+                                                    // ≤3: aún sin asignar, solo vista previa que redirige
+                                                    // >3: activo, se gestiona desde el chat modal
+                                                    col.statusId <= 3
+                                                        ? (t) => setSelectedTicket(t)
+                                                        : (t) => setChatTicket(t)
                                                 }
                                             />
                                         ))

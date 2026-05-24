@@ -1,3 +1,30 @@
+// ============================================
+// COMPONENT: ACTIVE TICKET CARD
+// Tarjeta del tablero kanban. Muestra el estado
+// visual del ticket con tres secciones:
+//   - Banner superior (cancelación / cliente respondió)
+//   - Cuerpo (ID, prioridad, asunto, empresa)
+//   - Footer (fecha con urgencia, avatares de asignados)
+//
+// AVATARES: solo se muestran desde statusId ≥ 4
+// porque los estados anteriores aún no tienen
+// técnico asignado.
+//
+// FECHA EN FOOTER — tres modos según estado:
+//   Ticket cerrado (9/10) + due date → muestra
+//     si finalizó "a tiempo" o "tarde" vs due date.
+//   Ticket activo + due date → muestra urgencia
+//     (ok / warning / critical / overdue).
+//   Sin due date → muestra fecha de creación.
+//
+// BANNERS DE ATENCIÓN:
+//   cancellationBanner → solicitud de cancelación
+//     pendiente de resolución.
+//   customerReplyBanner → cliente respondió; se
+//     oculta en tickets cerrados porque ya no
+//     es accionable.
+// ============================================
+
 import React from 'react';
 import styles from './ActiveTicketCard.module.less';
 import { LuCalendar } from 'react-icons/lu';
@@ -29,43 +56,51 @@ const formatTimeAgo = (dateString) => {
     return `hace ${Math.floor(diffH / 24)} días`;
 };
 
+// Fuera del componente: funciones puras sin dependencias
+// del scope del componente — no se recrean en cada render.
+const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
+
+const formatDate = (dateString) => {
+    if (!dateString) return 'Sin fecha';
+    return new Date(dateString).toLocaleDateString('es-ES', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+    });
+};
+
 const ActiveTicketCard = ({ ticket, statusId, onClick }) => {
-    const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
+    const priority = priorityConfig[ticket.ticket_priority] ?? null;
+    const assignedUsers = ticket.assignedUsers ?? [];
 
-    const formatDate = (dateString) => {
-        if (!dateString) return 'Sin fecha';
-        return new Date(dateString).toLocaleDateString('es-ES', {
-            year: 'numeric', month: '2-digit', day: '2-digit'
-        });
-    };
-
-    const priority = priorityConfig[ticket.ticket_priority] || null;
+    // company: empresa del cliente, o nombre completo, o fallback genérico.
     const company = ticket.customer?.customer_company
-        || `${ticket.customer?.customer_first_name || ''} ${ticket.customer?.customer_last_name || ''}`.trim()
+        || `${ticket.customer?.customer_first_name ?? ''} ${ticket.customer?.customer_last_name ?? ''}`.trim()
         || 'Cliente';
-    const assignedUsers = ticket.assignedUsers || [];
+
     const showAvatars = statusId >= 4;
     const isClosed = statusId === 9 || statusId === 10;
 
-    // Due date — only compute urgency for active (non-closed) tickets
+    // Urgencia de fecha límite — solo relevante en tickets activos con due date.
     const hasDueDate = showAvatars && !!ticket.ticket_due_date;
     const urgency = (hasDueDate && !isClosed) ? getDueDateUrgency(ticket.ticket_due_date) : null;
     const urgencyClass = urgency === 'overdue' || urgency === 'critical'
         ? styles.dateCritical
         : urgency === 'warning' ? styles.dateWarning : '';
 
-    // For closed tickets: compare due date vs when the ticket was last updated (closed)
+    // Para tickets cerrados: compara updated_at (momento de cierre) vs due date.
     const closedWithDueDate = isClosed && hasDueDate;
     const wasLate = closedWithDueDate
-        ? new Date(ticket.updated_at || ticket.updatedAt || Date.now()) > new Date(ticket.ticket_due_date)
+        ? new Date(ticket.updated_at ?? ticket.updatedAt ?? Date.now()) > new Date(ticket.ticket_due_date)
         : false;
 
     const hasCancellationRequest = !!ticket.cancellation_requested;
-    // Hide customer-replied indicator for closed tickets — no longer actionable
+    // En tickets cerrados el indicador de respuesta ya no es accionable.
     const hasCustomerReplied = showAvatars && !!ticket.customer_last_reply_at && !isClosed;
 
     return (
-        <div className={`${styles.card} ${hasCancellationRequest ? styles.cardCancellation : ''} ${hasCustomerReplied ? styles.cardCustomerReplied : ''}`} onClick={() => onClick && onClick(ticket)}>
+        <div
+            className={`${styles.card} ${hasCancellationRequest ? styles.cardCancellation : ''} ${hasCustomerReplied ? styles.cardCustomerReplied : ''}`}
+            onClick={() => onClick && onClick(ticket)}
+        >
             {hasCancellationRequest && (
                 <div className={styles.cancellationBanner}>
                     <FiAlertCircle size={11} />
@@ -78,6 +113,7 @@ const ActiveTicketCard = ({ ticket, statusId, onClick }) => {
                     Cliente respondió · {formatTimeAgo(ticket.customer_last_reply_at)}
                 </div>
             )}
+
             <div className={styles.cardTop}>
                 <span className={styles.ticketId}>{formatID(ticket.ticket_id)}</span>
                 {priority && (
@@ -122,20 +158,24 @@ const ActiveTicketCard = ({ ticket, statusId, onClick }) => {
                                 <div
                                     key={u.user_id}
                                     className={styles.avatarItem}
+                                    // El primer avatar tiene el z-index más alto para
+                                    // que el stack se superponga de izquierda a derecha.
                                     style={{ zIndex: assignedUsers.length - idx }}
                                     title={u.nombre_completo}
                                 >
-                                    {hasFoto ? (
+                                    {hasFoto && (
                                         <img
                                             src={u.foto}
                                             alt={u.nombre_completo}
                                             className={styles.avatar}
                                             onError={(e) => {
+                                                // Si la imagen falla, oculta el img y
+                                                // muestra el fallback de inicial de texto.
                                                 e.target.style.display = 'none';
                                                 e.target.nextSibling.style.display = 'flex';
                                             }}
                                         />
-                                    ) : null}
+                                    )}
                                     <div
                                         className={styles.avatarFallback}
                                         style={{ display: !hasFoto ? 'flex' : 'none' }}

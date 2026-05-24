@@ -1,3 +1,13 @@
+// ============================================
+// STYLES: ACTIVE TICKET
+// Tablero kanban de 10 columnas con scroll
+// horizontal. El toast de notificación está
+// fuera del contenedor principal porque usa
+// position: fixed y necesita estar en el
+// flujo raíz para no quedar recortado por
+// overflow de un padre.
+// ============================================
+
 @import "../less/main.less";
 
 .activeTicketContainer {
@@ -82,6 +92,7 @@
                 padding: 6px 12px;
                 transition: border-color 0.2s;
 
+                // Feedback visual cuando el select/input interior recibe foco.
                 &:focus-within {
                     border-color: fade(@quaternary-color, 40%);
                     background: #ffffff;
@@ -131,6 +142,8 @@
         }
     }
 
+    // overflow-x: auto habilita el scroll horizontal del tablero.
+    // El scrollbar personalizado lo hace discreto sin ocultarlo.
     .boardWrapper {
         overflow-x: auto;
         flex: 1;
@@ -153,7 +166,11 @@
     .boardLayout {
         display: grid;
         gap: 16px;
+        // 1800px garantiza que las 10 columnas tengan ancho mínimo
+        // razonable sin colapsar; el boardWrapper se encarga del scroll.
         min-width: 1800px;
+        // start evita que columnas cortas se estiren para igualar
+        // la altura de la columna más larga del tablero.
         align-items: start;
 
         .columnContainer {
@@ -179,6 +196,8 @@
                     flex: 1;
                 }
 
+                // flex-shrink: 0 en dot y badge evita que se aplasten
+                // cuando el nombre del estado ocupa todo el espacio.
                 .dot {
                     width: 8px;
                     height: 8px;
@@ -274,6 +293,10 @@
     }
 }
 
+// Toast fuera de .activeTicketContainer para que position: fixed
+// tome como referencia el viewport y no quede atrapado en un
+// contexto de apilamiento creado por el contenedor padre.
+// z-index: 2000 asegura que aparezca sobre cualquier modal abierto.
 .successToast {
     position: fixed;
     top: 24px;
@@ -352,6 +375,8 @@
         }
     }
 
+    // En móvil el toast pasa a la parte inferior para mejor
+    // accesibilidad con el pulgar y no tapar el contenido.
     @media (max-width: #breaks[tablet]) {
         top: auto;
         bottom: 20px;
