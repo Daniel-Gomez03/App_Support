@@ -1,3 +1,27 @@
+// ============================================
+// STYLES: WARRANTIES TABLE (Garantías)
+// Estilos de la tabla de garantías basada en
+// react-data-table-component.
+//
+// ESTRUCTURA DE CLASES:
+//   .tableWrapper    — contenedor full-width; en tablet
+//                      activa overflow-x para scroll horizontal
+//   .serialText      — número de serie en monospace
+//   .invoiceBadge    — chip de número de factura
+//   .expiryCell      — celda de vencimiento (flex column)
+//     .dateValid     — fecha en verde (vigente)
+//     .dateExpired   — fecha en rojo (expirada)
+//   .statusWrapper   — celda de estado
+//     .badgeValid / .badgeExpired — comparten base (display,
+//       padding, border-radius, font, whitespace, border);
+//       solo sobreescriben colores de fondo/texto/borde
+//     .statusDot     — ícono de punto de estado
+//   .actions / .iconBtn — botón de edición por fila
+//   .noData          — mensaje vacío; declara font-family
+//                      explícitamente porque react-data-table
+//                      inyecta el nodo fuera del árbol de herencia
+// ============================================
+
 @import '../../../less/main.less';
 
 .tableWrapper {

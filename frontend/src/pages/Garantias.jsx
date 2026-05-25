@@ -1,8 +1,32 @@
+// ============================================
+// PAGE: GARANTÍAS
+// Control de vigencia de garantías de equipos.
+// Permite buscar por serie/factura, filtrar por
+// estado (vigente / expirada), crear y editar
+// registros individualmente o en carga masiva,
+// y consultar/editar la política de garantía.
+//
+// PERMISOS (Garantias):
+//   canRead  — ver la tabla y filtros
+//   canEdit  — editar garantías existentes
+//   canWrite — crear/importar nuevas garantías
+//             y editar la política
+//
+// TIEMPO REAL (socket.io):
+//   warranty_created       — recarga tabla silenciosa
+//   warranties_bulk_updated — recarga + toast con conteo
+//   warranty_policy_updated — recarga política + toast
+//
+// FILTRADO LOCAL:
+//   filteredWarranties — combina búsqueda de texto
+//   (serie / factura) con filtro de vigencia.
+// ============================================
+
 import React, { useState, useEffect } from "react";
 import styles from "./Garantias.module.less";
 import lensIcon from "../assets/icons/Lens-icon.svg";
 import { MdFilterListAlt } from "react-icons/md";
-import { LuCheck, LuX, LuUpload, LuFileText } from "react-icons/lu";
+import { LuCheck, LuX, LuUpload, LuFileText, LuShieldCheck } from "react-icons/lu";
 import { FiPlus } from "react-icons/fi";
 import WarrantiesTable from "../components/Garantias/WarrantiesTable/WarrantiesTable";
 import AddWarrantyModal from "../components/Garantias/AddWarrantyModal/AddWarrantyModal";
@@ -227,7 +251,7 @@ const Garantias = () => {
                     <BulkUploadModal
                         isOpen={isBulkModalOpen}
                         onClose={() => setIsBulkModalOpen(false)}
-                        onSuccess={() => loadWarranties()}
+                        onSuccess={loadWarranties}
                     />
                 </>
             )}

@@ -1,3 +1,30 @@
+// ============================================
+// STYLES: BULK UPLOAD MODAL (Garantías)
+// Modal de carga masiva de garantías desde Excel/CSV.
+//
+// ESTRUCTURA:
+//   .modalOverlay    — backdrop fixed + blur
+//     .modalContent  — tarjeta max-w:600px + max-h:95vh
+//       .modalHeader — título con ícono + closeBtn
+//       .modalBody   — alterna entre dos paneles:
+//         Panel 1 (pre-upload):
+//           .instructionBox — bloque informativo con
+//                             borde izquierdo @tertiary
+//           .dropZone       — área de selección de archivo
+//             &.hasFile     — borde verde cuando hay archivo
+//             &.disabledZone — opacidad 0.6 + no-drop durante upload
+//           .actions / .uploadBtn — botón de procesamiento
+//         Panel 2 (resultado):
+//           .resultHeader  — ícono de éxito + título
+//           .summaryGrid   — 3 columnas: total/cargadas/errores
+//             .countCreated — color verde (sobrescribe strong base)
+//             .countSkipped — color ámbar (sobrescribe strong base)
+//           .errorLog      — lista scrolleable de filas fallidas
+//           .finishBtn     — cierra el modal
+//
+// ANIMACIONES: scaleUp (apertura), fadeIn (resultado), spin (loader).
+// ============================================
+
 @import '../../../less/main.less';
 
 .modalOverlay {

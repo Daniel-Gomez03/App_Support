@@ -1,6 +1,43 @@
+// ============================================
+// COMPONENT: POLICY MODAL (Garantías)
+// Modal de visualización y edición de la política
+// de garantía vigente.
+//
+// MODOS:
+//   'view' — muestra el contenido actual de la
+//            política (policy_content: secciones + ítems)
+//   'edit' — permite editar versión, etiqueta de fecha
+//            y el texto de cada ítem de cada sección
+//
+// PROPS:
+//   isOpen   — controla visibilidad
+//   onClose  — cierra el modal
+//   policy   — objeto con policy_version,
+//              policy_updated_label, policy_content
+//   onSave   — fn(data) async; recibe el objeto
+//              con los campos actualizados
+//   canEdit  — muestra el botón "Editar Política"
+//
+// draft: copia profunda de policy_content para edición
+//   en memoria. Se reconstruye con makeDraft() al abrir
+//   el modal y al cancelar, sin mutar el prop original.
+//
+// updateItemText: actualiza un ítem puntual dentro de
+//   draft usando deep clone para evitar mutación del
+//   estado previo.
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import { LuX, LuShieldCheck, LuPencil, LuSave, LuLoaderCircle } from 'react-icons/lu';
 import styles from './PolicyModal.module.less';
+
+const deepClone = obj => JSON.parse(JSON.stringify(obj));
+
+const makeDraft = policy => ({
+    version: policy.policy_version,
+    label: policy.policy_updated_label,
+    sections: deepClone(policy.policy_content),
+});
 
 const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
     const [mode, setMode] = useState('view');
@@ -10,17 +47,13 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
     useEffect(() => {
         if (isOpen && policy) {
             setMode('view');
-            setDraft({
-                version: policy.policy_version,
-                label: policy.policy_updated_label,
-                sections: JSON.parse(JSON.stringify(policy.policy_content)),
-            });
+            setDraft(makeDraft(policy));
         }
     }, [isOpen, policy]);
 
     const updateItemText = (si, ii, value) => {
         setDraft(prev => {
-            const sections = JSON.parse(JSON.stringify(prev.sections));
+            const sections = deepClone(prev.sections);
             sections[si].items[ii].text = value;
             return { ...prev, sections };
         });
@@ -44,11 +77,7 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
     };
 
     const handleCancel = () => {
-        setDraft({
-            version: policy.policy_version,
-            label: policy.policy_updated_label,
-            sections: JSON.parse(JSON.stringify(policy.policy_content)),
-        });
+        setDraft(makeDraft(policy));
         setMode('view');
     };
 
@@ -74,6 +103,7 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave, canEdit }) => {
                         <LuX />
                     </button>
                 </div>
+
                 <div className={styles.modalBody}>
                     {mode === 'view' ? (
                         <div className={styles.policyView}>

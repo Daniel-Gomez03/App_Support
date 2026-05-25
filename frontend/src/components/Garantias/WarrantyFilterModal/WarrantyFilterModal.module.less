@@ -1,3 +1,27 @@
+// ============================================
+// STYLES: WARRANTY FILTER MODAL (Garantías)
+// Modal de filtrado por vigencia de garantía.
+//
+// ESTRUCTURA:
+//   .modalOverlay    — backdrop fixed + blur; z-index:2500
+//                      (más alto que otros modales)
+//     .modalContent  — tarjeta max-w:420px
+//       .modalHeader — título con ícono + closeBtn
+//       .modalBody   — lista de opciones de filtro
+//         .filterSection > .sectionLabel + .filterOptions
+//           .optionBtn  — botón de opción tipo radio
+//             .radioCircle  — círculo custom animado;
+//               ::after escala de 0→1 al activarse
+//             &.active — resalta opción seleccionada +
+//               activa la animación del radioCircle
+//       .modalFooter — fondo #f8fafc; botones reset/apply
+//         .resetBtn y .applyBtn comparten base (display,
+//           gap, padding, border-radius, font, transition);
+//           solo difieren en flex, colores y border.
+//
+// ANIMACIÓN: slideIn (apertura con translateY).
+// ============================================
+
 @import '../../../less/main.less';
 
 .modalOverlay {
@@ -158,22 +182,26 @@
             gap: 12px;
             background-color: #f8fafc;
 
-            .resetBtn {
-                flex: 1;
+            .resetBtn,
+            .applyBtn {
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 gap: 8px;
                 padding: 12px;
-                background: white;
-                border: 1px solid #e2e8f0;
                 border-radius: 12px;
-                color: #64748b;
                 font-weight: 600;
                 font-size: 14px;
                 cursor: pointer;
                 transition: all 0.2s;
                 font-family: @font-family;
+            }
+
+            .resetBtn {
+                flex: 1;
+                background: white;
+                border: 1px solid #e2e8f0;
+                color: #64748b;
 
                 &:hover {
                     background-color: #f1f5f9;
@@ -183,20 +211,9 @@
 
             .applyBtn {
                 flex: 2;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                padding: 12px;
                 background-color: @quaternary-color;
                 border: none;
-                border-radius: 12px;
                 color: white;
-                font-weight: 600;
-                font-size: 14px;
-                cursor: pointer;
-                transition: all 0.2s;
-                font-family: @font-family;
 
                 &:hover {
                     background-color: @tertiary-color;
