@@ -1,3 +1,31 @@
+// ============================================
+// COMPONENT: COMENTARIOS FILTER MODAL
+// Modal de filtros para la página Comentarios.
+// Gestiona un estado local `local` como copia de
+// currentFilters para que cancelar descarte los
+// cambios sin alterar los filtros aplicados.
+//
+// SINCRONIZACIÓN:
+//   useEffect [isOpen] reinicia `local` a
+//   currentFilters cada vez que el modal se abre,
+//   descartando cualquier cambio no confirmado.
+//
+// handleReset: aplica filtros vacíos y cierra en
+//   un solo paso — no requiere un "Aplicar" extra.
+//
+// CIERRE POR CLIC FUERA:
+//   e.target === e.currentTarget en el overlay
+//   evita necesitar un ref; solo cierra si el clic
+//   fue directamente sobre el fondo oscuro.
+//
+// minDate / maxDate || undefined: string vacío se
+//   convierte a undefined para que el atributo
+//   min/max no se emita en el input de fecha.
+//
+// SCORES: constante fuera del componente para no
+//   recrear el array en cada render.
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import styles from './ComentariosFilterModal.module.less';
 import { FiX } from 'react-icons/fi';

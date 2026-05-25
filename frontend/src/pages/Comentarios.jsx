@@ -1,3 +1,29 @@
+// ============================================
+// PAGE: COMENTARIOS
+// Historial de reseñas y puntuaciones dejadas
+// por los clientes al cerrar un ticket.
+//
+// FLUJO DE DATOS:
+//   getAllRatings() carga todos los ratings al
+//   montar la página; no hay socket porque las
+//   reseñas son inmutables una vez enviadas.
+//
+// FILTRADO EN TRES NIVELES (filteredRatings):
+//   1. Búsqueda libre: cliente, empresa, técnico
+//      o número de ticket (T-XXXX).
+//   2. Score: excelente (>3), regular (=3), malo (<3).
+//   3. Rango de fechas: dateFrom / dateTo.
+//   stats se calcula sobre filteredRatings — refleja
+//   siempre los filtros activos, no el total global.
+//
+// dateRange: rango min/max derivado del dataset para
+//   pre-rellenar los controles del ComentariosFilterModal.
+//
+// canRead: guard de permisos sobre el módulo
+//   'Comentarios'; si es false se muestra un mensaje
+//   de acceso denegado en lugar del contenido.
+// ============================================
+
 import React, { useState, useEffect, useMemo } from 'react';
 import styles from './Comentarios.module.less';
 import lensIcon from '../assets/icons/Lens-icon.svg';
@@ -59,9 +85,9 @@ const Comentarios = () => {
         return ratings.filter(r => {
             const searchLower = searchTerm.toLowerCase();
             const clientName = `${r.customer?.customer_first_name || ''} ${r.customer?.customer_last_name || ''}`.toLowerCase();
-            const company    = (r.customer?.customer_company || '').toLowerCase();
-            const techName   = (r.ticket?.assignedUsers ?? []).map(u => u.nombre_completo).join(' ').toLowerCase();
-            const ticketNum  = `T-${r.ticket_id?.toString().padStart(4, '0')}`;
+            const company = (r.customer?.customer_company || '').toLowerCase();
+            const techName = (r.ticket?.assignedUsers ?? []).map(u => u.nombre_completo).join(' ').toLowerCase();
+            const ticketNum = `T-${r.ticket_id?.toString().padStart(4, '0')}`;
 
             const matchesSearch = !searchTerm || (
                 ticketNum.toLowerCase().includes(searchLower) ||
