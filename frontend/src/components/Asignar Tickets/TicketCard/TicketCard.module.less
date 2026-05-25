@@ -1,3 +1,22 @@
+// ============================================
+// STYLES: TICKET CARD (Asignar Tickets)
+// Tarjeta del tablero de asignación con dos
+// variantes de botón en el footer según la
+// columna en que aparece:
+//   .detailBtn → columna Nuevos (estado 1-2)
+//   .assignBtn → columna Backlog (estado 3)
+//
+// .detailBtn y .assignBtn comparten el bloque
+// base (ancho, padding, tipografía, flex) en
+// selector múltiple; solo los colores difieren.
+//
+// .highlighted activa un ring de acento con la
+// animación highlightPulse que lo reduce de 6px
+// a 3px (forwards) para señalar al usuario qué
+// tarjeta llegó por navigation.state y requiere
+// atención inmediata.
+// ============================================
+
 @import "../../../less/main.less";
 
 .card {
@@ -24,6 +43,8 @@
         border-color: fade(@quaternary-color, 30%);
     }
 
+    // forwards mantiene el estado final del ring (3px) una vez
+    // que la animación de entrada (6px) termina.
     &.highlighted {
         border-color: @quaternary-color;
         box-shadow: 0 0 0 3px fade(@quaternary-color, 25%), 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -130,6 +151,7 @@
 
     .cardFooter {
 
+        // Base compartida; colores se definen en cada variante.
         .detailBtn,
         .assignBtn {
             width: 100%;

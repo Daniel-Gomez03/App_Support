@@ -1,3 +1,31 @@
+// ============================================
+// STYLES: TICKET DETAIL MODAL (Asignar Tickets)
+// Modal de revisión de ticket con scroll interno
+// en el cuerpo y footer fijo con botones de acción.
+//
+// ESTRUCTURA:
+//   .modalHeader  — título + botón cerrar (fijo)
+//   .modalBody    — secciones con scroll (overflow-y: auto)
+//   .modalFooter  — zona de acción / confirmación (fijo)
+//
+// .modalContent usa overflow: hidden para que
+//   border-radius recorte el header y el footer, y
+//   position: relative como ancla del lightbox.
+//
+// .imageOverlay (lightbox) usa z-index: 3000 para
+//   aparecer por encima del overlay del modal (1100).
+//
+// .badge: clase base con variantes de color mediante
+//   &.categoryBadge / &.productBadge / etc.
+//
+// .questionIcon y .dangerIcon comparten tamaño base
+//   en selector múltiple; el color los diferencia.
+//
+// La base del selector button dentro de .modalFooter
+//   define display/flex/gap compartidos; las variantes
+//   solo sobreescriben color y background.
+// ============================================
+
 @import "../../../less/main.less";
 
 .modalOverlay {
@@ -16,6 +44,8 @@
     animation: fadeIn 0.2s ease-out;
 }
 
+// overflow: hidden recorta el border-radius sobre header y footer;
+// position: relative ancla el lightbox (.imageOverlay) al modal.
 .modalContent {
     background-color: #ffffff;
     width: 100%;
@@ -327,16 +357,19 @@
         text-align: center;
         gap: 12px;
 
-        .questionIcon {
+        // Base compartida; el color diferencia advance (azul) de close (rojo).
+        .questionIcon,
+        .dangerIcon {
             font-size: 36px;
-            color: #2563eb;
             margin-bottom: 4px;
         }
 
+        .questionIcon {
+            color: #2563eb;
+        }
+
         .dangerIcon {
-            font-size: 36px;
             color: #ef4444;
-            margin-bottom: 4px;
         }
 
         .warningText {
@@ -422,9 +455,6 @@
     .manageBtn {
         background-color: @quaternary-color;
         color: white;
-        display: flex;
-        align-items: center;
-        gap: 8px;
 
         &:hover {
             background-color: darken(@quaternary-color, 5%);
@@ -432,6 +462,8 @@
     }
 }
 
+// z-index: 3000 supera el overlay del modal (1100) para cubrir
+// toda la pantalla al ampliar una evidencia.
 .imageOverlay {
     position: fixed;
     top: 0;

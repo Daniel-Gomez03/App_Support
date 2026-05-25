@@ -1,3 +1,30 @@
+// ============================================
+// COMPONENT: TICKET DETAIL MODAL (Asignar Tickets)
+// Modal de revisión de un ticket antes de decidir
+// su destino. Opera en dos modos según la prop readOnly:
+//
+//   readOnly = false (modo operativo, columna "Nuevos"):
+//     Expone dos acciones en el footer:
+//       - "Avanzar a Backlog" → updateTicketStatus(id, 3)
+//         mueve el ticket al estado 3 para que aparezca
+//         en la columna de asignación.
+//       - "Forzar Cierre" → updateTicketStatus(id, 10)
+//         cancela el ticket sin asignarlo.
+//     Cada acción pasa por un paso de confirmación
+//     (confirmAction: 'advance' | 'close') antes de
+//     llamar a la API.
+//
+//   readOnly = true (modo consulta, p.ej. desde ActiveTicket):
+//     Solo muestra "Cerrar" y "Gestionar Ticket" que
+//     delega al padre vía onManage.
+//
+// countryRules: mapeo código → iso fuera del componente
+//   para no recrearlo en cada render.
+//
+// LIGHTBOX: clic en una evidencia muestra la imagen
+//   a pantalla completa (selectedImg state).
+// ============================================
+
 import React, { useState } from 'react';
 import styles from './TicketDetailModal.module.less';
 import { FiX, FiCheckCircle, FiAlertCircle, FiXCircle, FiChevronLeft, FiChevronRight, FiArrowRight } from "react-icons/fi";
@@ -20,7 +47,7 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess, readOnly = false, onMan
 
     const customerName = `${ticket.customer?.customer_first_name || ''} ${ticket.customer?.customer_last_name || ''}`.trim();
     const documentType = ticket.customer?.customer_registration_type || 'Documento';
-    const documentValue = ticket.customer?.customer_registration_value || 'N/A';
+    const documentValue = ticket.customer?.customer_registration_value ?? 'N/A';
     const currentFlagIso = countryRules[ticket.customer?.customer_country_code]?.iso || 'hn';
 
     const handleAdvance = async () => {
@@ -76,7 +103,7 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess, readOnly = false, onMan
                                 <span className={styles.value}>{ticket.customer?.customer_company}</span>
                             </div>
                             <div className={styles.infoGroup}>
-                                <span className={styles.label}>{documentType?.toUpperCase()}</span>
+                                <span className={styles.label}>{documentType.toUpperCase()}</span>
                                 <span className={styles.value}><LuFileText /> {documentValue}</span>
                             </div>
                             <div className={styles.infoGroup}>
@@ -111,13 +138,13 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess, readOnly = false, onMan
                             <div className={styles.infoGroup}>
                                 <span className={styles.label}>Modelo</span>
                                 <span className={`${styles.badge} ${styles.modelBadge}`}>
-                                    {ticket.productModel?.product_model_name || 'N/A'}
+                                    {ticket.productModel?.product_model_name ?? 'N/A'}
                                 </span>
                             </div>
                             <div className={styles.infoGroup}>
                                 <span className={styles.label}>No. de Serie / Garantía</span>
                                 <div className={styles.serialGroup}>
-                                    <span className={styles.value}>{ticket.ticket_serial_number || 'Sin Serie'}</span>
+                                    <span className={styles.value}>{ticket.ticket_serial_number ?? 'Sin Serie'}</span>
                                     {!ticket.warranty ? (
                                         <span className={`${styles.badge} ${styles.warrantyWarnBadge}`}>
                                             <FiXCircle /> No Encontrada
@@ -156,7 +183,7 @@ const TicketDetailModal = ({ ticket, onClose, onSuccess, readOnly = false, onMan
                                             src={ev.ticket_evidence_path}
                                             alt="Evidence"
                                             className={styles.evidenceImage}
-                                            onClick={() => setSelectedImg(ev.ticket_evidence_path)} // <-- Abre el visor en grande
+                                            onClick={() => setSelectedImg(ev.ticket_evidence_path)}
                                         />
                                     ))}
                                 </div>

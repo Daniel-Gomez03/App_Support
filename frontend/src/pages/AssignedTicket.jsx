@@ -1,3 +1,31 @@
+// ============================================
+// PAGE: ASSIGNED TICKET
+// Vista de asignación de tickets: dos columnas
+// (Nuevos/En revisión y Backlog) que muestran
+// los tickets en estados 1-2 y 3 respectivamente.
+//
+// FLUJO DE ASIGNACIÓN:
+//   1. Admin/supervisor ve los tickets entrantes
+//      y del backlog en columnas separadas.
+//   2. TicketDetailModal permite revisar el detalle
+//      antes de decidir a quién asignar.
+//   3. AssignTicketModal ejecuta la asignación
+//      real al técnico seleccionado.
+//
+// HIGHLIGHT: highlightTicketId llega por
+// navigation.state cuando otra vista redirige
+// aquí con un ticket específico que debe
+// scrollear al centro y resaltarse visualmente.
+//
+// PERMISOS:
+//   canRead  → acceso a la vista
+//   canEdit  → abrir modales (detalle + asignar)
+//   canWrite → botón "Crear Ticket"
+//
+// SOCKET: refresca la lista ante ticket_updated,
+// new_ticket_created y ticket_status_changed.
+// ============================================
+
 import React, { useEffect, useState, useCallback } from "react";
 import styles from "./AssignedTicket.module.less";
 import { FiPlus } from "react-icons/fi";
@@ -78,7 +106,7 @@ const AssignedTicket = () => {
         try {
             const data = await getAllTickets();
             if (Array.isArray(data)) {
-                const sortedData = data.sort(
+                const sortedData = [...data].sort(
                     (a, b) => new Date(a.created_at) - new Date(b.created_at),
                 );
                 setTickets(sortedData);

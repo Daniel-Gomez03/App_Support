@@ -1,3 +1,32 @@
+// ============================================
+// STYLES: ASSIGN TICKET MODAL
+// Modal de dos columnas: resumen del caso
+// (izquierda) y formulario de asignación
+// (derecha).
+//
+// ESTRUCTURA:
+//   overlay → content (position: relative)
+//     topHeader  — fijo, sin scroll
+//     mainLayout (overflow: hidden)
+//       summaryColumn → summaryBody (overflow-y: auto)
+//       formColumn                  (overflow-y: auto)
+//
+// overflow: hidden en .mainLayout con overflow-y: auto
+// en cada columna permite scroll independiente por
+// panel sin afectar al header ni al otro panel.
+//
+// GARANTÍA: [class*="warrantyLabel"] agrupa las
+// propiedades base de los tres estados (ok /
+// expired / error); cada clase solo añade color.
+//
+// .btnSecondary y .cancelBtn comparten el mismo
+// estilo gris — merged en selector múltiple.
+//
+// .imageOverlay usa z-index: 3000 (> 1200 del
+// modal) para aparecer encima del modal cuando
+// el usuario amplía una evidencia adjunta.
+// ============================================
+
 @import "../../../less/main.less";
 
 .modalOverlay {
@@ -26,6 +55,9 @@
     max-height: 95vh;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    // overflow: hidden recorta el contenido al border-radius.
+    // position: relative ancla el lightbox (.imageOverlay position: fixed)
+    // al viewport, no a este contenedor.
     overflow: hidden;
     position: relative;
 
@@ -101,6 +133,8 @@
 .mainLayout {
     display: flex;
     flex: 1;
+    // overflow: hidden necesario para que los paneles internos
+    // con overflow-y: auto hagan scroll de forma independiente.
     overflow: hidden;
     padding: 24px;
     gap: 24px;
@@ -226,6 +260,8 @@
                     color: #374151;
                 }
 
+                // Base compartida por los tres estados de garantía;
+                // cada variante solo añade su color.
                 [class*="warrantyLabel"] {
                     font-size: 11px;
                     font-weight: 700;
@@ -612,6 +648,8 @@
             }
         }
 
+        // btnSecondary (cancelar en formActions) y cancelBtn
+        // (regresar en confirmZone) comparten el mismo estilo gris.
         .btnSecondary,
         .cancelBtn {
             background: #e5e7eb;
@@ -634,6 +672,8 @@
     }
 }
 
+// z-index: 3000 — por encima del modal (1200) para que el lightbox
+// tape todo cuando el usuario amplía una evidencia adjunta.
 .imageOverlay {
     position: fixed;
     top: 0;

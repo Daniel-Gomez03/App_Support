@@ -1,3 +1,26 @@
+// ============================================
+// STYLES: ASSIGNED TICKET
+// Dos columnas de asignación: Nuevos/En revisión
+// (estados 1-2, fondo blanco) y Backlog de
+// asignación (estado 3, fondo verde suave).
+//
+// Las columnas usan colores de fondo distintos
+// (:first-child y :last-child) para distinguir
+// visualmente el flujo entrante del pendiente.
+//
+// .dotNew y .dotBacklog comparten base de
+// dimensión en selector múltiple; solo el color
+// los diferencia.
+//
+// .loadingCol y .emptyState comparten el mismo
+// layout de centrado — merged en selector múltiple.
+//
+// El toast está fuera de .assignedTicketContainer
+// para que position: fixed tome como referencia
+// el viewport y no quede recortado por el
+// overflow del contenedor padre.
+// ============================================
+
 @import "../less/main.less";
 
 .assignedTicketContainer {
@@ -129,6 +152,7 @@
                     line-height: 1.3;
                 }
 
+                // Base compartida; el color diferencia cada columna.
                 .dotNew,
                 .dotBacklog {
                     width: 8px;
@@ -197,6 +221,10 @@
     }
 }
 
+// Toast fuera de .assignedTicketContainer para que position: fixed
+// tome como referencia el viewport y no quede atrapado en un
+// contexto de apilamiento creado por el contenedor padre.
+// z-index: 2000 asegura que aparezca sobre cualquier modal abierto.
 .successToast {
     position: fixed;
     top: 24px;
@@ -275,6 +303,8 @@
         }
     }
 
+    // En móvil el toast pasa a la parte inferior para mejor
+    // accesibilidad con el pulgar y no tapar el contenido.
     @media (max-width: #breaks[tablet]) {
         top: auto;
         bottom: 20px;
