@@ -1,3 +1,27 @@
+// ============================================
+// COMPONENT: HISTORIAL EDIT MODAL
+// Modal de edición de tickets en estados finales (4–8).
+// Permite reasignar técnicos, cambiar prioridad,
+// fecha máxima y observaciones.
+//
+// FLUJO DE DOS PASOS:
+//   1. Formulario (handlePreSubmit) → valida + activa confirmAction
+//   2. Confirmación (handleFinalSubmit) → llama updateHistorialTicket
+//      y dispara onSuccess con mensaje para el toast del padre
+//
+// PROPS:
+//   ticket    — objeto de ticket con assignedUsers, customer,
+//               category, product, productModel, warranty
+//   onClose   — cierra sin guardar
+//   onSuccess — fn(msg); el padre cierra + muestra toast
+//
+// DROPDOWN DE TÉCNICOS:
+//   availableTechnicians = técnicos activos (estado=1)
+//   que aún no están en assignedUsers. Se calcula antes
+//   del return para no ejecutar filter() dos veces en el JSX.
+//   handleClickOutside cierra el dropdown al hacer clic fuera.
+// ============================================
+
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './HistorialEditModal.module.less';
 import {
@@ -17,10 +41,8 @@ const HistorialEditModal = ({ ticket, onClose, onSuccess }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
 
-    const today = new Date().toISOString().split('T')[0];
-
     const [formData, setFormData] = useState({
-        assignedUsers: ticket.assignedUsers?.map(u => u.user_id) || [],
+        assignedUsers: ticket.assignedUsers?.map(u => u.user_id) ?? [],
         ticket_priority: ticket.ticket_priority || '',
         ticket_due_date: ticket.ticket_due_date ? ticket.ticket_due_date.split('T')[0] : '',
         assignment_remarks: ticket.assignment_remarks || ''
@@ -97,6 +119,7 @@ const HistorialEditModal = ({ ticket, onClose, onSuccess }) => {
 
     const company = ticket.customer?.customer_company || '';
     const clientName = `${ticket.customer?.customer_first_name || ''} ${ticket.customer?.customer_last_name || ''}`.trim();
+    const availableTechnicians = technicians.filter(t => !formData.assignedUsers.includes(t.user_id));
 
     return (
         <div className={styles.modalOverlay}>
@@ -112,7 +135,6 @@ const HistorialEditModal = ({ ticket, onClose, onSuccess }) => {
 
                 <div className={styles.mainLayout}>
 
-                    {/* Resumen del caso */}
                     <div className={styles.summaryColumn}>
                         <div className={styles.summaryCard}>
                             <div className={styles.summaryHeader}>
@@ -167,7 +189,6 @@ const HistorialEditModal = ({ ticket, onClose, onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* Formulario de edición */}
                     <div className={styles.formColumn}>
                         <form onSubmit={handlePreSubmit}>
                             <div className={styles.formHeader}>
@@ -205,16 +226,14 @@ const HistorialEditModal = ({ ticket, onClose, onSuccess }) => {
                                 </div>
                                 {isDropdownOpen && !confirmAction && (
                                     <ul className={styles.dropdownMenu}>
-                                        {technicians.filter(t => !formData.assignedUsers.includes(t.user_id)).length === 0 ? (
+                                        {availableTechnicians.length === 0 ? (
                                             <li className={styles.emptyOption}>Todos los técnicos han sido seleccionados</li>
                                         ) : (
-                                            technicians
-                                                .filter(t => !formData.assignedUsers.includes(t.user_id))
-                                                .map(t => (
-                                                    <li key={t.user_id} onClick={() => handleAddUser(t)}>
-                                                        {t.nombre_completo}
-                                                    </li>
-                                                ))
+                                            availableTechnicians.map(t => (
+                                                <li key={t.user_id} onClick={() => handleAddUser(t)}>
+                                                    {t.nombre_completo}
+                                                </li>
+                                            ))
                                         )}
                                     </ul>
                                 )}

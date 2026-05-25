@@ -1,3 +1,33 @@
+// ============================================
+// PAGE: HISTORIAL
+// Bitácora completa de tickets cerrados/archivados.
+// Permite buscar, filtrar por estado/prioridad/fecha,
+// visualizar el detalle de un ticket y editar
+// tickets en estados finales (4–8).
+//
+// PERMISOS:
+//   canRead — necesario para ver la tabla
+//   canEdit — habilita acciones de edición
+//
+// FLUJO DE EDICIÓN (handleEdit):
+//   ticket_status_id ≤ 3  → redirige a AssignedTicket
+//     con highlightTicketId (aún está activo)
+//   ticket_status_id 4–8  → abre HistorialEditModal
+//
+// filteredTickets: derivado con useMemo de tickets +
+//   searchTerm + appliedFilters. Filtra por número de
+//   ticket, asunto, cliente, empresa, estado, prioridad
+//   y rango de fechas.
+//
+// dateRange: useMemo que extrae min/max de created_at
+//   para pasarlos al HistorialFilterModal como límites
+//   del date picker.
+//
+// Socket: se suscribe a 'ticket_updated' y
+//   'new_ticket_created' para recargar la lista en
+//   tiempo real cuando canRead es true.
+// ============================================
+
 import React, { useState, useEffect, useMemo } from "react";
 import styles from "./Historial.module.less";
 import lensIcon from "../assets/icons/Lens-icon.svg";
@@ -58,12 +88,11 @@ const Historial = () => {
 
     useEffect(() => {
         if (!canRead) return;
-        const refresh = () => loadTickets();
-        socket.on('ticket_updated', refresh);
-        socket.on('new_ticket_created', refresh);
+        socket.on('ticket_updated', loadTickets);
+        socket.on('new_ticket_created', loadTickets);
         return () => {
-            socket.off('ticket_updated', refresh);
-            socket.off('new_ticket_created', refresh);
+            socket.off('ticket_updated', loadTickets);
+            socket.off('new_ticket_created', loadTickets);
         };
     }, [canRead]);
 
@@ -106,6 +135,20 @@ const Historial = () => {
     const showToast = (title, message, type = "success") => {
         setToastConfig({ show: true, title, message, type });
         setTimeout(() => setToastConfig(prev => ({ ...prev, show: false })), 5000);
+    };
+
+    const handleEdit = (t) => {
+        if (t.ticket_status_id <= 3) {
+            navigate('/tickets/assignedTicket', { state: { highlightTicketId: t.ticket_id } });
+        } else {
+            setEditTicket(t);
+        }
+    };
+
+    const handleEditSuccess = (msg) => {
+        setEditTicket(null);
+        showToast('¡Actualización Exitosa!', msg, 'success');
+        loadTickets();
     };
 
     if (!canRead) {
@@ -158,17 +201,8 @@ const Historial = () => {
                 ) : (
                     <HistorialTable
                         data={filteredTickets}
-                        onView={t => setViewTicket(t)}
-                        onEdit={t => {
-                            const s = t.ticket_status_id;
-                            if (s <= 3) {
-                                navigate('/tickets/assignedTicket', {
-                                    state: { highlightTicketId: t.ticket_id }
-                                });
-                            } else {
-                                setEditTicket(t);
-                            }
-                        }}
+                        onView={setViewTicket}
+                        onEdit={handleEdit}
                         canEdit={canEdit}
                     />
                 )}
@@ -185,11 +219,7 @@ const Historial = () => {
                 <HistorialEditModal
                     ticket={editTicket}
                     onClose={() => setEditTicket(null)}
-                    onSuccess={msg => {
-                        setEditTicket(null);
-                        showToast('¡Actualización Exitosa!', msg, 'success');
-                        loadTickets();
-                    }}
+                    onSuccess={handleEditSuccess}
                 />
             )}
 

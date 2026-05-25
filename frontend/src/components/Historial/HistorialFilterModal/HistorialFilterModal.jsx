@@ -1,3 +1,28 @@
+// ============================================
+// COMPONENT: HISTORIAL FILTER MODAL
+// Modal de filtrado de la bitácora de tickets.
+// Permite filtrar por estado, prioridad y rango
+// de fechas de creación.
+//
+// PROPS:
+//   isOpen         — controla visibilidad
+//   onClose        — cierra sin aplicar
+//   currentFilters — estado activo de filtros
+//   onApply        — fn(filters); persiste en el padre
+//   minDate/maxDate — límites del date picker derivados
+//                     de los tickets cargados
+//
+// FLUJO:
+//   local state copia currentFilters al abrirse;
+//   handleApply → onApply(local) + onClose
+//   handleReset → limpia local, llama onApply({...vacío}) + onClose
+//   hasChanges controla visibilidad del botón "Limpiar filtros".
+//
+// CONSTANTES (módulo):
+//   STATUSES — lista completa de estados (id + label)
+//   PRIORITIES — opciones de prioridad
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import styles from './HistorialFilterModal.module.less';
 import { FiX } from 'react-icons/fi';

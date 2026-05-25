@@ -1,3 +1,35 @@
+// ============================================
+// COMPONENT: HISTORIAL VIEW MODAL
+// Modal de solo lectura para un ticket del historial.
+// Muestra resumen del caso (panel izquierdo) e
+// historial completo del chat (panel derecho).
+//
+// PROPS:
+//   ticket  — objeto completo del ticket
+//   onClose — cierra el modal
+//
+// PANEL IZQUIERDO:
+//   Cliente, categoría/producto/modelo, serie + garantía,
+//   prioridad, fecha máxima, técnicos asignados,
+//   descripción, observaciones y evidencias adjuntas.
+//
+// PANEL DERECHO (chat):
+//   Carga comentarios con getTicketComments al montar.
+//   Mensajes sistema detectados por prefijo '🔴'.
+//   Burbujas derecha = técnico/admin, izquierda = cliente.
+//   Cada burbuja puede tener attachments (imagen/video/archivo).
+//   Auto-scroll al final con messagesEndRef.
+//
+// LIGHTBOX:
+//   selectedMedia = { url, type } activa overlay fullscreen
+//   al hacer clic en evidencia o adjunto de imagen/video.
+//
+// CONSTANTES (módulo):
+//   STATUS_MAP  — id → label de estado
+//   getMediaType — clasifica extensión en image/video/file
+//   formatID / formatTime — formato de ID y fecha-hora
+// ============================================
+
 import React, { useEffect, useState, useRef } from 'react';
 import styles from './HistorialViewModal.module.less';
 import {
@@ -53,14 +85,13 @@ const HistorialViewModal = ({ ticket, onClose }) => {
 
     const company = ticket.customer?.customer_company || '—';
     const clientName = `${ticket.customer?.customer_first_name || ''} ${ticket.customer?.customer_last_name || ''}`.trim();
-    const statusLabel = STATUS_MAP[ticket.ticket_status_id] || 'Desconocido';
-    const evidences = ticket.evidences || [];
+    const statusLabel = STATUS_MAP[ticket.ticket_status_id] ?? 'Desconocido';
+    const evidences = ticket.evidences ?? [];
 
     return (
         <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
             <div className={styles.modalContent}>
 
-                {/* ── HEADER ── */}
                 <div className={styles.topHeader}>
                     <div className={styles.ticketBadge}>
                         <h2>Historial del Ticket <span>{formatID(ticket.ticket_id)}</span></h2>
@@ -69,10 +100,8 @@ const HistorialViewModal = ({ ticket, onClose }) => {
                     <button className={styles.closeBtn} onClick={onClose}><FiX /></button>
                 </div>
 
-                {/* ── MAIN ── */}
                 <div className={styles.mainLayout}>
 
-                    {/* Panel izquierdo: Resumen del caso */}
                     <div className={styles.summaryColumn}>
                         <div className={styles.summaryCard}>
                             <div className={styles.summaryHeader}>
@@ -180,7 +209,6 @@ const HistorialViewModal = ({ ticket, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Panel derecho: Chat */}
                     <div className={styles.chatColumn}>
                         <div className={styles.chatHeader}>
                             <LuMessageSquare />
@@ -226,7 +254,6 @@ const HistorialViewModal = ({ ticket, onClose }) => {
                                             key={comment.comment_id}
                                             className={`${styles.messageRow} ${isUser ? styles.rowRight : styles.rowLeft}`}
                                         >
-                                            {/* Avatar izquierdo (cliente)*/}
                                             {!isUser && (
                                                 <div className={styles.avatarSmall}>
                                                     {hasFoto
@@ -246,7 +273,6 @@ const HistorialViewModal = ({ ticket, onClose }) => {
                                                 </div>
                                             )}
 
-                                            {/* Burbuja */}
                                             <div className={`${styles.bubble} ${isUser ? styles.bubbleRight : styles.bubbleLeft}`}>
                                                 <div className={styles.bubbleMeta}>
                                                     <span className={styles.bubbleAuthor}>{authorName}</span>
@@ -294,7 +320,6 @@ const HistorialViewModal = ({ ticket, onClose }) => {
                                                 )}
                                             </div>
 
-                                            {/* Avatar derecho (técnico) */}
                                             {isUser && (
                                                 <div className={styles.avatarSmall}>
                                                     {hasFoto
@@ -322,7 +347,6 @@ const HistorialViewModal = ({ ticket, onClose }) => {
                     </div>
                 </div>
 
-                {/* ── LIGHTBOX ── */}
                 {selectedMedia && (
                     <div className={styles.lightbox} onClick={() => setSelectedMedia(null)}>
                         <button className={styles.closeLightbox} onClick={() => setSelectedMedia(null)}><FiX /></button>

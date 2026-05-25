@@ -1,3 +1,32 @@
+// ============================================
+// STYLES: HISTORIAL TABLE
+// Tabla de react-data-table-component para el historial.
+//
+// ESTRUCTURA:
+//   .tableWrapper  — contenedor; overflow-x en tablet
+//   Celdas custom (inyectadas vía cell: de columns):
+//     .ticketId      — badge mono con fondo tintado
+//     .subject       — texto con line-clamp: 2
+//     .clientCell    — avatar + nombre (.clientAvatar img +
+//                      .clientFallback, .clientName)
+//     .company       — ellipsis truncado
+//     .avatarStack   — pila de avatares técnicos:
+//                      .avatarItem (img + .avatarFallback) +
+//                      .avatarMore (+N)
+//     .noAssigned,
+//     .noPriority    — selector combinado (estilos idénticos:
+//                      "—" en gris claro)
+//     .priorityBadge,
+//     .statusBadge   — selector combinado para base compartida
+//                      (display, border-radius, font-size,
+//                      font-weight, white-space); solo padding difiere
+//     .date          — fecha en gris
+//     .actions > .iconBtn — base neutral; &.editBtn y &.manageBtn
+//                      solo sobreescriben el hover
+//   .noData — requiere font-family explícito: react-data-table
+//             inyecta este nodo fuera del árbol CSS heredado
+// ============================================
+
 @import '../../../less/main.less';
 
 .tableWrapper {
@@ -145,32 +174,27 @@
     }
 }
 
-.noAssigned {
-    color: #d1d5db;
-    font-size: 13px;
-}
-
-.priorityBadge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
+.noAssigned,
 .noPriority {
     color: #d1d5db;
     font-size: 13px;
 }
 
+.priorityBadge,
 .statusBadge {
     display: inline-block;
-    padding: 4px 10px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: 700;
     white-space: nowrap;
+}
+
+.priorityBadge {
+    padding: 3px 10px;
+}
+
+.statusBadge {
+    padding: 4px 10px;
 }
 
 .date {

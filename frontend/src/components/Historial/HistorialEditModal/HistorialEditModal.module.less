@@ -1,3 +1,39 @@
+// ============================================
+// STYLES: HISTORIAL EDIT MODAL
+// Modal de dos columnas para editar tickets
+// en estados finales (4–8).
+//
+// ESTRUCTURA:
+//   .modalOverlay  — backdrop fixed + blur
+//   .modalContent  — tarjeta max-w:1000px; 2 columnas en desktop,
+//                    1 columna (scroll) en tablet
+//   .topHeader     — título + closeBtn absolute top-right
+//   .mainLayout    — flex row → col en tablet; overflow hidden
+//     .summaryColumn — panel izquierdo fijo (360px)
+//       .summaryCard > .summaryHeader + .summaryBody
+//         .miniLabel, .clientInfo, .tagsRow, .serialWarranty,
+//         .descriptionSection
+//         [class*="warrantyLabel"] — selector de atributo que
+//           aplica base compartida a .warrantyLabelOk/Expired/Error;
+//           CSS Modules preserva el substring en el nombre
+//           hasheado, por lo que el selector sigue matcheando
+//     .formColumn — panel derecho flexible; overflow-y: auto
+//       form — flex column; gap 20px
+//         .inputGroup — campo con label + control; también
+//           contiene el custom dropdown (.customSelectBox +
+//           .dropdownMenu)
+//         .formRow    — grilla 2 cols para prioridad + fecha
+//         .formActions / .confirmZone — mutuamente excluyentes;
+//           ambos con margin-top: auto para pegar al fondo
+//         form button {} — base genérica que cubre .btnPrimary,
+//           .btnSecondary, .cancelBtn, .successBtn (no repiten
+//           padding, font-size, font-family, etc.)
+//         .btnSecondary, .cancelBtn — selector combinado
+//           (estilos idénticos, roles distintos)
+//
+// ANIMACIONES: fadeIn (overlay), slideUp (modal + confirmZone).
+// ============================================
+
 @import "../../../less/main.less";
 
 .modalOverlay {
@@ -108,7 +144,6 @@
     }
 }
 
-/* ─── Summary column ─── */
 .summaryColumn {
     flex: 0 0 360px;
     display: flex;

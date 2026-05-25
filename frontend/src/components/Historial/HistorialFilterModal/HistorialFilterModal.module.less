@@ -1,3 +1,25 @@
+// ============================================
+// STYLES: HISTORIAL FILTER MODAL
+// Modal de filtrado de tickets del historial.
+//
+// ESTRUCTURA:
+//   .overlay  — backdrop fixed; align top-right (flex-end/flex-start)
+//     .modal  — tarjeta max-w:380px con slideDown
+//       .header — título con ícono + closeBtn
+//       .body   — secciones de filtro (estado, prioridad, fecha)
+//         .filterSection > .sectionLabel + controles
+//           .radioGroup > .radioItem — pill toggle; input[type="radio"]
+//             oculto con display:none; el label completo actúa como botón
+//         .dateRange > .dateGroup — fila "Desde/Hasta" con span label fijo
+//       .footer — resetBtn + cancelBtn + applyBtn
+//         .resetBtn usa margin-right:auto para empujar los otros a la derecha;
+//           solo visible cuando hasChanges (condicional en el JSX)
+//         .cancelBtn y .applyBtn comparten 7 propiedades base; solo difieren
+//           en padding, background, color y hover
+//
+// ANIMACIONES: fadeIn (overlay), slideDown (tarjeta modal).
+// ============================================
+
 @import "../../../less/main.less";
 
 .overlay {
@@ -220,17 +242,21 @@
         }
     }
 
-    .cancelBtn {
-        background: #f3f4f6;
+    .cancelBtn,
+    .applyBtn {
         border: none;
         border-radius: 10px;
-        padding: 10px 18px;
         font-size: 14px;
         font-weight: 600;
-        color: #374151;
         cursor: pointer;
         transition: all 0.2s;
         font-family: @font-family;
+    }
+
+    .cancelBtn {
+        padding: 10px 18px;
+        background: #f3f4f6;
+        color: #374151;
 
         &:hover {
             background: #e5e7eb;
@@ -238,16 +264,9 @@
     }
 
     .applyBtn {
-        background: @quaternary-color;
-        border: none;
-        border-radius: 10px;
         padding: 10px 20px;
-        font-size: 14px;
-        font-weight: 600;
+        background: @quaternary-color;
         color: white;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-family: @font-family;
 
         &:hover {
             background: darken(@quaternary-color, 5%);
