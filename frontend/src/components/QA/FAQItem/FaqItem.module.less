@@ -1,3 +1,35 @@
+// ============================================
+// STYLES: FAQ ITEM
+// Tarjeta expandible de una FAQ individual.
+//
+// ESTRUCTURA:
+//   .faqCard        — tarjeta base con hover lift; modificadores:
+//                     &.expanded (borde @primary-color, fondo blanco)
+//                     &.inactive (fondo/borde gris, hover neutralizado)
+//   .faqHeader      — fila principal (content + actions)
+//     .faqContent   — icono + texto
+//       .faqIcon    — cuadrado redondeado; &.active → fondo oscuro
+//                     + .qaIconImg invertido (filter:brightness invert)
+//       .faqTextContent — .faqQuestion + .faqTags
+//         .faqTags  — .tag base (inline-flex, pill) + modificadores
+//                     .categoryTag / .productTag / .modelTag
+//         .tagIcon  — icono dentro del .tag
+//     .faqActions   — columna derecha (estado + editar + toggle)
+//       .statusActive,
+//       .statusInactive — selector combinado (base compartida);
+//                     cada uno solo declara color/background
+//       .editBtn    — botón icono con hover borde
+//       .toggleContainer — .toggle (checkbox oculto) + .toggleLabel
+//                     como switch visual; :checked mueve ::after
+//                     con translateX(20px)
+//   .faqBody        — panel colapsable max-height 0→800px con opacity;
+//                     &.show activa la transición y añade border-top
+//     .answerSection — .answerHeader (título + .expandIcon) +
+//                     .answerText (pre-wrap para saltos de línea)
+//     .expandIcon   — flecha; .rotated la gira 180° al expandir
+//     .videoLink    — pill verde con .videoLinkIcon + enlace
+// ============================================
+
 @import "../../../less/main.less";
 
 .faqCard {
@@ -32,20 +64,6 @@
     &.inactive {
         background-color: #f6f6f6;
         border-color: #f6f6f6;
-
-        .faqHeader {
-            .faqContent {
-                .faqTextContent {
-                    .faqQuestion {
-                        color: @quaternary-color;
-                    }
-                }
-
-                .faqIcon {
-                    background-color: fade(@secondary-color, 40%);
-                }
-            }
-        }
 
         &:hover {
             border-color: #f6f6f6;
@@ -140,6 +158,11 @@
                             background-color: #ffedd5;
                             color: #c2410c;
                         }
+                    }
+
+                    .tagIcon {
+                        font-size: 10px;
+                        flex-shrink: 0;
                     }
                 }
             }
@@ -276,6 +299,17 @@
                     color: #9ca3af;
                     letter-spacing: 1px;
                 }
+
+                .expandIcon {
+                    font-size: 20px;
+                    color: #9ca3af;
+                    transition: transform 0.3s ease;
+                    flex-shrink: 0;
+                }
+
+                .rotated {
+                    transform: rotate(180deg);
+                }
             }
 
             .answerText {
@@ -297,6 +331,12 @@
             border-radius: 12px;
             width: fit-content;
             border: 1px solid #dcfce7;
+
+            .videoLinkIcon {
+                font-size: 18px;
+                color: @quaternary-color;
+                flex-shrink: 0;
+            }
 
             a {
                 color: @quaternary-color;

@@ -1,3 +1,27 @@
+// ============================================
+// STYLES: QA PAGE
+// Layout de la página de Preguntas Frecuentes.
+//
+// ESTRUCTURA:
+//   .qaContainer       — columna raíz con gap y padding responsivo
+//   .header            — sección superior (título + topBar)
+//     .titleSection    — .title + .subtitle
+//     .topBar          — searchBar + actionButtons en fila;
+//                        en tablet colapsa a columna
+//       .searchBar     — pill con focus-within highlight
+//       .actionButtons — .createBtn (pill primario) +
+//                        .filterBtn (icono cuadrado)
+//   .faqListContainer  — wrapper del FAQList
+//   .loadingMessage,
+//   .errorInfo         — estados placeholder (texto centrado
+//                        en recuadro punteado); emptyState
+//                        lo maneja FAQList internamente
+//   .successToast      — toast fijo top-right; en mobile
+//                        se ancla al bottom full-width;
+//                        &.errorToast sobreescribe colores
+//                        de icon/content/close
+// ============================================
+
 @import "../less/main.less";
 
 .qaContainer {
@@ -151,8 +175,7 @@
     }
 
     .loadingMessage,
-    .errorInfo,
-    .emptyState {
+    .errorInfo {
         text-align: center;
         padding: 60px 20px;
         color: #777;

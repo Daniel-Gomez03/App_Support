@@ -1,3 +1,26 @@
+// ============================================
+// STYLES: FAQ FORM MODAL
+// Modal de creación/edición de FAQ.
+//
+// ESTRUCTURA:
+//   .modalOverlay   — fondo fijo con blur; en tablet ancla
+//                     el modal al borde inferior (flex-end)
+//   .modalContent   — tarjeta con scroll interno y animación;
+//                     slideUp en desktop, slideUpBottom en tablet
+//     .modalHeader  — sticky con título y .closeBtn circular
+//     .errorMessage — banner rojo animado con slideDown
+//     .form         — columna de campos con gap
+//       .twoColumnsGroup — grid 2 columnas → 1 col en tablet
+//       .formGroup   — label + control (select/input/textarea);
+//                      selector combinado cubre todos los controles:
+//                      focus highlight + estado disabled
+//                      .textarea solo agrega resize:none + min-height
+//       .formActions — fila de botones (column-reverse en tablet);
+//                      `button {}` regla genérica cubre base
+//                      compartida; .cancelBtn y .submitBtn solo
+//                      declaran lo que difiere
+// ============================================
+
 @import "../../../less/main.less";
 
 .modalOverlay {
@@ -44,28 +67,6 @@
         &::-webkit-scrollbar-thumb {
             background: darken(@secondary-color, 15%);
             border-radius: 10px;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(40px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideUpBottom {
-            from {
-                transform: translateY(100%);
-            }
-
-            to {
-                transform: translateY(0);
-            }
         }
 
         .modalHeader {
@@ -245,6 +246,28 @@
                 }
             }
         }
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideUpBottom {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
     }
 }
 
