@@ -1,3 +1,34 @@
+// ============================================
+// STYLES: CREATE TICKET
+// Formulario de tres pasos para registrar un
+// ticket desde administración.
+//
+// ESTRUCTURA:
+//   .pageHeader         — título y subtítulo
+//   .formCard           — contenedor del form
+//     .section          — cada paso numerado
+//     .formGridTwo/Three — grids responsive
+//   .modalOverlay       — confirmación antes
+//                         de enviar
+//   .successToast       — notificación flotante
+//                         (top-right en desktop,
+//                          bottom en móvil)
+//
+// .inputGroup y .formGroup comparten base en
+//   selector múltiple; input, select y textarea
+//   también comparten estilos base.
+//
+// .warrantyInfo tiene variantes .valid,
+//   .expired y .notFound para el resultado
+//   de la verificación de número de serie.
+//
+// .btnCancelModal y .btnAcceptModal comparten
+//   border y font-family en selector múltiple.
+//
+// .successToast usa z-index: 2000 para aparecer
+//   por encima del modal de confirmación (1000).
+// ============================================
+
 @import "../less/variables.less";
 
 .createTicketContainer {
@@ -211,6 +242,7 @@
         }
     }
 
+    // Base compartida; input, select y textarea solo difieren en resize/min-height (textarea).
     .inputGroup,
     .formGroup {
         display: flex;
@@ -499,11 +531,16 @@
             }
         }
 
+        // Base compartida; background y color los diferencian.
+        .btnCancelModal,
+        .btnAcceptModal {
+            border: none;
+            font-family: @font-family;
+        }
+
         .btnCancelModal {
             background: #F3F4F6;
-            border: none;
             color: #374151;
-            font-family: @font-family;
 
             &:hover {
                 background: #E5E7EB;
@@ -513,8 +550,6 @@
         .btnAcceptModal {
             background: @tertiary-color;
             color: white;
-            border: none;
-            font-family: @font-family;
 
             &:hover {
                 opacity: 0.9;
@@ -562,6 +597,7 @@
     }
 }
 
+// z-index: 2000 supera el modal de confirmación (1000).
 .successToast {
     position: fixed;
     top: 24px;
