@@ -1,3 +1,24 @@
+// ============================================
+// STYLES: FEEDBACK (Dashboard)
+// Tarjeta lateral de opiniones de clientes.
+//
+// ESTRUCTURA:
+//   .feedbackCard       — contenedor flex-column
+//                         con height:100% en desktop
+//                         y auto en móvil
+//     .cardHeader       — título de la sección
+//     .listContainer    — lista scrollable de filas;
+//                         flex:1 + min-height:0
+//                         para que el scroll funcione
+//                         dentro del flex parent
+//       .userRow        — fila técnico: avatar +
+//                         nombre/reseñas a la izquierda,
+//                         estrellas + número a la derecha
+//       .emptyState     — mensaje cuando no hay datos
+//     .footer           — botón "Ver todos" anclado
+//                         al fondo con margin-top:auto
+// ============================================
+
 @import "../../../less/variables.less";
 
 .feedbackCard {

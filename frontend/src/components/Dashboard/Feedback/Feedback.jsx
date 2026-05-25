@@ -1,3 +1,23 @@
+// ============================================
+// COMPONENT: FEEDBACK (Dashboard)
+// Tarjeta lateral del Dashboard que muestra
+// el promedio de calificación por técnico
+// (últimas reseñas). Navega a /comments al
+// pulsar "Ver todos los comentarios".
+//
+// COMPONENTES INTERNOS:
+//   TechAvatar: avatar circular con fallback
+//     a inicial cuando la imagen falla.
+//
+// FUNCIONES PURAS (fuera del árbol):
+//   renderStars(rating): genera fila de 5
+//     FaStar coloreadas según el promedio
+//     redondeado; doradas (#FF9F43) vs grises.
+//
+// DATA SHAPE (item):
+//   { name, avatar, rating, totalRatings }
+// ============================================
+
 import React, { useState } from 'react';
 import styles from './Feedback.module.less';
 import { FaStar } from "react-icons/fa";

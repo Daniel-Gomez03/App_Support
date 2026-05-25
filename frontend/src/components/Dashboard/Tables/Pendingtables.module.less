@@ -1,3 +1,19 @@
+// ============================================
+// STYLES: PENDING CASES TABLE (Dashboard)
+// Tabla horizontal de conteo por estado.
+//
+// ESTRUCTURA:
+//   .tableCard      — contenedor con borde y sombra
+//     .cardHeader   — título + subtítulo de la sección
+//     .tableWrapper — scroll horizontal para la tabla
+//                     en pantallas estrechas
+//
+// CELDAS DE DATO:
+//   .faded  — color gris claro para valor 0
+//   .badge  — pill coloreado (bg/color via inline
+//             style desde STATUS_STYLES en el .jsx)
+// ============================================
+
 @import "../../../less/variables.less";
 
 .faded {
@@ -15,11 +31,6 @@
 
 .tableWrapper {
     overflow-x: auto;
-}
-
-.boldNumber {
-    font-weight: 700;
-    color: #111827;
 }
 
 .emptyState {

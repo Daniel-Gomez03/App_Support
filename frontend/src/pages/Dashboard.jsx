@@ -1,3 +1,27 @@
+// ============================================
+// PAGE: DASHBOARD
+// Vista principal de monitoreo del sistema de
+// soporte. Carga estadísticas globales al
+// montar y las distribuye a cuatro widgets:
+//
+//   STATS GRID (4 Cards):
+//     pendientes, finalizados,
+//     mes anterior, mes actual
+//
+//   CONTENT GRID (2 columnas):
+//     Izquierda: TablesCases (casos por técnico)
+//                PendingCases (desglose por estado)
+//     Derecha:   TicketGraph (gráfica de prioridades)
+//                Feedback (últimas reseñas)
+//
+// EMPTY_STATS: forma de datos vacíos que evita
+//   errores de prop-type mientras se carga;
+//   las Cards muestran '—' cuando loading=true.
+//
+// getDashboardStats falla silenciosamente —
+//   la UI permanece en estado vacío sin crashear.
+// ============================================
+
 import React, { useEffect, useState } from 'react';
 import Card from '../components/Dashboard/Cards/Card';
 import styles from './Dashboard.module.less';
@@ -18,25 +42,25 @@ const EMPTY_STATS = {
         mesActual: 0, mesActualPct: 0,
         mesAnterior: 0, mesAnteriorPct: 0,
     },
-    priorities:     [
-        { name: 'Alta',  value: 0, color: '#DC2626' },
+    priorities: [
+        { name: 'Alta', value: 0, color: '#DC2626' },
         { name: 'Media', value: 0, color: '#EAB308' },
-        { name: 'Baja',  value: 0, color: '#105030' },
+        { name: 'Baja', value: 0, color: '#105030' },
     ],
-    casesByUser:    [],
-    pendingCases:   { nuevo: 0, revisionGarantia: 0, porAsignar: 0, asignado: 0, enProceso: 0, pendienteInfo: 0, escalado: 0, solCancelacion: 0, finalizado: 0, cancelado: 0 },
+    casesByUser: [],
+    pendingCases: { nuevo: 0, revisionGarantia: 0, porAsignar: 0, asignado: 0, enProceso: 0, pendienteInfo: 0, escalado: 0, solCancelacion: 0, finalizado: 0, cancelado: 0 },
     recentFeedback: [],
 };
 
 const Dashboard = () => {
-    const [stats, setStats]   = useState(EMPTY_STATS);
+    const [stats, setStats] = useState(EMPTY_STATS);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         document.title = 'Soporte | Dashboard';
         getDashboardStats()
             .then(data => setStats(data))
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoading(false));
     }, []);
 
@@ -81,7 +105,7 @@ const Dashboard = () => {
             <div className={styles.contentGrid}>
                 <div className={styles.leftColumn}>
                     <TablesCases data={casesByUser} />
-                    <PendingCases data={pendingCases ? [pendingCases] : []} />
+                    <PendingCases data={[pendingCases]} />
                 </div>
                 <div className={styles.rightColumn}>
                     <TicketGraph data={priorities} />

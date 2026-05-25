@@ -1,3 +1,20 @@
+// ============================================
+// STYLES: TICKET GRAPH (Dashboard)
+// Tarjeta lateral con dona de prioridades.
+//
+// ESTRUCTURA:
+//   .chartCard        — contenedor flex-column
+//     .cardHeader     — título de la sección
+//     .donutContainer — wrapper relativo height:200px;
+//                       .centerText posicionado
+//                       absolute en el hueco de la dona
+//     .customLegend   — leyenda custom con margin-top:auto
+//                       para anclarse al fondo del card
+//
+// .dot recibe backgroundColor via inline style
+//   desde el color de cada entrada de data.
+// ============================================
+
 @import "../../../less/variables.less";
 
 .chartCard {
@@ -12,7 +29,6 @@
     flex-direction: column;
 
     @media (max-width: #breaks[desktop]) {
-        width: auto;
         width: auto;
     }
 

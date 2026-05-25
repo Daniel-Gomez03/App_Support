@@ -1,20 +1,38 @@
+// ============================================
+// COMPONENT: TICKET GRAPH (Dashboard)
+// Dona (PieChart) de distribución de tickets
+// por prioridad: Alta / Media / Baja.
+//
+// ESTADO VACÍO: cuando todos los valores son 0
+//   (total === 0), se sustituye data por un
+//   segmento gris '#F3F4F6' para que la dona
+//   no desaparezca; paddingAngle y cornerRadius
+//   se anulan para que se vea como un anillo liso.
+//
+// DEFAULT: forma vacía que usa el prop default
+//   mientras el Dashboard carga los datos reales.
+//
+// La leyenda itera sobre `data` (no chartData)
+//   para mostrar siempre los tres colores reales
+//   aunque la dona esté en estado vacío.
+// ============================================
+
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import styles from './TicketGraph.module.less';
 
 const DEFAULT = [
-    { name: 'Alta',  value: 0, color: '#DC2626' },
+    { name: 'Alta', value: 0, color: '#DC2626' },
     { name: 'Media', value: 0, color: '#EAB308' },
-    { name: 'Baja',  value: 0, color: '#105030' },
+    { name: 'Baja', value: 0, color: '#105030' },
 ];
 
 const TicketGraph = ({ data = DEFAULT }) => {
-
     const total = data.reduce((sum, item) => sum + item.value, 0);
 
     const chartData = total > 0
         ? data
-        : [{ name: 'Vacio', value: 1, color: '#F3F4F6' }]; 
+        : [{ name: 'Vacio', value: 1, color: '#F3F4F6' }];
 
     return (
         <div className={styles.chartCard}>
@@ -28,12 +46,12 @@ const TicketGraph = ({ data = DEFAULT }) => {
                     <PieChart>
                         <Pie
                             data={chartData}
-                            innerRadius={70} 
-                            outerRadius={90} 
+                            innerRadius={70}
+                            outerRadius={90}
                             paddingAngle={total > 0 ? 8 : 0}
                             dataKey="value"
-                            stroke="none" 
-                            cornerRadius={total > 0 ? 10 : 0} 
+                            stroke="none"
+                            cornerRadius={total > 0 ? 10 : 0}
                         >
                             {chartData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
@@ -49,8 +67,8 @@ const TicketGraph = ({ data = DEFAULT }) => {
             </div>
 
             <div className={styles.customLegend}>
-                {data.map((item, index) => (
-                    <div key={index} className={styles.legendItem}>
+                {data.map(item => (
+                    <div key={item.name} className={styles.legendItem}>
                         <div className={styles.legendLeft}>
                             <span
                                 className={styles.dot}

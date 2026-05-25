@@ -1,3 +1,22 @@
+// ============================================
+// COMPONENT: CARD (Dashboard KPI)
+// Tarjeta de indicador clave para el Dashboard.
+// Muestra un título, valor actual y variación
+// porcentual respecto al mes anterior.
+//
+// PROPS:
+//   title      — etiqueta de la métrica
+//   value      — valor a mostrar (string; '—' mientras carga)
+//   percentage — variación vs mes anterior (string numérico)
+//   icon       — SVG importado para el icono decorativo
+//   isDark     — aplica variante oscura (card de pendientes)
+//
+// TENDENCIA:
+//   > 0  → GoArrowUpRight  + trendPositive (verde)
+//   < 0  → GoArrowDownRight + trendNegative (rojo)
+//   = 0  → GoDash          + trendNeutral  (gris)
+// ============================================
+
 import React from "react";
 import styles from './Card.module.less';
 import { GoArrowDownRight, GoArrowUpRight, GoDash } from "react-icons/go";
