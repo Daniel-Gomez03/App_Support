@@ -1,11 +1,38 @@
+// ============================================
+// COMPONENT: CONFIRM MODAL (Salidas)
+// Modal de confirmación para aprobar o rechazar una solicitud de salida.
+//
+// PROPS:
+//   isOpen    — booleano; si false o sin salida, retorna null
+//   type      — 'approve' | 'reject'; deriva isApprove
+//   salida    — objeto salida en revisión
+//   onClose   — fn(); cierra el modal (también resetea estado local)
+//   onConfirm — fn({ salida_status, rejection_reason }); llamado al confirmar
+//
+// ESTADO:
+//   reason  — motivo del rechazo (requerido si type === 'reject')
+//   loading — bloquea botones durante el await
+//   error   — mensaje de validación o error de API
+//
+// FLUJO:
+//   Aprobar → onConfirm({ salida_status: 1, rejection_reason: null })
+//   Rechazar → valida reason no vacío →
+//              onConfirm({ salida_status: 2, rejection_reason: reason })
+//
+// CIERRE:
+//   handleClose resetea reason + error antes de llamar onClose,
+//   evitando estado residual si el modal se reabre.
+//   Click en overlay (solo si target === currentTarget) también cierra.
+// ============================================
+
 import React, { useState } from 'react';
 import styles from './ConfirmModal.module.less';
 import { FiX, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 
 const ConfirmModal = ({ isOpen, type, salida, onClose, onConfirm }) => {
-    const [reason, setReason]   = useState('');
+    const [reason, setReason] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError]     = useState('');
+    const [error, setError] = useState('');
 
     if (!isOpen || !salida) return null;
 
@@ -43,7 +70,7 @@ const ConfirmModal = ({ isOpen, type, salida, onClose, onConfirm }) => {
                 <div className={`${styles.iconWrap} ${isApprove ? styles.iconGreen : styles.iconRed}`}>
                     {isApprove
                         ? <FiCheckCircle className={styles.icon} />
-                        : <FiXCircle    className={styles.icon} />
+                        : <FiXCircle className={styles.icon} />
                     }
                 </div>
 

@@ -1,3 +1,21 @@
+// ============================================
+// STYLES: SALIDAS TABLE
+// Estilos para celdas custom de react-data-table-component.
+//
+// ESTRUCTURA:
+//   .idCell       — ID numérico en negrita
+//   .userCell     — avatar circular + nombre/cargo;
+//                   .avatar usa overflow:hidden para img de perfil
+//   .ticketCell   — ID formateado (monospace pill) + asunto truncado
+//   .destination  — texto de destino de la salida
+//   .dateCell     — fecha + hora en columna; .time color secundario
+//   .statusBadge  — pill de estado; modificadores .pendiente /
+//                   .aprobada / .rechazada sobreescriben colores
+//   .actions      — fila de botones; .actionBtn base compartida;
+//                   .approveBtn / .rejectBtn sobreescriben hover
+//   .emptyState   — mensaje cuando data está vacía
+// ============================================
+
 @import "../../../less/main.less";
 
 .idCell {
@@ -145,18 +163,14 @@
         color: @quaternary-color;
     }
 
-    &.approveBtn {
-        &:hover {
-            background: #dcfce7;
-            color: #16a34a;
-        }
+    &.approveBtn:hover {
+        background: #dcfce7;
+        color: #16a34a;
     }
 
-    &.rejectBtn {
-        &:hover {
-            background: #fee2e2;
-            color: #dc2626;
-        }
+    &.rejectBtn:hover {
+        background: #fee2e2;
+        color: #dc2626;
     }
 }
 

@@ -1,4 +1,39 @@
+// ============================================
+// STYLES: SALIDAS PAGE
+// Página de gestión de solicitudes de salida técnica.
+//
+// ESTRUCTURA:
+//   .salidasContainer — columna principal con gap y padding
+//     .header         — título + subtítulo
+//     .controlsWrapper — barra de búsqueda + botón nueva solicitud;
+//                        border-bottom separa de la tabla
+//       .toolbar      — flex row (column en tablet); contiene
+//                       .searchBar y .newBtn
+//     .tableContainer — área de tabla con overflow-x:auto;
+//                       .loadingState y .errorInfo comparten estilo
+//
+//   .successToast     — notificación fixed top-right (position:fixed,
+//                       fuera del flujo del contenedor);
+//                       &.errorToast sobreescribe colores para error;
+//                       .toastClose absolute dentro del toast
+//
+// ANIMACIONES:
+//   toastSlideIn — entrada del toast desde arriba
+// ============================================
+
 @import '../less/main.less';
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 
 .salidasContainer {
     display: flex;
@@ -124,7 +159,6 @@
     }
 
     .tableContainer {
-        background: @background-color;
         width: 100%;
         overflow-x: auto;
 
@@ -159,9 +193,17 @@
         background-color: #fef2f2;
         border-color: #fecaca;
 
-        .toastIconContainer { background-color: #dc2626; }
-        .toastContent h4 { color: #991b1b; }
-        .toastContent p  { color: #7f1d1d; }
+        .toastIconContainer {
+            background-color: #dc2626;
+        }
+
+        .toastContent h4 {
+            color: #991b1b;
+        }
+
+        .toastContent p {
+            color: #7f1d1d;
+        }
     }
 
     .toastIconContainer {
@@ -213,11 +255,8 @@
         align-items: center;
         transition: all 0.2s;
 
-        &:hover { color: #166534; }
+        &:hover {
+            color: #166534;
+        }
     }
-}
-
-@keyframes toastSlideIn {
-    from { transform: translateY(-50px); opacity: 0; }
-    to   { transform: translateY(0);     opacity: 1; }
 }

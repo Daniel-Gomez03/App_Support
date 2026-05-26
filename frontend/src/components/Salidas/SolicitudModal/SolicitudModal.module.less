@@ -1,4 +1,51 @@
+// ============================================
+// STYLES: SOLICITUD MODAL
+// Formulario de creación de nueva solicitud de salida técnica.
+//
+// ESTRUCTURA:
+//   .overlay  — fondo fijo con blur y fadeIn
+//   .modal    — tarjeta centrada con slideUp
+//     .header — título + botón X; h3 directo (sin clase propia)
+//     .body   — form con campos apilados + .row para fecha/hora en paralelo
+//       .field     — wrapper vertical label + control; flex:1 para .row
+//       .label     — uppercase con icono opcional (svg descendiente)
+//       .select / .input — controles compartidos; :focus, :disabled
+//       .readOnly  — display estático del técnico para no-admin
+//       .row       — flex horizontal para fecha y hora
+//       .hint      — aviso amarillo cuando el técnico no tiene tickets
+//       .error     — mensaje de validación o error de API
+//     .footer — fila de botones alineada a la derecha;
+//               .cancelBtn / .submitBtn comparten base; cada uno
+//               sobrescribe fondo, padding y color
+//
+// ANIMACIONES:
+//   fadeIn  — opacity 0→1 para el overlay
+//   slideUp — entrada del modal desde abajo con scale
+// ============================================
+
 @import "../../../less/main.less";
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
 
 .overlay {
     position: fixed;
@@ -146,17 +193,21 @@
     gap: 10px;
     padding-top: 4px;
 
-    .cancelBtn {
-        background: #f3f4f6;
+    .cancelBtn,
+    .submitBtn {
         border: none;
         border-radius: 10px;
-        padding: 10px 20px;
         font-size: 14px;
         font-weight: 600;
-        color: #374151;
         cursor: pointer;
         transition: all 0.2s;
         font-family: @font-family;
+    }
+
+    .cancelBtn {
+        background: #f3f4f6;
+        padding: 10px 20px;
+        color: #374151;
 
         &:hover {
             background: #e5e7eb;
@@ -165,15 +216,8 @@
 
     .submitBtn {
         background: @quaternary-color;
-        border: none;
-        border-radius: 10px;
         padding: 10px 24px;
-        font-size: 14px;
-        font-weight: 600;
         color: white;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-family: @font-family;
 
         &:hover:not(:disabled) {
             background: darken(@quaternary-color, 5%);
@@ -185,14 +229,4 @@
             cursor: not-allowed;
         }
     }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
