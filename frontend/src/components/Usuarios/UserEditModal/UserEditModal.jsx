@@ -1,4 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
+// ============================================
+// COMPONENT: USER EDIT MODAL
+// Edición de usuarios internos y clientes externos con flujo de 2 pasos:
+//   1. Formulario — datos según tipo (cliente: datos personales + foto;
+//                   interno: rol/cargo/área + tabla de permisos)
+//   2. Confirmación — resumen antes de llamar a onSave
+//
+// PROPS:
+//   isOpen    — booleano; si false, retorna null y resetea estado
+//   user      — objeto; cliente si tiene customer_id, interno en caso contrario
+//   secciones — lista de módulos del sistema (solo relevante para internos)
+//   onClose   — fn(); cierra el modal
+//   onSave    — fn(id, data); recibe id + FormData (cliente) o plain obj (interno)
+//
+// ESTADO:
+//   formData        — campos editables; población inicial desde user en useEffect
+//   permisos        — permisos mezclados (secciones + permisos existentes del usuario)
+//   showPermissions — visibilidad del panel de permisos (solo internos)
+//   imagePreview    — data-URL o URL de foto de perfil
+//   imgError        — true cuando falla la carga de imagen (muestra fallback)
+//   isConfirming    — true durante el paso de confirmación
+//   isLoading       — bloquea botones durante operaciones async
+//   emailStatus     — {message, type} para feedback del reenvío de email
+//
+// FLUJO DE PERMISOS (internos):
+//   handlePermissionToggle — no permite desmarcar "read" si "write" o "edit"
+//                            están activos; activar "write"/"edit" activa "read"
+//                            automáticamente; Dashboard siempre tiene "read"=1
+//
+// MÓDULO SCOPE:
+//   countryRules        — validación de longitud de teléfono por código de país
+//   CUSTOMER_NAME_FIELDS — Set de campos que aceptan solo letras con acentos
+// ============================================
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import styles from './UserEditModal.module.less';
 import { MdClose, MdExpandMore, MdExpandLess, MdCloudUpload } from 'react-icons/md';
 import { LuUserCheck, LuLoaderCircle, LuMailCheck } from "react-icons/lu";
@@ -13,6 +47,13 @@ const countryRules = {
     '+503': { name: 'El Salvador', iso: 'sv', min: 8, max: 8 },
     '+502': { name: 'Guatemala', iso: 'gt', min: 8, max: 8 },
 };
+
+const CUSTOMER_NAME_FIELDS = new Set([
+    'customer_first_name',
+    'customer_second_name',
+    'customer_last_name',
+    'customer_second_last_name',
+]);
 
 const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
     const fileInputRef = useRef(null);
@@ -92,7 +133,7 @@ const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
         }
     }, [user, isOpen, secciones, isCustomer]);
 
-    const isFormValid = () => {
+    const isValid = useMemo(() => {
         if (!isCustomer) return formData.rol && formData.cargo && formData.area;
 
         const {
@@ -104,7 +145,7 @@ const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
         } = formData;
 
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        const rules = countryRules[customer_country_code] || countryRules['+504'];
+        const rules = countryRules[customer_country_code] ?? countryRules['+504'];
 
         return (
             customer_first_name.length >= 3 &&
@@ -112,7 +153,7 @@ const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
             emailRegex.test(customer_email) &&
             customer_phone.length === rules.max
         );
-    };
+    }, [formData, isCustomer]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -120,8 +161,7 @@ const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
         let filteredValue = value;
 
         if (isCustomer) {
-            const nameFields = ['customer_first_name', 'customer_second_name', 'customer_last_name', 'customer_second_last_name'];
-            if (nameFields.includes(name)) filteredValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '');
+            if (CUSTOMER_NAME_FIELDS.has(name)) filteredValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '');
             if (name === 'customer_email') filteredValue = value.replace(/\s+/g, '');
             if (name === 'customer_phone') {
                 filteredValue = value.replace(/[^0-9]/g, '');
@@ -148,8 +188,8 @@ const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
         try {
             const res = await sendVerificationEmailAdmin(user.customer_id);
             setEmailStatus({ message: res.message, type: 'success' });
-        } catch (error) {
-            setEmailStatus({ message: error.message || 'Error al enviar email', type: 'error' });
+        } catch (err) {
+            setEmailStatus({ message: err.message || 'Error al enviar email', type: 'error' });
         } finally {
             setIsLoading(false);
         }
@@ -177,7 +217,7 @@ const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
 
     const handlePreSubmit = (e) => {
         e.preventDefault();
-        if (!isFormValid()) return;
+        if (!isValid) return;
         setIsConfirming(true);
     };
 
@@ -200,8 +240,8 @@ const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
         try {
             await onSave(id, dataToSave);
             onClose();
-        } catch (error) {
-            console.error(error);
+        } catch (err) {
+            console.error(err);
         } finally {
             setIsLoading(false);
             setIsConfirming(false);
@@ -210,7 +250,7 @@ const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
 
     if (!isOpen || !user) return null;
 
-    const currentRules = countryRules[formData.customer_country_code] || countryRules['+504'];
+    const currentRules = countryRules[formData.customer_country_code] ?? countryRules['+504'];
 
     return (
         <div className={styles.modalOverlay}>
@@ -388,7 +428,7 @@ const UserEditModal = ({ user, isOpen, secciones, onClose, onSave }) => {
                                 )}
 
                                 <div className={styles.modalActions}>
-                                    <button type="submit" className={styles.saveBtn} disabled={!isFormValid()}>Guardar Cambios</button>
+                                    <button type="submit" className={styles.saveBtn} disabled={!isValid}>Guardar Cambios</button>
                                 </div>
                             </form>
                         </>

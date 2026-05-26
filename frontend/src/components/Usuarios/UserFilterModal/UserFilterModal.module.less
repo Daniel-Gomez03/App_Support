@@ -1,4 +1,32 @@
+// ============================================
+// STYLES: USER FILTER MODAL
+// Panel lateral de filtros para la tabla de usuarios internos.
+//
+// ESTRUCTURA:
+//   .filterOverlay — fondo fijo con blur
+//     .filterModal — tarjeta centrada; slideIn al abrir
+//       .header    — título + icono + botón X
+//         .headerTitle / .headerIcon / .closeBtn
+//       .body      — tres .formGroup (rol, cargo, área)
+//       .footer    — .resetBtn (limpiar) + .applyBtn (aplicar)
+//
+// ANIMACIONES:
+//   slideIn — entrada del modal desde abajo
+// ============================================
+
 @import '../../../less/main.less';
+
+@keyframes slideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 
 .filterOverlay {
     position: fixed;
@@ -145,17 +173,5 @@
                 }
             }
         }
-    }
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateY(20px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
     }
 }

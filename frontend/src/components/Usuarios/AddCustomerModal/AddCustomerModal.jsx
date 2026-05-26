@@ -1,4 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
+// ============================================
+// COMPONENT: ADD CUSTOMER MODAL
+// Formulario de registro de nuevo cliente externo con flujo de 2 pasos:
+//   1. Formulario    — datos personales + foto + validación de garantía
+//   2. Confirmación  — resumen antes de llamar al servicio
+//
+// PROPS:
+//   isOpen           — booleano; si false, retorna null y resetea estado
+//   onClose          — fn(); cierra el modal
+//   onCustomerCreated — fn(message, isManualReview); notifica al padre
+//                       del resultado (registro ok o revisión manual)
+//
+// ESTADO:
+//   formData       — campos del formulario; inicializa y resetea con INITIAL_STATE
+//   imagePreview   — data-URL de la foto seleccionada (FileReader)
+//   isConfirming   — true durante el paso de confirmación
+//   isLoading      — bloquea botones durante el await de registro
+//   formError      — error de API mostrado como banner
+//
+// FLUJO:
+//   handleChange       — filtra caracteres por tipo de campo;
+//                        limpia formError al editar
+//   handlePreSubmit    — valida con isValid y activa isConfirming
+//   handleFinalSave    — construye FormData, llama al servicio,
+//                        notifica al padre y cierra
+//
+// MÓDULO SCOPE:
+//   countryRules — validación de longitud de teléfono por código de país
+//   INITIAL_STATE — estado vacío del formulario; compartido con el reset
+//   NAME_FIELDS   — Set de campos que aceptan solo letras con acentos
+// ============================================
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import styles from './AddCustomerModal.module.less';
 import { MdClose, MdCloudUpload } from 'react-icons/md';
 import { LuUserPlus, LuLoaderCircle } from "react-icons/lu";
@@ -12,32 +44,38 @@ const countryRules = {
     '+502': { name: 'Guatemala', iso: 'gt', min: 8, max: 8 },
 };
 
+const INITIAL_STATE = {
+    customer_first_name: '',
+    customer_second_name: '',
+    customer_last_name: '',
+    customer_second_last_name: '',
+    customer_email: '',
+    customer_country_code: '+504',
+    customer_phone: '',
+    customer_company: '',
+    validation_type: 'serie',
+    validation_value: '',
+    customer_image: null,
+};
+
+const NAME_FIELDS = new Set([
+    'customer_first_name',
+    'customer_second_name',
+    'customer_last_name',
+    'customer_second_last_name',
+]);
+
 const AddCustomerModal = ({ isOpen, onClose, onCustomerCreated }) => {
     const fileInputRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
     const [imagePreview, setImagePreview] = useState(null);
     const [formError, setFormError] = useState('');
-
-    const initialState = {
-        customer_first_name: '',
-        customer_second_name: '',
-        customer_last_name: '',
-        customer_second_last_name: '',
-        customer_email: '',
-        customer_country_code: '+504',
-        customer_phone: '',
-        customer_company: '',
-        validation_type: 'serie',
-        validation_value: '',
-        customer_image: null
-    };
-
-    const [formData, setFormData] = useState(initialState);
+    const [formData, setFormData] = useState(INITIAL_STATE);
 
     useEffect(() => {
         if (!isOpen) {
-            setFormData(initialState);
+            setFormData(INITIAL_STATE);
             setImagePreview(null);
             setIsConfirming(false);
             setIsLoading(false);
@@ -45,46 +83,7 @@ const AddCustomerModal = ({ isOpen, onClose, onCustomerCreated }) => {
         }
     }, [isOpen]);
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setFormData(prev => ({ ...prev, customer_image: file }));
-            const reader = new FileReader();
-            reader.onloadend = () => setImagePreview(reader.result);
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        let filteredValue = value;
-
-        if (filteredValue.startsWith(' ')) return;
-
-        const nameFields = [
-            'customer_first_name',
-            'customer_second_name',
-            'customer_last_name',
-            'customer_second_last_name'
-        ];
-        if (nameFields.includes(name)) {
-            filteredValue = filteredValue.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '');
-        }
-        if (name === 'customer_email' || name === 'validation_value') {
-            filteredValue = filteredValue.replace(/\s+/g, '');
-        }
-
-        if (name === 'customer_phone') {
-            filteredValue = filteredValue.replace(/[^0-9]/g, '');
-            const maxAllowed = countryRules[formData.customer_country_code]?.max || 15;
-            if (filteredValue.length > maxAllowed) return;
-        }
-
-        setFormData(prev => ({ ...prev, [name]: filteredValue }));
-        if (formError) setFormError('');
-    };
-
-    const isFormValid = () => {
+    const isValid = useMemo(() => {
         const {
             customer_first_name, customer_last_name, customer_email,
             customer_phone, customer_company, validation_value,
@@ -102,11 +101,43 @@ const AddCustomerModal = ({ isOpen, onClose, onCustomerCreated }) => {
             customer_phone.length === rules.max &&
             (validation_type === 'factura' ? validation_value.length >= 4 : validation_value.length >= 16)
         );
+    }, [formData]);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setFormData(prev => ({ ...prev, customer_image: file }));
+            const reader = new FileReader();
+            reader.onloadend = () => setImagePreview(reader.result);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        let filteredValue = value;
+
+        if (filteredValue.startsWith(' ')) return;
+
+        if (NAME_FIELDS.has(name)) {
+            filteredValue = filteredValue.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '');
+        }
+        if (name === 'customer_email' || name === 'validation_value') {
+            filteredValue = filteredValue.replace(/\s+/g, '');
+        }
+        if (name === 'customer_phone') {
+            filteredValue = filteredValue.replace(/[^0-9]/g, '');
+            const maxAllowed = countryRules[formData.customer_country_code]?.max || 15;
+            if (filteredValue.length > maxAllowed) return;
+        }
+
+        setFormData(prev => ({ ...prev, [name]: filteredValue }));
+        if (formError) setFormError('');
     };
 
     const handlePreSubmit = (e) => {
         e.preventDefault();
-        if (!isFormValid()) return;
+        if (!isValid) return;
         setIsConfirming(true);
     };
 
@@ -122,8 +153,8 @@ const AddCustomerModal = ({ isOpen, onClose, onCustomerCreated }) => {
             const response = await registerAdminCustomer(data);
             onCustomerCreated(response.message, response.requires_manual_review);
             onClose();
-        } catch (error) {
-            setFormError(error.response?.data?.error || error.message);
+        } catch (err) {
+            setFormError(err.response?.data?.error || err.message);
             setIsConfirming(false);
         } finally {
             setIsLoading(false);
@@ -237,7 +268,7 @@ const AddCustomerModal = ({ isOpen, onClose, onCustomerCreated }) => {
                             </div>
 
                             <div className={styles.modalActions}>
-                                <button type="submit" className={styles.saveBtn} disabled={!isFormValid()}>
+                                <button type="submit" className={styles.saveBtn} disabled={!isValid}>
                                     Registrar Cliente
                                 </button>
                             </div>

@@ -1,5 +1,74 @@
+// ============================================
+// STYLES: ADD CUSTOMER MODAL
+// Modal de registro de nuevo cliente externo (2 pasos).
+//
+// ESTRUCTURA:
+//   .modalOverlay  — fondo fijo con blur
+//     .modalContent — tarjeta centrada; scaleUp al abrir
+//       .modalHeader — título + icono + botón X
+//         .headerTitle / .headerIcon / .closeBtn
+//       .modalBody   — scrollable; contiene paso 1 (form) y paso 2 (confirm)
+//
+//   PASO 1 — Formulario:
+//     .errorBanner       — banner rojo para errores de API
+//     .imageUploadSection — foto circular con .previewContainer / .previewImg /
+//                           .uploadPlaceholder
+//     .form
+//       .formGrid         — 2 cols; 1 col en tablet
+//         .formGroup      — label + input/select; .phoneInputContainer para
+//                          el campo de teléfono (.flagSelector / .flagIcon /
+//                          .hiddenSelect)
+//       .validationSection — sección de garantía; .validationGrid 2 cols
+//       .modalActions      — .saveBtn centrado, ancho completo hasta 350px
+//
+//   PASO 2 — Confirmación:
+//     .confirmationWrapper — centrado con .iconCircle / .summaryCard /
+//                            .confirmButtons (.btnSecondary / .btnPrimary)
+//     Botones comparten base en selector `button` dentro de .confirmButtons;
+//     .btnSecondary y .btnPrimary solo sobreescriben colores y comportamiento.
+//
+// ANIMACIONES:
+//   scaleUp   — entrada del modal y de .confirmationWrapper
+//   slideDown — entrada del .errorBanner y .validationSection
+//   spin      — loader circular dentro de .btnPrimary
+// ============================================
+
 @import '../../../less/main.less';
 @import 'flag-icons/css/flag-icons.min.css';
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes scaleUp {
+    from {
+        transform: scale(0.96);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
 .modalOverlay {
     position: fixed;
@@ -464,39 +533,5 @@
                 }
             }
         }
-    }
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes scaleUp {
-    from {
-        transform: scale(0.96);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
     }
 }
