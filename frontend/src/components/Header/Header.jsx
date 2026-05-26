@@ -1,3 +1,20 @@
+// ============================================
+// COMPONENT: HEADER
+// Barra superior fija del layout principal.
+// Aparece en todas las rutas protegidas (renderizado por MainLayout).
+//
+// PROPS:
+//   toggleSidebar — fn(); abre/cierra el sidebar al pulsar el botón hamburguesa
+//
+// COMPORTAMIENTO:
+//   - Lee el usuario activo desde AuthContext para mostrar la racha de actividad.
+//   - streakCount > 0: muestra el contador activo (ícono de fuego encendido).
+//   - streakCount === 0 && lostStreak > 0: muestra el mensaje de racha perdida.
+//   - handleLogout: llama a /api/logout (invalida sesión en servidor), limpia
+//     localStorage y redirige al portal de aplicativos. El finally garantiza
+//     la limpieza local aunque la petición al servidor falle.
+// ============================================
+
 import React from 'react';
 import { FaFire } from "react-icons/fa";
 import logOut from '../../assets/icons/Log-out-icon.svg';
@@ -19,8 +36,8 @@ const Header = ({ toggleSidebar }) => {
     }
   };
 
-  const streakCount = user?.racha_actual || 0;
-  const lostStreak = user?.racha_perdida || 0;
+  const streakCount = user?.racha_actual ?? 0;
+  const lostStreak = user?.racha_perdida ?? 0;
 
   return (
     <header className={styles.header}>

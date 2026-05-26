@@ -1,3 +1,30 @@
+// ============================================
+// STYLES: SIDEBAR
+// Menú de navegación lateral del layout principal.
+//
+// ESTRUCTURA:
+//   .sidebarOverlay — fondo oscuro semitransparente; visible solo en móvil (display:none en desktop)
+//     &.open — activa opacity:1 y pointer-events cuando el sidebar está abierto
+//   .sidebar — columna fija de 256px; position fixed, z-index 1000
+//     .logoArea     — logo + .closeBtn (botón X visible solo en móvil)
+//     .nav          — lista de ítems de navegación
+//       .menuList
+//         .menuItem   — ítem simple (una ruta); &.active aplica forma de pastilla izquierda
+//         .menuHeader — cabecera del grupo Tickets; comparte estilos base con .menuItem
+//         .menuGroup  — wrapper del grupo colapsable (sin estilos propios; semántico)
+//         .subMenu    — lista colapsable; max-height:0→500px + opacity anima apertura
+//           .subItem  — ítem del submenú; &.active igual que .menuItem
+//             .spaceBetween — fila con badge a la derecha (Asignar/Activos)
+//               .badge — contador numérico de tickets pendientes
+//     .profileSection — tarjeta de usuario al fondo (margin-top: auto)
+//       .avatarImg / .avatarFallback — misma estrategia onError que UsersTable
+//
+// NOTAS:
+//   - &.closed traslada el sidebar fuera de la vista con translateX(-100%).
+//     En desktop el sidebar siempre es visible; en móvil el overlay lo cubre cuando está abierto.
+//   - .groupOpen y .menuGroup no tienen estilos propios; se reservan para uso futuro o semántico.
+// ============================================
+
 @import "../../less/variables.less";
 
 .sidebarOverlay {
@@ -54,7 +81,7 @@
         .closeBtn {
             display: none;
 
-            @media (max-width: 768px) {
+            @media (max-width: #breaks[tablet]) {
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -173,7 +200,6 @@
                     border-radius: 8px;
                     color: @background-color;
                     font-size: 13px;
-                    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
                     transition: color 0.2s;
                     display: flex;
                     align-items: center;

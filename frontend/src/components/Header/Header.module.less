@@ -1,3 +1,23 @@
+// ============================================
+// STYLES: HEADER
+// Barra superior del layout principal.
+//
+// ESTRUCTURA:
+//   .header          — flex row; space-between entre leftSection y rightSection
+//     .hamburgerBtn  — botón de toggle del sidebar; 3 barras apiladas (.bar)
+//     .rightSection  — racha + botón de logout
+//       .streakContainer     — badge de racha; se activa con .activeStreak
+//         .fireIcon          — gris en reposo; rojo (#ff4500) cuando racha activa
+//         .streakNumber      — contador numérico
+//         .lostStreakMessage — badge rojo; visible solo cuando streakCount === 0 y lostStreak > 0
+//           .hideOnMobile    — prefijo "RACHA PERDIDA:" oculto en móvil
+//       .logoutContainer     — ícono SVG + texto; texto oculto en móvil
+//
+// NOTAS:
+//   - position: sticky activa solo en móvil (top: 0 y z-index: 90 están dentro del @media).
+//     En desktop el header fluye normalmente dentro del flex column de .mainContent.
+// ============================================
+
 @import "../../less/variables.less";
 
 .header {

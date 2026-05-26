@@ -1,3 +1,31 @@
+// ============================================
+// CONTEXT: TICKET CONTEXT
+// Proveedor global de contadores de tickets en tiempo real.
+// Alimenta los badges del sidebar ("Asignar Tickets" y "Tickets Activos").
+//
+// VALOR DEL CONTEXTO:
+//   unassignedCount      — número de tickets sin asignar
+//   fetchUnassignedCount — recarga el contador desde el servidor
+//   setUnassignedCount   — actualización optimista del contador (sin fetch)
+//   activeCount          — número de tickets activos
+//   fetchActiveCount     — recarga el contador desde el servidor
+//   setActiveCount       — actualización optimista del contador (sin fetch)
+//
+// FLUJO:
+//   - Los contadores solo se cargan si el usuario tiene permissions_read === 1
+//     en el módulo correspondiente ("Asignar Tickets" / "Tickets Activos").
+//     Esto evita llamadas innecesarias al API para usuarios sin acceso.
+//   - Los listeners de socket se registran solo si el usuario tiene al menos
+//     uno de los dos permisos. El cleanup desregistra los handlers exactos
+//     (no solo el nombre del evento) para evitar que queden handlers huérfanos
+//     si el efecto se re-ejecuta por cambio de user o socket.
+//
+// EVENTOS SOCKET:
+//   new_ticket_created — incrementa unassignedCount (+1 optimista) si el ticket
+//                        tiene status 1/2/3; recarga activeCount si aplica.
+//   ticket_updated     — recarga ambos contadores (cambio de estado/asignación).
+// ============================================
+
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { getUnassignedTicketCount, getActiveTicketCount } from '../services/Ticketservice';
 import { useAuth } from './AuthContext';
@@ -15,7 +43,7 @@ export const TicketProvider = ({ children }) => {
     const fetchUnassignedCount = useCallback(async () => {
         try {
             const data = await getUnassignedTicketCount();
-            if (data && data.count !== undefined) {
+            if (data?.count !== undefined) {
                 setUnassignedCount(data.count);
             }
         } catch (error) {
@@ -26,7 +54,7 @@ export const TicketProvider = ({ children }) => {
     const fetchActiveCount = useCallback(async () => {
         try {
             const data = await getActiveTicketCount();
-            if (data && data.count !== undefined) {
+            if (data?.count !== undefined) {
                 setActiveCount(data.count);
             }
         } catch (error) {
@@ -46,7 +74,6 @@ export const TicketProvider = ({ children }) => {
         if (canViewActive) fetchActiveCount();
 
         if (socket && (canAssign || canViewActive)) {
-
             const handleNewTicket = (newTicket) => {
                 if (canAssign && [1, 2, 3].includes(newTicket.ticket_status_id)) {
                     setUnassignedCount(prev => prev + 1);
