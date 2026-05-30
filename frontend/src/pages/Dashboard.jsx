@@ -34,6 +34,7 @@ import checkIcon from '../assets/icons/Check-icon.svg';
 import clockIcon from '../assets/icons/Clock-icon.svg';
 import grahpIcon from '../assets/icons/Graph-icon.svg';
 import { getDashboardStats } from '../services/DashboardService';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY_STATS = {
     cards: {
@@ -53,16 +54,23 @@ const EMPTY_STATS = {
 };
 
 const Dashboard = () => {
+    const { user } = useAuth();
     const [stats, setStats] = useState(EMPTY_STATS);
     const [loading, setLoading] = useState(true);
 
+    const hasRole = Boolean(user?.rol);
+
     useEffect(() => {
         document.title = 'Soporte | Dashboard';
+        if (!hasRole) {
+            setLoading(false);
+            return;
+        }
         getDashboardStats()
             .then(data => setStats(data))
             .catch(() => { })
             .finally(() => setLoading(false));
-    }, []);
+    }, [hasRole]);
 
     const { cards, priorities, casesByUser, pendingCases, recentFeedback } = stats;
 
@@ -74,44 +82,55 @@ const Dashboard = () => {
                 <p className={styles.subtitle}>Resumen de tickets y casos por asignar.</p>
             </div>
 
-            <div className={styles.statsGrid}>
-                <Card
-                    title="Tickets Pendientes"
-                    value={loading ? '—' : String(cards.pendientes)}
-                    percentage={String(cards.pendientesPct)}
-                    icon={alertIcon}
-                    isDark={true}
-                />
-                <Card
-                    title="Tickets Finalizados"
-                    value={loading ? '—' : String(cards.finalizados)}
-                    percentage={String(cards.finalizadosPct)}
-                    icon={checkIcon}
-                />
-                <Card
-                    title="Tickets Mes Anterior"
-                    value={loading ? '—' : String(cards.mesAnterior)}
-                    percentage={String(cards.mesAnteriorPct)}
-                    icon={clockIcon}
-                />
-                <Card
-                    title="Tickets Mes Actual"
-                    value={loading ? '—' : String(cards.mesActual)}
-                    percentage={String(cards.mesActualPct)}
-                    icon={grahpIcon}
-                />
-            </div>
+            {!hasRole ? (
+                <div className={styles.noPermissionsContainer}>
+                    <p className={styles.noPermissionsTitle}>Sin permisos asignados</p>
+                    <p className={styles.noPermissionsText}>
+                        Tu cuenta aún no tiene módulos habilitados. Contacta a un administrador para que te asigne los permisos correspondientes.
+                    </p>
+                </div>
+            ) : (
+                <>
+                    <div className={styles.statsGrid}>
+                        <Card
+                            title="Tickets Pendientes"
+                            value={loading ? '—' : String(cards.pendientes)}
+                            percentage={String(cards.pendientesPct)}
+                            icon={alertIcon}
+                            isDark={true}
+                        />
+                        <Card
+                            title="Tickets Finalizados"
+                            value={loading ? '—' : String(cards.finalizados)}
+                            percentage={String(cards.finalizadosPct)}
+                            icon={checkIcon}
+                        />
+                        <Card
+                            title="Tickets Mes Anterior"
+                            value={loading ? '—' : String(cards.mesAnterior)}
+                            percentage={String(cards.mesAnteriorPct)}
+                            icon={clockIcon}
+                        />
+                        <Card
+                            title="Tickets Mes Actual"
+                            value={loading ? '—' : String(cards.mesActual)}
+                            percentage={String(cards.mesActualPct)}
+                            icon={grahpIcon}
+                        />
+                    </div>
 
-            <div className={styles.contentGrid}>
-                <div className={styles.leftColumn}>
-                    <TablesCases data={casesByUser} />
-                    <PendingCases data={[pendingCases]} />
-                </div>
-                <div className={styles.rightColumn}>
-                    <TicketGraph data={priorities} />
-                    <Feedback data={recentFeedback} />
-                </div>
-            </div>
+                    <div className={styles.contentGrid}>
+                        <div className={styles.leftColumn}>
+                            <TablesCases data={casesByUser} />
+                            <PendingCases data={[pendingCases]} />
+                        </div>
+                        <div className={styles.rightColumn}>
+                            <TicketGraph data={priorities} />
+                            <Feedback data={recentFeedback} />
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

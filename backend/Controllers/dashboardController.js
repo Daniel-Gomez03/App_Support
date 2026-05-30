@@ -14,12 +14,19 @@ const { Op, Sequelize } = require('sequelize');
 const Ticket = require('../models/Ticket');
 const User = require('../models/User');
 const Rating = require('../models/Rating');
+const TicketAssignment = require('../models/TicketAssignment');
 
 // ============================================
 // ESTADÍSTICAS GENERALES DEL DASHBOARD
 // Los rangos de fecha se calculan con objetos
 // Date de JavaScript para manejar el cambio de
 // año en enero sin aritmética manual de meses.
+//
+// Si el usuario es Admin: retorna datos globales.
+// Si no es Admin: filtra todas las queries a los
+// tickets asignados a ese usuario específico.
+// Los IDs asignados se obtienen antes del
+// Promise.all para reutilizarlos en cada query.
 //
 // Queries en paralelo (11 total):
 //  1-2. Ticket.count activos (1-8) ahora vs mes prev → % pendientes
@@ -32,11 +39,27 @@ const Rating = require('../models/Rating');
 // ============================================
 exports.getDashboardStats = async (req, res) => {
     try {
+        const isAdmin = req.user.rol === 'Admin';
+        const userId = req.user.user_id;
+
         const now = new Date();
         const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const startTwoAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
         const startNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+        // Para no-Admin: obtener los ticket_id asignados a este usuario.
+        // Se usa [0] como fallback para evitar IN() vacío que rompe SQL.
+        let ticketIdFilter = {};
+        if (!isAdmin) {
+            const assignments = await TicketAssignment.findAll({
+                where: { user_id: userId },
+                attributes: ['ticket_id'],
+                raw: true,
+            });
+            const assignedIds = assignments.map(a => a.ticket_id);
+            ticketIdFilter = { ticket_id: { [Op.in]: assignedIds.length ? assignedIds : [0] } };
+        }
 
         const [
             pendientesNow,
@@ -57,6 +80,7 @@ exports.getDashboardStats = async (req, res) => {
                 where: {
                     ticket_status_id: { [Op.between]: [1, 8] },
                     ticket_status: 1,
+                    ...ticketIdFilter,
                 },
             }),
 
@@ -65,6 +89,7 @@ exports.getDashboardStats = async (req, res) => {
                 where: {
                     ticket_status_id: { [Op.between]: [1, 8] },
                     created_at: { [Op.gte]: startLastMonth, [Op.lt]: startThisMonth },
+                    ...ticketIdFilter,
                 },
             }),
 
@@ -73,6 +98,7 @@ exports.getDashboardStats = async (req, res) => {
                 where: {
                     ticket_status_id: 9,
                     updated_at: { [Op.gte]: startThisMonth, [Op.lt]: startNextMonth },
+                    ...ticketIdFilter,
                 },
             }),
 
@@ -81,6 +107,7 @@ exports.getDashboardStats = async (req, res) => {
                 where: {
                     ticket_status_id: 9,
                     updated_at: { [Op.gte]: startLastMonth, [Op.lt]: startThisMonth },
+                    ...ticketIdFilter,
                 },
             }),
 
@@ -88,6 +115,7 @@ exports.getDashboardStats = async (req, res) => {
             Ticket.count({
                 where: {
                     created_at: { [Op.gte]: startThisMonth, [Op.lt]: startNextMonth },
+                    ...ticketIdFilter,
                 },
             }),
 
@@ -95,6 +123,7 @@ exports.getDashboardStats = async (req, res) => {
             Ticket.count({
                 where: {
                     created_at: { [Op.gte]: startLastMonth, [Op.lt]: startThisMonth },
+                    ...ticketIdFilter,
                 },
             }),
 
@@ -102,6 +131,7 @@ exports.getDashboardStats = async (req, res) => {
             Ticket.count({
                 where: {
                     created_at: { [Op.gte]: startTwoAgo, [Op.lt]: startLastMonth },
+                    ...ticketIdFilter,
                 },
             }),
 
@@ -114,14 +144,17 @@ exports.getDashboardStats = async (req, res) => {
                 where: {
                     ticket_status_id: { [Op.between]: [1, 8] },
                     ticket_status: 1,
+                    ...ticketIdFilter,
                 },
                 group: ['ticket_priority'],
                 raw: true,
             }),
 
-            // 9. Técnicos con sus tickets activos (estados 4-10)
-            // El pivot de columnas se construye en JS tras la consulta.
+            // 9. Técnicos con sus tickets activos (estados 4-10).
+            // No-Admin: limita a este usuario para que CasesByUser
+            // solo muestre su propia fila.
             User.findAll({
+                where: isAdmin ? {} : { user_id: userId },
                 attributes: ['user_id', 'nombre_completo'],
                 include: [{
                     model: Ticket,
@@ -138,21 +171,20 @@ exports.getDashboardStats = async (req, res) => {
             }),
 
             // 10. Conteo de tickets por estado (1-10)
-            // El pivot de columnas nombradas se construye en JS tras la consulta.
             Ticket.findAll({
                 attributes: [
                     'ticket_status_id',
                     [Sequelize.fn('COUNT', Sequelize.col('ticket_id')), 'count'],
                 ],
-                where: { ticket_status: 1 },
+                where: { ticket_status: 1, ...ticketIdFilter },
                 group: ['ticket_status_id'],
                 raw: true,
             }),
 
-            // 11. Top 5 técnicos por promedio de calificación
-            // Ruta: User → assignedTickets (via TicketAssignment) → ratings
-            // foto se devuelve como nombre de archivo; avatar se añade en JS.
+            // 11. Técnicos por promedio de calificación.
+            // No-Admin: solo retorna su propia entrada de feedback.
             User.findAll({
+                where: isAdmin ? {} : { user_id: userId },
                 attributes: [
                     'user_id',
                     ['nombre_completo', 'name'],
@@ -175,7 +207,7 @@ exports.getDashboardStats = async (req, res) => {
                 }],
                 group: ['User.user_id', 'User.nombre_completo', 'User.foto'],
                 order: [[Sequelize.fn('AVG', Sequelize.col('assignedTickets->ratings.rating_score')), 'DESC']],
-                limit: 5,
+                limit: isAdmin ? 5 : undefined,
                 subQuery: false,
                 raw: true,
             }),
@@ -228,12 +260,12 @@ exports.getDashboardStats = async (req, res) => {
             if (key) pendingCases[key] = parseInt(row.count) || 0;
         });
 
-        // Construir avatar a partir del nombre de archivo, igual que en los
-        // demás controllers que devuelven foto cruda y el consumidor forma la URL.
+        // foto ya es la URL completa que guardó el portal SSO; se pasa
+        // directamente como avatar. null cuando no hay foto válida.
         const recentFeedback = rawFeedback.map(tech => ({
             ...tech,
             avatar: tech.foto && tech.foto !== '' && tech.foto !== 'default.jpg'
-                ? `http://localhost:8000/uploads/profiles/${tech.foto}`
+                ? tech.foto
                 : null,
         }));
 
