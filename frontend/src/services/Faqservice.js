@@ -1,131 +1,110 @@
-const API_BASE_URL = "http://localhost:8000/api";
+import { io } from 'socket.io-client';
 
-// Obtener todas las FAQs activas
+const API_URL = 'http://localhost:8000/api';
+const SOCKET_BASE_URL = 'http://localhost:8000';
+
+export const socket = io(SOCKET_BASE_URL, {
+    autoConnect: false,
+    withCredentials: true
+});
+
+const handleResponse = async (response) => {
+    if (!response.ok) {
+        let errorMessage = 'Error en la petición al servidor';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+        }
+        throw new Error(errorMessage);
+    }
+    return await response.json();
+};
+
+const fetchConfig = (method, body = null) => {
+    const config = {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+    };
+    if (body) config.body = JSON.stringify(body);
+    return config;
+};
+
+// ============================================
+// OBTENER TODAS LAS FAQS ACTIVAS
+// ============================================
 export const getFaqs = async () => {
     try {
-        const response = await fetch(`${API_BASE_URL}/faqs`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`Error: ${response.status}`);
-        }
-
-        return await response.json();
+        const response = await fetch(`${API_URL}/faqs`, fetchConfig('GET'));
+        return await handleResponse(response);
     } catch (error) {
-        console.error("Error fetching FAQs:", error);
+        console.error("Error en getFaqs:", error);
         throw error;
     }
 };
 
-// Obtener FAQs inactivas
+// ============================================
+// OBTENER FAQS INACTIVAS
+// ============================================
 export const getInactiveFaqs = async () => {
     try {
-        const response = await fetch(`${API_BASE_URL}/faqs/inactives`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`Error: ${response.status}`);
-        }
-
-        return await response.json();
+        const response = await fetch(`${API_URL}/faqs/inactives`, fetchConfig('GET'));
+        return await handleResponse(response);
     } catch (error) {
-        console.error("Error fetching inactive FAQs:", error);
+        console.error("Error en getInactiveFaqs:", error);
         throw error;
     }
 };
 
-// Obtener una FAQ específica
+// ============================================
+// OBTENER UNA FAQ POR ID
+// ============================================
 export const getFaqById = async (id) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/faqs/${id}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`Error: ${response.status}`);
-        }
-
-        return await response.json();
+        const response = await fetch(`${API_URL}/faqs/${id}`, fetchConfig('GET'));
+        return await handleResponse(response);
     } catch (error) {
-        console.error("Error fetching FAQ:", error);
+        console.error("Error en getFaqById:", error);
         throw error;
     }
 };
 
-// Crear nueva FAQ
+// ============================================
+// CREAR NUEVA FAQ
+// ============================================
 export const createFaq = async (faqData) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/faqs`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(faqData),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Error: ${response.status}`);
-        }
-
-        return await response.json();
+        const response = await fetch(`${API_URL}/faqs`, fetchConfig('POST', faqData));
+        return await handleResponse(response);
     } catch (error) {
-        console.error("Error creating FAQ:", error);
+        console.error("Error en createFaq:", error);
         throw error;
     }
 };
 
-// Actualizar FAQ
+// ============================================
+// ACTUALIZAR FAQ
+// ============================================
 export const updateFaq = async (id, faqData) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/faqs/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(faqData),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Error: ${response.status}`);
-        }
-
-        return await response.json();
+        const response = await fetch(`${API_URL}/faqs/${id}`, fetchConfig('PUT', faqData));
+        return await handleResponse(response);
     } catch (error) {
-        console.error("Error updating FAQ:", error);
+        console.error("Error en updateFaq:", error);
         throw error;
     }
 };
 
-// Cambiar estado de FAQ
+// ============================================
+// CAMBIAR ESTADO DE FAQ (TOGGLE)
+// ============================================
 export const toggleFaqStatus = async (id) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/faqs/${id}/toggle`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`Error: ${response.status}`);
-        }
-
-        return await response.json();
+        const response = await fetch(`${API_URL}/faqs/${id}/toggle`, fetchConfig('PATCH'));
+        return await handleResponse(response);
     } catch (error) {
-        console.error("Error toggling FAQ status:", error);
+        console.error("Error en toggleFaqStatus:", error);
         throw error;
     }
 };

@@ -1,95 +1,284 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import styles from "./AssignedTicket.module.less";
-import clockIcon from '../assets/icons/Clock-icon.svg';
-import { FiEye, FiPlus, FiClock } from "react-icons/fi";
-import assignedTicketIcon from '../assets/icons/Assigned-icon.svg';
-import { useNavigate } from "react-router-dom";
-import { useTicketContext } from "../context/TicketContext";
-import { LuTag, LuBox } from "react-icons/lu";
+import { FiPlus } from "react-icons/fi";
+import { LuCheck, LuX, LuCircleAlert } from "react-icons/lu";
+import { useNavigate, useLocation } from "react-router-dom";
+import { getAllTickets, socket } from "../services/Ticketservice";
+import { useAuth } from "../context/AuthContext";
+import TicketCard from "../components/Asignar Tickets/TicketCard/TicketCard";
+import AssignTicketModal from "../components/Asignar Tickets/AssignTicketModal/AssignTicketModal";
+import TicketDetailModal from "../components/Asignar Tickets/TicketDetailModal/TicketDetailModal";
 
-const assignedTicket = () => {
-
-    const { tickets } = useTicketContext();
+const AssignedTicket = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { user } = useAuth();
+    const highlightTicketId = location.state?.highlightTicketId ?? null;
+
+    const highlightRef = useCallback((node) => {
+        if (node) {
+            setTimeout(
+                () => node.scrollIntoView({ behavior: "smooth", block: "center" }),
+                200,
+            );
+        }
+    }, []);
+
+    const canRead = user?.Permissions?.some(
+        (p) =>
+            p.Seccion?.module_name === "Asignar Tickets" && p.permissions_read === 1,
+    );
+    const canEdit = user?.Permissions?.some(
+        (p) =>
+            p.Seccion?.module_name === "Asignar Tickets" && p.permissions_edit === 1,
+    );
+    const canWrite = user?.Permissions?.some(
+        (p) =>
+            p.Seccion?.module_name === "Asignar Tickets" && p.permissions_write === 1,
+    );
+
+    const [tickets, setTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const [selectedTicket, setSelectedTicket] = useState(null);
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+
+    const [toastConfig, setToastConfig] = useState({
+        show: false,
+        title: "",
+        message: "",
+        type: "success",
+    });
 
     useEffect(() => {
         document.title = "Soporte | Asignar Tickets";
-    }, []);
+        if (canRead) {
+            loadTickets();
+        } else {
+            setLoading(false);
+        }
+    }, [canRead]);
 
-    const formatID = (id) => `T-${id.toString().slice(-4)}`;
+    useEffect(() => {
+        if (!canRead) return;
+        const refresh = () => loadTickets();
+        socket.on("ticket_updated", refresh);
+        socket.on("new_ticket_created", refresh);
+        socket.on("ticket_status_changed", refresh);
+        return () => {
+            socket.off("ticket_updated", refresh);
+            socket.off("new_ticket_created", refresh);
+            socket.off("ticket_status_changed", refresh);
+        };
+    }, [canRead]);
+
+    const loadTickets = async () => {
+        setLoading(true);
+        try {
+            const data = await getAllTickets();
+            if (Array.isArray(data)) {
+                const sortedData = data.sort(
+                    (a, b) => new Date(a.created_at) - new Date(b.created_at),
+                );
+                setTickets(sortedData);
+            } else {
+                setTickets([]);
+            }
+        } catch (error) {
+            console.error("Error al cargar los tickets:", error);
+            setTickets([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const showToast = (title, message, type = "success") => {
+        setToastConfig({ show: true, title, message, type });
+        setTimeout(
+            () => setToastConfig((prev) => ({ ...prev, show: false })),
+            5000,
+        );
+    };
+
+    const handleActionSuccess = (mensaje) => {
+        showToast("¡Acción Exitosa!", mensaje, "success");
+        loadTickets();
+    };
+
+    const nuevosTickets = tickets.filter(
+        (t) => t.ticket_status_id === 1 || t.ticket_status_id === 2,
+    );
+    const backlogTickets = tickets.filter((t) => t.ticket_status_id === 3);
+
+    const handleViewDetail = (ticket) => {
+        if (!canEdit) {
+            showToast(
+                "Acceso Denegado",
+                "No tienes permisos para asignar tickets.",
+                "error",
+            );
+            return;
+        }
+        setSelectedTicket(ticket);
+        setShowDetailModal(true);
+    };
+
+    const handleOpenAssignModal = (ticket) => {
+        if (!canEdit) {
+            showToast(
+                "Acceso Denegado",
+                "No tienes permisos para asignar tickets.",
+                "error",
+            );
+            return;
+        }
+        setSelectedTicket(ticket);
+        setShowAssignModal(true);
+    };
+
+    if (!canRead) {
+        return (
+            <div className={styles.assignedTicketContainer}>
+                <div className={styles.errorInfo}>
+                    No tienes permisos para ver esta sección.
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.assignedTicketContainer}>
-
             <div className={styles.pageHeader}>
                 <div className={styles.headerLeft}>
                     <h1 className={styles.title}>Asignar Tickets</h1>
-                    <p className={styles.subtitle}>Gestiona la carga de trabajo del equipo.</p>
+                    <p className={styles.subtitle}>
+                        Gestiona la carga de trabajo del equipo.
+                    </p>
                 </div>
-                <button className={styles.createBtn} onClick={() => navigate('/tickets/createTicket')}>
-                    <FiPlus /> Crear Ticket
-                </button>
+                {canWrite && (
+                    <button
+                        className={styles.createBtn}
+                        onClick={() => navigate("/tickets/createTicket")}
+                    >
+                        <FiPlus /> Crear Ticket
+                    </button>
+                )}
             </div>
 
-            <div className={styles.mainGrid}>
+            <div className={styles.boardLayout}>
+                <div className={styles.columnContainer}>
+                    <div className={styles.columnHeader}>
+                        <span className={styles.dotNew}></span>
+                        <h3>Tickets Nuevos (Entrantes)</h3>
+                        <span className={styles.countBadge}>{nuevosTickets.length}</span>
+                    </div>
 
-                <div className={styles.leftColumn}>
-                    <h3 className={styles.columnTitle}>
-                        <span className={styles.greenDot}></span> Tickets Nuevos (Entrantes)
-                    </h3>
-
-                    <div className={styles.ticketsList}>
-                        {tickets.length === 0 ? (
-                            <div className={styles.emptyState}>
-                                <p>No hay tickets nuevos por ahora.</p>
-                            </div>
+                    <div className={styles.columnBody}>
+                        {loading ? (
+                            <div className={styles.loadingCol}>Cargando...</div>
+                        ) : nuevosTickets.length === 0 ? (
+                            <div className={styles.emptyState}>No hay tickets nuevos.</div>
                         ) : (
-                            tickets.map((ticket) => (
-                                <div key={ticket.ticket_id} className={styles.ticketCard}>
-
-                                    <div className={styles.cardTopRow}>
-                                        <span className={styles.ticketId}>{formatID(ticket.ticket_id)}</span>
-                                        <div className={styles.timeWrapper}>
-                                            <FiClock />
-                                            <span>10 min</span>
-                                        </div>
-                                    </div>
-
-                                    <div className={styles.cardContent}>
-                                        <h4 className={styles.clientName}>{ticket.company}</h4>
-                                        <p className={styles.ticketIssue}>{ticket.subject}</p>
-                                    </div>
-
-                                    <div className={styles.tagRow}>
-                                        <span className={`${styles.tag} ${styles.tagBlue}`}>
-                                            <LuTag className={styles.tagIcon} /> {ticket.category}
-                                        </span>
-                                        <span className={`${styles.tag} ${styles.tagOrange}`}>
-                                            <LuBox className={styles.tagIcon} /> {ticket.deviceType}
-                                        </span>
-                                    </div>
-
-                                    <button className={styles.btnDetails}>
-                                        <FiEye /> Ver Detalles
-                                    </button>
+                            nuevosTickets.map((ticket) => (
+                                <div
+                                    key={ticket.ticket_id}
+                                    ref={
+                                        ticket.ticket_id === highlightTicketId ? highlightRef : null
+                                    }
+                                >
+                                    <TicketCard
+                                        ticket={ticket}
+                                        highlighted={ticket.ticket_id === highlightTicketId}
+                                        showAssignButton={false}
+                                        onViewDetail={handleViewDetail}
+                                        onAssign={handleOpenAssignModal}
+                                    />
                                 </div>
                             ))
                         )}
                     </div>
                 </div>
 
-                <div className={`${styles.columnWrapper} ${styles.grayColumn}`}>
-                    <h3 className={styles.columnTitle}>
-                        <span className={styles.greenDot}></span> Backlog de Asignación
-                    </h3>
+                <div className={styles.columnContainer}>
+                    <div className={styles.columnHeader}>
+                        <span className={styles.dotBacklog}></span>
+                        <h3>Backlog de Asignación</h3>
+                        <span className={styles.countBadge}>{backlogTickets.length}</span>
+                    </div>
 
-                    <div className={styles.emptyBacklogHint}>
-                        <p>No hay más tickets pendientes de asignación.</p>
+                    <div className={styles.columnBody}>
+                        {loading ? (
+                            <div className={styles.loadingCol}>Cargando...</div>
+                        ) : backlogTickets.length === 0 ? (
+                            <div className={styles.emptyState}>
+                                No hay tickets pendientes de asignación.
+                            </div>
+                        ) : (
+                            backlogTickets.map((ticket) => (
+                                <div
+                                    key={ticket.ticket_id}
+                                    ref={
+                                        ticket.ticket_id === highlightTicketId ? highlightRef : null
+                                    }
+                                >
+                                    <TicketCard
+                                        ticket={ticket}
+                                        highlighted={ticket.ticket_id === highlightTicketId}
+                                        showAssignButton={true}
+                                        onViewDetail={handleViewDetail}
+                                        onAssign={handleOpenAssignModal}
+                                    />
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
+
+            {showAssignModal && selectedTicket && (
+                <AssignTicketModal
+                    ticket={selectedTicket}
+                    onClose={() => {
+                        setShowAssignModal(false);
+                        setSelectedTicket(null);
+                    }}
+                    onSuccess={handleActionSuccess}
+                />
+            )}
+
+            {showDetailModal && selectedTicket && (
+                <TicketDetailModal
+                    ticket={selectedTicket}
+                    onClose={() => {
+                        setShowDetailModal(false);
+                        setSelectedTicket(null);
+                    }}
+                    onSuccess={handleActionSuccess}
+                />
+            )}
+
+            {toastConfig.show && (
+                <div
+                    className={`${styles.successToast} ${toastConfig.type === "error" ? styles.errorToast : ""}`}
+                >
+                    <div className={styles.toastIcon}>
+                        {toastConfig.type === "success" ? <LuCheck /> : <LuCircleAlert />}
+                    </div>
+                    <div className={styles.toastContent}>
+                        <h4>{toastConfig.title}</h4>
+                        <p>{toastConfig.message}</p>
+                    </div>
+                    <button
+                        onClick={() => setToastConfig((prev) => ({ ...prev, show: false }))}
+                        className={styles.toastClose}
+                    >
+                        <LuX />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
 
-export default assignedTicket;
+export default AssignedTicket;

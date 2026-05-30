@@ -1,0 +1,319 @@
+@import '../less/main.less';
+
+.garantiasContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    background-color: @background-color;
+    min-height: calc(100vh - 100px);
+    font-family: @font-family;
+    border-radius: 30px;
+
+    @media(max-width: #breaks[tablet]) {
+        padding: 16px;
+        gap: 16px;
+        border-radius: 20px;
+    }
+
+    .header {
+        margin-bottom: 3px;
+
+        .titleSection {
+            .title {
+                font-size: 30px;
+                font-weight: 700;
+                color: @quaternary-color;
+                margin: 0 0 8px 0;
+
+                @media(max-width: #breaks[tablet]) {
+                    font-size: 24px;
+                }
+            }
+
+            .subtitle {
+                font-size: 14px;
+                color: darken(@secondary-color, 40%);
+                margin: 0;
+            }
+        }
+    }
+
+    .controlsWrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid darken(@secondary-color, 10%);
+        padding-bottom: 16px;
+        margin-bottom: 24px;
+
+        @media(max-width: #breaks[desktop]) {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 20px;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 20px;
+
+            @media(max-width: #breaks[tablet]) {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+            }
+
+            .searchBar {
+                display: flex;
+                align-items: center;
+                background-color: fade(@secondary-color, 30%);
+                border: 1px solid darken(@secondary-color, 5%);
+                border-radius: 24px;
+                padding: 10px 16px;
+                width: 350px;
+                transition: all 0.3s ease;
+
+                &:focus-within {
+                    border-color: @tertiary-color;
+                    background-color: white;
+                    box-shadow: 0 0 0 3px fade(@tertiary-color, 10%);
+                }
+
+                @media(max-width: #breaks[desktop]) {
+                    width: 100%;
+                }
+
+                .searchIcon {
+                    width: 16px;
+                    height: 16px;
+                    opacity: 0.5;
+                    margin-right: 10px;
+                }
+
+                .searchInput {
+                    border: none;
+                    outline: none;
+                    width: 100%;
+                    font-size: 14px;
+                    background: transparent;
+                    font-family: @font-family;
+
+                    &::placeholder {
+                        color: darken(@secondary-color, 30%);
+                    }
+                }
+            }
+
+            .actionButtons {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+
+                @media(max-width: #breaks[tablet]) {
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                }
+
+                .bulkBtn {
+                    background-color: white;
+                    color: @quaternary-color;
+                    border: 1px solid @quaternary-color;
+                    padding: 10px 20px;
+                    border-radius: 24px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.2s;
+
+                    &:hover {
+                        background-color: fade(@quaternary-color, 5%);
+                        transform: translateY(-1px);
+                    }
+
+                    @media(max-width: #breaks[tablet]) {
+                        flex: 1;
+                        justify-content: center;
+                    }
+                }
+
+                .createBtn {
+                    background-color: @quaternary-color;
+                    color: white;
+                    border: none;
+                    padding: 10px 24px;
+                    border-radius: 24px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.2s;
+
+                    &:hover {
+                        background-color: darken(@quaternary-color, 5%);
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 12px fade(@quaternary-color, 20%);
+                    }
+
+                    @media(max-width: #breaks[tablet]) {
+                        flex: 1;
+                        justify-content: center;
+                    }
+                }
+
+                .iconGroup {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    border-left: 1px solid darken(@secondary-color, 10%);
+                    padding-left: 16px;
+
+                    @media(max-width: #breaks[tablet]) {
+                        border-left: none;
+                        padding-left: 0;
+                    }
+                }
+
+                .filterBtn {
+                    background: none;
+                    border: none;
+                    font-size: 22px;
+                    color: darken(@secondary-color, 40%);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    transition: color 0.2s;
+
+                    &:hover {
+                        color: @quaternary-color;
+                    }
+
+                    &.activeFilter {
+                        color: @tertiary-color;
+                    }
+                }
+            }
+        }
+    }
+
+    .tableContainer {
+        background: @background-color;
+        width: 100%;
+        overflow-x: auto;
+
+        .loadingState,
+        .errorState,
+        .noAccess {
+            padding: 60px;
+            text-align: center;
+            font-size: 15px;
+            color: darken(@secondary-color, 40%);
+        }
+
+        .errorState {
+            color: #d93025;
+        }
+    }
+}
+
+.successToast {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 9999;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    min-width: 320px;
+    max-width: 400px;
+
+    animation: toastSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    @media(max-width: 480px) {
+        top: 20px;
+        right: 20px;
+        left: 20px;
+        min-width: auto;
+    }
+
+    .toastIconContainer {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        background-color: #16a34a;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+
+        .checkIcon {
+            color: white;
+            font-size: 24px;
+            stroke-width: 3px;
+        }
+    }
+
+    .toastContent {
+        flex: 1;
+
+        h4 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: #15803d;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #166534;
+            font-weight: 500;
+        }
+    }
+
+    .toastClose {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        transition: all 0.2s;
+
+        &:hover {
+            color: #166534;
+            transform: scale(1.1);
+        }
+    }
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

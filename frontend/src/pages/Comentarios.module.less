@@ -1,0 +1,192 @@
+@import '../less/main.less';
+
+.comentariosContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    background-color: @background-color;
+    min-height: calc(100vh - 100px);
+    font-family: @font-family;
+    border-radius: 30px;
+
+    @media(max-width: #breaks[tablet]) {
+        padding: 16px;
+        gap: 16px;
+        border-radius: 20px;
+    }
+
+    .header {
+        margin-bottom: 3px;
+
+        .titleSection {
+            .title {
+                font-size: 30px;
+                font-weight: 700;
+                color: @quaternary-color;
+                margin: 0 0 8px 0;
+
+                @media(max-width: #breaks[tablet]) {
+                    font-size: 24px;
+                }
+            }
+
+            .subtitle {
+                font-size: 14px;
+                color: darken(@secondary-color, 40%);
+                margin: 0;
+            }
+        }
+    }
+
+    .controlsWrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid darken(@secondary-color, 10%);
+        padding-bottom: 16px;
+        margin-bottom: 8px;
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 20px;
+
+            @media(max-width: #breaks[tablet]) {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+            }
+
+            .searchBar {
+                display: flex;
+                align-items: center;
+                background-color: fade(@secondary-color, 30%);
+                border: 1px solid darken(@secondary-color, 5%);
+                border-radius: 24px;
+                padding: 10px 16px;
+                width: 400px;
+                transition: all 0.3s ease;
+
+                &:focus-within {
+                    border-color: @tertiary-color;
+                    background-color: white;
+                    box-shadow: 0 0 0 3px fade(@tertiary-color, 10%);
+                }
+
+                @media(max-width: #breaks[desktop]) {
+                    width: 100%;
+                }
+
+                .searchIcon {
+                    width: 16px;
+                    height: 16px;
+                    opacity: 0.5;
+                    margin-right: 10px;
+                    flex-shrink: 0;
+                }
+
+                .searchInput {
+                    border: none;
+                    outline: none;
+                    width: 100%;
+                    font-size: 14px;
+                    background: transparent;
+                    font-family: @font-family;
+
+                    &::placeholder {
+                        color: darken(@secondary-color, 30%);
+                    }
+                }
+            }
+
+            .actionButtons {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+
+                .iconGroup {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .filterBtn {
+                    background: none;
+                    border: none;
+                    font-size: 22px;
+                    color: darken(@secondary-color, 40%);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    transition: color 0.2s;
+
+                    &:hover {
+                        color: @quaternary-color;
+                    }
+
+                    &.activeFilter {
+                        color: @tertiary-color;
+                    }
+                }
+            }
+        }
+    }
+
+    .statsRow {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+
+        @media(max-width: #breaks[desktop]) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media(max-width: #breaks[tablet]) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .statCard {
+            background: @secondary-color;
+            border-radius: 16px;
+            padding: 20px 24px;
+
+            .statLabel {
+                font-size: 12px;
+                font-weight: 600;
+                color: darken(@secondary-color, 40%);
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+                margin: 0 0 6px 0;
+            }
+
+            .statValue {
+                font-size: 30px;
+                font-weight: 800;
+                color: @quaternary-color;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .starIcon {
+                    font-size: 22px;
+                    color: #f59e0b;
+                }
+            }
+        }
+    }
+
+    .gridContainer {
+
+        .loadingState,
+        .errorInfo {
+            padding: 60px;
+            text-align: center;
+            font-size: 15px;
+            color: darken(@secondary-color, 40%);
+        }
+    }
+}

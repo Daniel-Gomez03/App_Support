@@ -1,226 +1,341 @@
+// ============================================
+// CONTROLADOR DE CLIENTES
+// Gestiona el registro, consulta, actualización
+// y cambio de estado de los clientes del sistema.
+// El registro valida número y correo únicos,
+// verifica la garantía (serie o factura) y sube
+// la foto de perfil al FTP. La verificación de
+// email usa tokens de un solo uso con expiración.
+// ============================================
+
 const bcrypt = require('bcrypt');
-const crypto = require('crypto')
+const crypto = require('crypto');
 const fs = require('fs');
-const { Op } = require('sequelize');
+const { Op, Sequelize } = require('sequelize');
 const Customer = require('../models/Customer');
 const { uploadToFTP, deleteFromFTP } = require('../Utils/ftpClient');
+const { sendVerificationEmail, sendAccountActivatedEmail } = require('../config/email');
+const Warranty = require('../models/Warranty');
+const WarrantyPolicy = require('../models/WarrantyPolicy');
 
-
+// ============================================
+// HELPER — ELIMINAR ARCHIVO TEMPORAL LOCAL
+// Usado en todos los flujos con req.file para
+// garantizar limpieza tanto en éxito como error.
+// ============================================
 const cleanupFile = (path) => {
     if (path && fs.existsSync(path)) fs.unlinkSync(path);
 };
 
 // ============================================
-// VALIDAR CONTRASEÑA
+// ENVIAR CORREO DE VERIFICACIÓN (Admin)
+// Genera un token aleatorio de 32 bytes con
+// vigencia de 6 horas. Si ya existe un token
+// vigente responde 429 con el tiempo restante
+// para evitar spam de correos.
 // ============================================
-const validatePassword = (password) => {
-    const errors = [];
-
-    if (password.length < 12) {
-        errors.push('La contraseña debe tener mínimo 12 caracteres');
-    }
-
-    if (!/[A-Z]/.test(password)) {
-        errors.push('La contraseña debe contener al menos una mayúscula (A-Z)');
-    }
-
-    if (!/[a-z]/.test(password)) {
-        errors.push('La contraseña debe contener al menos una minúscula (a-z)');
-    }
-
-    if (!/[0-9]/.test(password)) {
-        errors.push('La contraseña debe contener al menos un número (0-9)');
-    }
-
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-        errors.push('La contraseña debe contener al menos un carácter especial (!@#$%^&*)');
-    }
-
-    return {
-        isValid: errors.length === 0,
-        errors: errors
-    };
-};
-
-// ============================================
-// REGISTRO DE CLIENTE
-// ============================================
-exports.register = async (req, res) => {
+exports.sendVerificationEmailAdmin = async (req, res) => {
     try {
-        const { customer_name, customer_email, customer_phone, customer_country_code, customer_company, customer_password } = req.body;
+        const { id } = req.params;
+        const customer = await Customer.findByPk(id);
 
-        if (!customer_name || !customer_email || !customer_phone || !customer_country_code || !customer_company || !customer_password) {
-            return res.status(400).json({ error: 'Todos los campos son requeridos' });
+        if (!customer) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(customer_email)) {
-            return res.status(400).json({ error: 'Email inválido' });
-        }
-
-        const existingPhone = await Customer.findOne({ where: { customer_phone } });
-        if (existingPhone) {
-            return res.status(400).json({ error: 'Este número de teléfono ya está registrado' });
-        }
-
-        if (customer_name.length < 3) {
-            return res.status(400).json({ error: 'El nombre debe tener mínimo 3 caracteres' });
-        }
-
-        if (customer_company.length < 3) {
-            return res.status(400).json({ error: 'La empresa debe tener mínimo 3 caracteres' });
-        }
-
-        const phoneRegex = /^[0-9]+$/;
-        if (!phoneRegex.test(customer_phone)) {
-            return res.status(400).json({ error: 'El teléfono solo debe contener números' });
-        }
-
-        const passwordValidation = validatePassword(customer_password);
-        if (!passwordValidation.isValid) {
-            return res.status(400).json({
-                error: 'La contraseña no cumple los requisitos',
-                details: passwordValidation.errors
+        if (customer.verification_token && customer.verification_token_expires > new Date()) {
+            const remainingTime = Math.ceil(
+                (customer.verification_token_expires - new Date()) / (1000 * 60)
+            );
+            return res.status(429).json({
+                error: `Ya existe un correo de verificación vigente. Intente de nuevo en ${remainingTime} minutos.`
             });
         }
 
-        const existingEmail = await Customer.findOne({ where: { customer_email } });
-        if (existingEmail) {
-            return res.status(400).json({ error: 'El email ya está registrado' });
-        }
+        const newToken = crypto.randomBytes(32).toString('hex');
+        const expires = new Date();
+        expires.setHours(expires.getHours() + 6);
 
-        //Genera token de verificacion
-        const verificationToken = crypto.randomBytes(32).toString('hex');
-        const tokenExpires = new Date(Date.now() + 15 * 60 * 1000); //15 minutos maximo
-
-        //Hashea Contraseña
-        const hashedPassword = await bcrypt.hash(customer_password, 15);
-
-        const newCustomer = await Customer.create({
-            customer_name,
-            customer_email,
-            customer_phone,
-            customer_country_code,
-            customer_company,
-            customer_password: hashedPassword,
-            customer_status: 1,
-            email_verified: false,
-            verification_token: verificationToken,
-            verification_token_expires: tokenExpires,
+        await customer.update({
+            verification_token: newToken,
+            verification_token_expires: expires,
         });
 
-        const { sendVerificationEmail } = require('../config/email');
-        await sendVerificationEmail(customer_email, verificationToken);
+        const fullName = `${customer.customer_first_name} ${customer.customer_last_name}`;
+        await sendVerificationEmail(customer.customer_email, newToken, fullName);
 
-        const io = req.app.get('io');
-        io.emit('customer_created', newCustomer);
-
-        res.status(201).json({
-            message: 'Usuario registrado. Por favor, verifica tu email para continuar.',
-            customer_id: newCustomer.customer_id,
-            customer_email: newCustomer.customer_email,
-            note: 'Revisa tu email para el enlace de verificación'
+        res.status(200).json({
+            message: `Correo de verificación enviado a ${customer.customer_email}. Válido por 6 horas.`
         });
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error enviando email:", error);
+        res.status(500).json({ error: 'Error al procesar el envío del correo de verificación.' });
     }
 };
 
 // ============================================
-// VERIFICAR EMAIL
+// VALIDAR TOKEN DE EMAIL
+// Acepta el token vía query string. Si el
+// cliente tenía status 0 (pendiente revisión)
+// muestra un mensaje de espera en lugar del
+// de bienvenida, ya que aún no puede ingresar
+// hasta que un Admin active la cuenta.
 // ============================================
 exports.verifyEmail = async (req, res) => {
     try {
         const { token } = req.query;
 
         if (!token) {
-            return res.status(400).json({ error: 'Token no proporcionado' });
+            return res.status(400).send('<h1>Token no proporcionado</h1>');
         }
 
         const customer = await Customer.findOne({
-            where: { verification_token: token }
+            where: {
+                verification_token: token,
+                verification_token_expires: { [Op.gt]: new Date() },
+            },
         });
 
         if (!customer) {
-            return res.status(400).json({ error: 'Token inválido' });
+            return res.status(400).send(`
+                <div style="font-family: Poppins; text-align: center; padding: 50px;">
+                    <h1 style="color: #cf1322;">Enlace inválido o expirado</h1>
+                    <p>El enlace de verificación ha caducado o ya ha sido utilizado.</p>
+                </div>
+            `);
         }
 
-
-        if (new Date() > customer.verification_token_expires) {
-            return res.status(400).json({ error: 'El token ha expirado' });
-        }
+        const isPendingReview = customer.customer_status === 0;
 
         await customer.update({
-            email_verified: true,
+            email_verified: 1,
             verification_token: null,
-            verification_token_expires: null
+            verification_token_expires: null,
         });
 
-        res.status(200).json({
-            message: 'Email verificado correctamente. Ahora puedes iniciar sesión.',
-            customer_email: customer.customer_email
-        });
+        if (isPendingReview) {
+            res.status(200).send(`
+                <div style="font-family: sans-serif; background: #f4f4f4; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: #fff; border-radius: 12px; padding: 48px 36px; max-width: 480px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                        <h1 style="color: #92400e; font-size: 24px; margin-bottom: 12px;">Correo Verificado</h1>
+                        <p style="color: #555; line-height: 1.6; margin-bottom: 20px;">
+                            Tu dirección de correo ha sido verificada correctamente.<br><br>
+                            Sin embargo, <strong>tu cuenta está pendiente de revisión</strong> por parte de un administrador. Te notificaremos cuando tu acceso sea habilitado.
+                        </p>
+                        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px; color: #92400e; font-size: 13px;">
+                            ⚠️ No podrás iniciar sesión hasta que un administrador active tu cuenta.
+                        </div>
+                    </div>
+                </div>
+            `);
+        } else {
+            res.status(200).send(`
+                <div style="font-family: sans-serif; background: #f4f4f4; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: #fff; border-radius: 12px; padding: 48px 36px; max-width: 480px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                        <h1 style="color: #3C6034; font-size: 24px; margin-bottom: 12px;">¡Correo Verificado!</h1>
+                        <p style="color: #555; line-height: 1.6;">
+                            Tu cuenta ha sido activada correctamente.<br>Ya puedes iniciar sesión en la aplicación.
+                        </p>
+                    </div>
+                </div>
+            `);
+        }
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error verificando email:", error);
+        res.status(500).send('<h1>Error interno del servidor</h1>');
     }
 };
 
 // ============================================
-// LOGIN
+// REGISTRO DE CLIENTE (Panel Administrativo)
+// Flujo:
+//  1. Sanitiza y valida los campos del body.
+//  2. Verifica unicidad de email y teléfono en
+//     paralelo con Promise.all para reducir RTTs.
+//  3. Valida la garantía (serie o factura) y
+//     obtiene la política activa también en
+//     paralelo; si no hay garantía el cliente
+//     queda en status 0 (pendiente revisión).
+//  4. Sube la foto al FTP si se adjuntó.
+//  5. Crea el cliente y emite 'customer_created'.
 // ============================================
-exports.login = async (req, res) => {
+exports.registerAdmin = async (req, res) => {
+    const tempFilePath = req.file?.path;
+
     try {
-        const { customer_email, customer_password } = req.body;
-        const customer = await Customer.findOne({ where: { customer_email } });
+        const {
+            customer_first_name,
+            customer_second_name,
+            customer_last_name,
+            customer_second_last_name,
+            customer_email,
+            customer_country_code,
+            customer_phone,
+            customer_company,
+            validation_type,
+            validation_value,
+        } = req.body;
 
-        if (!customer_email || !customer_password) {
-            return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+        // Sanitización de campos de texto
+        const cleanFirstName = customer_first_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '');
+        const cleanSecondName = customer_second_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || null;
+        const cleanLastName = customer_last_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '');
+        const cleanSecondLastName = customer_second_last_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || null;
+        const cleanEmail = customer_email?.replace(/\s+/g, '').toLowerCase();
+        const cleanValidationValue = validation_value?.replace(/\s+/g, '');
+        const cleanPhone = customer_phone?.replace(/[^0-9]/g, '');
+
+        if (!cleanFirstName || !cleanLastName || !cleanEmail || !cleanPhone || !customer_country_code || !customer_company || !validation_type || !cleanValidationValue) {
+            cleanupFile(tempFilePath);
+            return res.status(400).json({ error: 'Faltan campos obligatorios para procesar el registro.' });
         }
 
-        if (!customer) {
-            return res.status(401).json({ error: 'Email o contraseña incorrectos' });
-        }
-
-        if (!customer.email_verified) {
-            return res.status(403).json({
-                error: 'Por favor, verifica tu email antes de iniciar sesión',
-                message: 'Se envió un enlace de verificación a tu correo'
+        // Validación de longitud de teléfono por código de país
+        const countryRules = { '+504': 8, '+505': 8, '+503': 8, '+502': 8 };
+        const expectedLength = countryRules[customer_country_code];
+        if (expectedLength && cleanPhone.length !== expectedLength) {
+            cleanupFile(tempFilePath);
+            return res.status(400).json({
+                error: `El número de teléfono para ${customer_country_code} debe tener exactamente ${expectedLength} dígitos.`
             });
         }
 
-        const isPasswordValid = await bcrypt.compare(customer_password, customer.customer_password);
-
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Email o contraseña incorrectos' });
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(cleanEmail)) {
+            cleanupFile(tempFilePath);
+            return res.status(400).json({ error: 'El formato del correo electrónico es inválido.' });
         }
 
-        res.status(200).json({
-            message: 'Login exitoso',
-            customer_id: customer.customer_id,
-            customer_name: customer.customer_name,
-            customer_email: customer.customer_email,
-            customer_country_code: customer.customer_country_code,
-            customer_phone: customer.customer_phone,
-            customer_company: customer.customer_company,
-            customer_image: customer.customer_image
+        if (cleanFirstName.length < 3) {
+            cleanupFile(tempFilePath);
+            return res.status(400).json({ error: 'El primer nombre debe tener mínimo 3 caracteres.' });
+        }
+
+        // Verificar unicidad de email y teléfono en paralelo
+        const [existingEmail, existingPhone] = await Promise.all([
+            Customer.findOne({ where: { customer_email: cleanEmail } }),
+            Customer.findOne({ where: { customer_phone: cleanPhone } }),
+        ]);
+
+        if (existingEmail) {
+            cleanupFile(tempFilePath);
+            return res.status(400).json({ error: 'El email ya está registrado.' });
+        }
+        if (existingPhone) {
+            cleanupFile(tempFilePath);
+            return res.status(400).json({ error: 'Este número de teléfono ya está registrado.' });
+        }
+
+        // Consultar garantía y política activa en paralelo
+        const warrantyQuery = validation_type === 'serie'
+            ? { warranty_serial_number: cleanValidationValue }
+            : { warranty_invoice_number: cleanValidationValue };
+
+        const [warrantyExists, activePolicy] = await Promise.all([
+            Warranty.findOne({ where: warrantyQuery }),
+            WarrantyPolicy.findOne({
+                where: { policy_is_active: 1 },
+                order: [['created_at', 'DESC']],
+            }),
+        ]);
+
+        // Si no hay garantía, el cliente queda pendiente de revisión manual
+        const initialStatus = warrantyExists ? 1 : 0;
+        const responseMessage = warrantyExists
+            ? 'Cliente registrado exitosamente.'
+            : `Cliente creado (Inactivo). La ${validation_type} no existe en nuestra base de datos y requiere revisión manual.`;
+
+        // Subir foto al FTP si se adjuntó
+        let customer_image = null;
+        if (req.file) {
+            try {
+                const remoteUrl = await uploadToFTP(tempFilePath, req.file.filename);
+                customer_image = remoteUrl;
+            } catch (ftpError) {
+                console.error("Error FTP:", ftpError);
+            }
+            cleanupFile(tempFilePath);
+        }
+
+        const newCustomer = await Customer.create({
+            customer_first_name: cleanFirstName,
+            customer_second_name: cleanSecondName,
+            customer_last_name: cleanLastName,
+            customer_second_last_name: cleanSecondLastName,
+            customer_email: cleanEmail,
+            customer_phone: cleanPhone,
+            customer_country_code,
+            customer_company: customer_company.trim(),
+            customer_registration_type: validation_type,
+            customer_registration_value: cleanValidationValue,
+            customer_password: null,
+            customer_image,
+            customer_status: initialStatus,
+            email_verified: 0,
+            verification_token: null,
+            accepted_policy_at: activePolicy ? new Date() : null,
+            accepted_policy_version: activePolicy ? activePolicy.policy_version : null,
+        });
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('customer_created', {
+                customer_id: newCustomer.customer_id,
+                full_name: `${newCustomer.customer_first_name} ${newCustomer.customer_last_name}`,
+                status: initialStatus,
+            });
+        }
+
+        res.status(201).json({
+            message: responseMessage,
+            customer_id: newCustomer.customer_id,
+            requires_manual_review: !warrantyExists,
         });
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        cleanupFile(tempFilePath);
+        console.error("Error en registro:", error);
+        res.status(500).json({ error: "Ocurrió un error interno al procesar el registro." });
     }
 };
 
 // ============================================
 // OBTENER TODOS LOS CLIENTES
+// Devuelve campos clave con dos columnas
+// calculadas por Sequelize: full_name (nombre
+// completo con CONCAT_WS) y full_phone (código
+// de país + número). Ordenado por fecha de
+// registro descendente.
 // ============================================
 exports.getAllCustomers = async (req, res) => {
     try {
         const customers = await Customer.findAll({
-            attributes: { exclude: ['customer_password'] }
+            attributes: [
+                'customer_id',
+                'customer_first_name',
+                'customer_second_name',
+                'customer_last_name',
+                'customer_second_last_name',
+                [Sequelize.fn('CONCAT_WS', ' ', Sequelize.col('customer_first_name'), Sequelize.col('customer_last_name')), 'full_name'],
+                'customer_email',
+                'email_verified',
+                'customer_country_code',
+                'customer_phone',
+                [Sequelize.fn('CONCAT', Sequelize.col('customer_country_code'), ' ', Sequelize.col('customer_phone')), 'full_phone'],
+                'customer_company',
+                'customer_registration_type',
+                'customer_registration_value',
+                'customer_status',
+                'customer_image',
+                'created_at',
+            ],
+            order: [['created_at', 'DESC']],
         });
-        res.json(customers);
+        res.status(200).json(customers);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -231,141 +346,141 @@ exports.getAllCustomers = async (req, res) => {
 // ============================================
 exports.getCustomerById = async (req, res) => {
     try {
-        const customer = await Customer.findByPk(req.params.id, {
-            attributes: { exclude: ['customer_password'] }
+        const { id } = req.params;
+        const customer = await Customer.findByPk(id, {
+            attributes: [
+                'customer_id', 'customer_first_name', 'customer_second_name',
+                'customer_last_name', 'customer_second_last_name', 'customer_email',
+                'customer_country_code', 'customer_phone', 'customer_company',
+                'customer_registration_type', 'customer_registration_value',
+                'customer_status', 'customer_image', 'email_verified', 'created_at',
+            ],
         });
 
-        if (!customer) {
-            return res.status(404).json({ error: 'Cliente no encontrado' });
-        }
-
-        res.json(customer);
+        if (!customer) return res.status(404).json({ error: 'Cliente no encontrado' });
+        res.status(200).json(customer);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
 // ============================================
-// ACTUALIZAR CLIENTE
+// ACTUALIZAR CLIENTE (Panel Administrativo)
+// Si cambia el correo electrónico se resetea
+// email_verified a 0, obligando al cliente a
+// reverificar. La foto nueva se sube al FTP y
+// la anterior se elimina del servidor remoto.
 // ============================================
 exports.updateCustomer = async (req, res) => {
     const tempFilePath = req.file?.path;
-    try {
-        const { id } = req.params;
-        const customer = await Customer.findByPk(id);
+    const { id } = req.params;
 
+    try {
+        const customer = await Customer.findByPk(id);
         if (!customer) {
             cleanupFile(tempFilePath);
             return res.status(404).json({ error: 'Cliente no encontrado' });
         }
 
-        const { customer_name, customer_phone, customer_company, customer_password, customer_country_code } = req.body;
-        let updateData = {};
+        const body = req.body || {};
+        const {
+            customer_first_name,
+            customer_second_name,
+            customer_last_name,
+            customer_second_last_name,
+            customer_email,
+            customer_phone,
+            customer_company,
+            customer_country_code,
+        } = body;
 
-        // Procesar Imagen 
+        const cleanEmail = customer_email?.replace(/\s+/g, '').toLowerCase();
+        const cleanPhone = customer_phone?.replace(/[^0-9]/g, '');
+
+        // Verificar que el nuevo correo no esté en uso por otro cliente
+        if (cleanEmail && cleanEmail !== customer.customer_email) {
+            const emailExists = await Customer.findOne({
+                where: { customer_email: cleanEmail, customer_id: { [Op.ne]: id } },
+            });
+            if (emailExists) {
+                cleanupFile(tempFilePath);
+                return res.status(400).json({ error: 'El nuevo correo ya está en uso.' });
+            }
+            customer.email_verified = 0;
+        }
+
+        // Reemplazar foto: eliminar la anterior del FTP y subir la nueva
+        let customer_image = customer.customer_image;
         if (req.file) {
-            const cleanRemotePath = (process.env.FTP_REMOTE_PATH || '').replace(/^\/+|\/+$/g, '');
-
-            if (customer.customer_image) {
-                const oldFileName = customer.customer_image.split('/').pop();
-                const remoteOldPath = `/${cleanRemotePath}/${oldFileName}`.replace(/\/+/g, '/');
-                deleteFromFTP(remoteOldPath).catch(() => { });
+            try {
+                if (customer.customer_image) {
+                    const oldFileName = customer.customer_image.split('/').pop();
+                    await deleteFromFTP(oldFileName).catch(err => console.error("Error eliminando foto vieja FTP:", err));
+                }
+                const remoteUrl = await uploadToFTP(tempFilePath, req.file.filename);
+                customer_image = remoteUrl;
+            } catch (ftpErr) {
+                console.error("Error al subir a FTP:", ftpErr);
+            } finally {
+                cleanupFile(tempFilePath);
             }
-
-            const remoteUrl = await uploadToFTP(tempFilePath, req.file.filename);
-            updateData.customer_image = remoteUrl.replace(/([^:]\/)\/+/g, "$1");
-            cleanupFile(tempFilePath);
         }
 
-        // Validaciones de Texto Selectivas
-        if (customer_name) {
-            if (customer_name.length < 3) throw new Error('Nombre demasiado corto');
-            updateData.customer_name = customer_name;
-        }
+        await customer.update({
+            customer_first_name: customer_first_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || customer.customer_first_name,
+            customer_second_name: customer_second_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || null,
+            customer_last_name: customer_last_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || customer.customer_last_name,
+            customer_second_last_name: customer_second_last_name?.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || null,
+            customer_email: cleanEmail || customer.customer_email,
+            customer_phone: cleanPhone || customer.customer_phone,
+            customer_country_code: customer_country_code || customer.customer_country_code,
+            customer_company: customer_company?.trim() || customer.customer_company,
+            customer_image,
+            email_verified: customer.email_verified,
+        });
 
-        if (customer_phone) {
-            const phoneExists = await Customer.findOne({ where: { customer_phone, customer_id: { [Op.ne]: id } } });
-            if (phoneExists) throw new Error('El teléfono ya está en uso');
-            updateData.customer_phone = customer_phone;
-        }
-
-        if (customer_password && customer_password.trim() !== "") {
-            const isSamePassword = await bcrypt.compare(customer_password, customer.customer_password);
-
-            if (isSamePassword) {
-                return res.status(400).json({
-                    error: 'La nueva contraseña no puede ser igual a la anterior'
-                });
-            }
-            updateData.customer_password = await bcrypt.hash(customer_password, 15);
-        }
-
-        if (customer_company) updateData.customer_company = customer_company;
-        if (customer_country_code) updateData.customer_country_code = customer_country_code;
-
-        // Guardar y Responder
-        await customer.update(updateData);
-        const updatedCustomer = customer.toJSON();
-        delete updatedCustomer.customer_password;
-
-        req.app.get('io')?.emit('customer_updated', updatedCustomer);
-        res.json({ message: "Perfil actualizado", customer: updatedCustomer });
+        res.status(200).json({ message: 'Cliente actualizado correctamente.' });
 
     } catch (error) {
         cleanupFile(tempFilePath);
-        res.status(400).json({ error: error.message });
+        console.error("Error en updateCustomer:", error);
+        res.status(500).json({ error: 'Error interno al actualizar el cliente.' });
     }
 };
 
 // ============================================
-// ELIMINAR CLIENTE
-// ============================================
-exports.deleteCustomer = async (req, res) => {
-    try {
-        const customer = await Customer.findByPk(req.params.id);
-
-        if (!customer) {
-            return res.status(404).json({ error: 'Cliente no encontrado' });
-        }
-
-        const customerId = customer.customer_id;
-        await customer.destroy();
-
-        const io = req.app.get('io');
-        io.emit('customer_deleted', {
-            customer_id: customerId
-        });
-
-        res.json({ message: 'Cliente eliminado' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-// ============================================
-// CAMBIAR ESTADO DEL CLIENTE
+// CAMBIAR ESTADO DEL CLIENTE (Toggle)
+// Activo ↔ Inactivo. Cuando se activa por
+// primera vez desde inactivo se envía un correo
+// de bienvenida al cliente. Emite el evento
+// 'customer_status_updated' para actualizar la
+// vista del panel sin recargar.
 // ============================================
 exports.toggleCustomerStatus = async (req, res) => {
     try {
-        const customer = await Customer.findByPk(req.params.id);
+        const { id } = req.params;
+        const customer = await Customer.findByPk(id);
+        if (!customer) return res.status(404).json({ error: 'Cliente no encontrado' });
 
-        if (!customer) {
-            return res.status(404).json({ error: 'Cliente no encontrado' });
+        const wasInactive = customer.customer_status === 0;
+        const newStatus = wasInactive ? 1 : 0;
+
+        await customer.update({ customer_status: newStatus });
+
+        if (wasInactive && newStatus === 1) {
+            const fullName = `${customer.customer_first_name} ${customer.customer_last_name}`;
+            await sendAccountActivatedEmail(customer.customer_email, fullName);
         }
 
-        customer.customer_status = !customer.customer_status;
-        await customer.save();
-
         const io = req.app.get('io');
-        io.emit('customer_status_updated', {
-            customer_id: customer.customer_id,
-            new_status: customer.customer_status
-        });
+        if (io) {
+            io.emit('customer_status_updated', { customer_id: id, new_status: newStatus });
+        }
 
-        res.json({
-            message: 'Estado actualizado',
-            customer_name: customer.customer_name,
-            new_status: customer.customer_status
+        res.status(200).json({
+            message: `Estado actualizado a ${newStatus === 1 ? 'Activo' : 'Inactivo'}`,
+            new_status: newStatus,
+            email_sent: wasInactive && newStatus === 1,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });

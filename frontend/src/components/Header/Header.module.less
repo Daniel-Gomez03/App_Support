@@ -45,81 +45,6 @@
     }
   }
 
-  .searchSection {
-    flex: 1;
-    display: flex;
-    justify-content: flex-start;
-    padding-left: 32px;
-
-    @media (max-width: #breaks[tablet]) {
-      padding-left: 0;
-      justify-content: flex-end;
-      padding-right: 12px;
-    }
-
-    .searchBar {
-      width: 384px;
-      height: 48px;
-      background-color: @background-color;
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-
-      @media (max-width: #breaks[tablet]) {
-        width: 40px;
-        height: 40px;
-        padding: 0;
-        justify-content: center;
-        border-radius: 50%;
-        cursor: pointer;
-        background-color: @background-color;
-      }
-
-      .searchIcon {
-        margin-right: 12px;
-
-        @media (max-width: #breaks[tablet]) {
-          margin-right: 0;
-          opacity: 0.7;
-        }
-      }
-
-      .searchInput {
-        flex: 1;
-        border: none;
-        outline: none;
-        font-size: 16px;
-        color: #99A1AF;
-        background: transparent;
-
-        &::placeholder {
-          color: #9CA3AF;
-        }
-
-        @media (max-width: 768px) {
-          display: none;
-        }
-      }
-
-      .shortcutBadge {
-        background-color: #F3F4F6;
-        color: #9CA3AF;
-        font-size: 12px;
-        font-weight: 600;
-        padding: 4px 8px;
-        border-radius: 6px;
-        border: 1px solid #E5E7EB;
-        font-family: Arial, Helvetica, sans-serif;
-
-        @media (max-width: #breaks[tablet]) {
-          display: none;
-        }
-      }
-    }
-  }
-
   .rightSection {
     display: flex;
     align-items: center;
@@ -133,31 +58,49 @@
       display: flex;
       align-items: center;
       gap: 8px;
-
-      @media (max-width: 768px) {
-        gap: 4px;
-      }
+      padding: 4px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      white-space: nowrap;
 
       .fireIcon {
-        color: #D1D5DB;
-        font-size: 20px;
-        transition: all 0.3s ease;
+        font-size: 18px;
+        color: #555;
+        transition: color 0.3s ease;
+      }
+
+      &.activeStreak .fireIcon {
+        color: #ff4500;
       }
 
       .streakNumber {
         font-weight: 700;
-        font-size: 16px;
-        color: #111827;
+        font-size: 14px;
+        color: #374151;
       }
 
-      &.activeStreak {
-        .fireIcon {
-          color: #FF7A00;
-          filter: drop-shadow(0 2px 4px rgba(255, 122, 0, 0.3));
+      .lostStreakMessage {
+        font-size: 11px;
+        font-weight: 800;
+        color: #ff4d4f;
+        background: rgba(255, 77, 79, 0.15);
+        padding: 2px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 77, 79, 0.3);
+        margin-left: 4px;
+        letter-spacing: 0.5px;
+
+        .hideOnMobile {
+          display: inline;
         }
 
-        .streakNumber {
-          color: #111827;
+        @media (max-width: #breaks[tablet]) {
+          font-size: 10px;
+          padding: 2px 6px;
+
+          .hideOnMobile {
+            display: none;
+          }
         }
       }
     }

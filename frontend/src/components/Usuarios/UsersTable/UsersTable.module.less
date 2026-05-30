@@ -1,0 +1,222 @@
+@import '../../../less/main.less';
+
+.tableWrapper {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+
+    @media(max-width: #breaks[tablet]) {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+.userProfile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+
+    .avatarContainer {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid fade(@secondary-color, 20%);
+    }
+
+    .avatarFallback {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: @secondary-color;
+        color: darken(@secondary-color, 40%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+
+    .userName {
+        font-weight: 600;
+        color: @quaternary-color;
+        font-size: 13.5px;
+        white-space: nowrap;
+    }
+}
+
+
+.emailContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+
+    .emailText {
+        color: #555;
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .verifiedIcon {
+        color: #008236;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .pendingIcon {
+        color: #fa8c16;
+        font-size: 16px;
+        flex-shrink: 0;
+        animation: pulse 2s infinite;
+    }
+}
+
+.statusActive,
+.statusInactive {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    gap: 6px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    min-width: 95px;
+}
+
+.statusActive {
+    background-color: #F0FDF4;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+.statusInactive {
+    background-color: #FFC9C9;
+    color: #C10007;
+    border-color: #FFB3B3;
+}
+
+.statusDot {
+    font-size: 14px;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    @media(max-width: #breaks[tablet]) {
+        gap: 10px;
+    }
+
+    .iconBtn {
+        background: none;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+
+        &:hover {
+            color: @tertiary-color;
+            transform: scale(1.1);
+        }
+    }
+}
+
+.toggleContainer {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    cursor: pointer;
+
+    .toggle {
+        opacity: 0;
+        width: 0;
+        height: 0;
+
+        &:checked+.toggleLabel {
+            background-color: @quaternary-color;
+        }
+
+        &:checked+.toggleLabel:before {
+            transform: translateX(16px);
+        }
+    }
+
+    .toggleLabel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #9E1111;
+        border-radius: 20px;
+        transition: .4s;
+        cursor: pointer;
+
+        &:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+    }
+}
+
+.noData {
+    padding: 60px 20px;
+    color: #888;
+    text-align: center;
+    font-size: 14px;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.15);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@media(min-width: #breaks[desktop]) {
+    .userName {
+        font-size: 14px;
+    }
+
+    .statusActive,
+    .statusInactive {
+        font-size: 13px;
+        padding: 6px 16px;
+    }
+}

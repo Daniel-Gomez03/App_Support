@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Card from '../components/Dashboard/Cards/Card';
 import styles from './Dashboard.module.less';
 import TablesCases from '../components/Dashboard/Tables/TablesCases';
@@ -9,83 +9,87 @@ import alertIcon from '../assets/icons/Alert-icon.svg';
 import checkIcon from '../assets/icons/Check-icon.svg';
 import clockIcon from '../assets/icons/Clock-icon.svg';
 import grahpIcon from '../assets/icons/Graph-icon.svg';
+import { getDashboardStats } from '../services/DashboardService';
+
+const EMPTY_STATS = {
+    cards: {
+        pendientes: 0, pendientesPct: 0,
+        finalizados: 0, finalizadosPct: 0,
+        mesActual: 0, mesActualPct: 0,
+        mesAnterior: 0, mesAnteriorPct: 0,
+    },
+    priorities:     [
+        { name: 'Alta',  value: 0, color: '#DC2626' },
+        { name: 'Media', value: 0, color: '#EAB308' },
+        { name: 'Baja',  value: 0, color: '#105030' },
+    ],
+    casesByUser:    [],
+    pendingCases:   { nuevo: 0, revisionGarantia: 0, porAsignar: 0, asignado: 0, enProceso: 0, pendienteInfo: 0, escalado: 0, solCancelacion: 0, finalizado: 0, cancelado: 0 },
+    recentFeedback: [],
+};
 
 const Dashboard = () => {
+    const [stats, setStats]   = useState(EMPTY_STATS);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    document.title = "Soporte | Dashboard";
-  }, []);
+    useEffect(() => {
+        document.title = 'Soporte | Dashboard';
+        getDashboardStats()
+            .then(data => setStats(data))
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, []);
 
-  const usersData = [
-    // { usuario: "Nino Nakano", nuevo: 2, enProceso: 4, pendienteInfo: 10, escalado: 0, resuelto: 10 },
-    // { usuario: "Mikasa Ackerman", nuevo: 2, enProceso: 4, pendienteInfo: 5, escalado: 0, resuelto: 10 },
-    // { usuario: "Tanjiro Kamado", nuevo: 10, enProceso: 4, pendienteInfo: 10, escalado: 2, resuelto: 10 },
-    // { usuario: "Hinata Hyuga", nuevo: 2, enProceso: 3, pendienteInfo: 10, escalado: 0, resuelto: 10 },
-    // { usuario: "Levi Ackerman", nuevo: 2, enProceso: 4, pendienteInfo: 0, escalado: 0, resuelto: 10 },
-  ];
+    const { cards, priorities, casesByUser, pendingCases, recentFeedback } = stats;
 
-  const casesData = [
-    // { nuevo: 2, enProceso: 5, pendienteInfo: 3, escalado: 0, resuelto: 1 }
-  ];
+    return (
+        <div className={styles.dashboardContainer}>
 
-  const feedbackData = [
-    // { name: "Nino Nakano", rating: 5, avatar: null },
-    // { name: "Mikasa Ackerman", rating: 3, avatar: null },
-    // { name: "Tanjiro Kamado", rating: 1, avatar: null },
-    // { name: "Hinata Hyuga", rating: 2, avatar: null },
-    // { name: "Levi Ackerman", rating: 5, avatar: null },
-  ];
+            <div className={styles.pageHeader}>
+                <h1 className={styles.title}>Dashboard</h1>
+                <p className={styles.subtitle}>Resumen de tickets y casos por asignar.</p>
+            </div>
 
-  return (
-    <div className={styles.dashboardContainer}>
+            <div className={styles.statsGrid}>
+                <Card
+                    title="Tickets Pendientes"
+                    value={loading ? '—' : String(cards.pendientes)}
+                    percentage={String(cards.pendientesPct)}
+                    icon={alertIcon}
+                    isDark={true}
+                />
+                <Card
+                    title="Tickets Finalizados"
+                    value={loading ? '—' : String(cards.finalizados)}
+                    percentage={String(cards.finalizadosPct)}
+                    icon={checkIcon}
+                />
+                <Card
+                    title="Tickets Mes Anterior"
+                    value={loading ? '—' : String(cards.mesAnterior)}
+                    percentage={String(cards.mesAnteriorPct)}
+                    icon={clockIcon}
+                />
+                <Card
+                    title="Tickets Mes Actual"
+                    value={loading ? '—' : String(cards.mesActual)}
+                    percentage={String(cards.mesActualPct)}
+                    icon={grahpIcon}
+                />
+            </div>
 
-      <div className={styles.pageHeader}>
-        <h1 className={styles.title}>Dashboard</h1>
-        <p className={styles.subtitle}>Resumen de tickets y casos por asignar.</p>
-      </div>
-
-      <div className={styles.statsGrid}>
-
-        <Card
-          title="Tickets Pendientes"
-          value="0"
-          percentage="0"
-          icon={alertIcon}
-          isDark={true}
-        />
-
-        <Card
-          title="Tickets Finalizados"
-          value="0"
-          percentage="0"
-          icon={checkIcon}
-        />
-
-        <Card
-          title="Tickets Mes Anterior"
-          value="0"
-          percentage="0"
-          icon={clockIcon}
-        />
-
-        <Card
-          title="Tickets Mes Actual"
-          value="0"
-          percentage="0"
-          icon={grahpIcon}
-        />
-      </div>
-      <div className={styles.contentGrid}>
-        <div className={styles.leftColumn}>
-          <TablesCases data={usersData} />
-          <PendingCases data={casesData} />
+            <div className={styles.contentGrid}>
+                <div className={styles.leftColumn}>
+                    <TablesCases data={casesByUser} />
+                    <PendingCases data={pendingCases ? [pendingCases] : []} />
+                </div>
+                <div className={styles.rightColumn}>
+                    <TicketGraph data={priorities} />
+                    <Feedback data={recentFeedback} />
+                </div>
+            </div>
         </div>
-        <div className={styles.rightColumn}>
-          <TicketGraph />
-          <Feedback data={feedbackData} />
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
+
 export default Dashboard;
