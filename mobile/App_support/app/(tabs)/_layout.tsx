@@ -1,3 +1,16 @@
+// ============================================
+// LAYOUT: TABS PRINCIPALES (MÓVIL)
+// Define la navegación inferior de la app con
+// cinco pestañas: Inicio, FAQ, Nuevo, Historial
+// y Perfil.
+//
+// CustomHeader — encabezado compartido entre tabs
+// TabBar       — barra inferior personalizada
+//
+// Colores activo/inactivo centralizados aquí para
+// que TabBar pueda leerlos desde screenOptions.
+// ============================================
+
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import CustomHeader from "@/components/CustomHeader";
 import TabBar from "@/components/TabBar";

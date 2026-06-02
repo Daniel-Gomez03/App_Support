@@ -1,3 +1,16 @@
+// ============================================
+// PANTALLA: VERIFICAR EMAIL (VerifyEmailScreen)
+// Pantalla estática de confirmación mostrada
+// tras el registro exitoso. Recibe `email` como
+// parámetro de ruta para mostrarlo al usuario.
+//
+// No tiene formulario ni lógica de validación;
+// solo guía al usuario a revisar su bandeja.
+//
+// El panel blanco entra con spring desde abajo
+// al montar la pantalla.
+// ============================================
+
 import React, { useRef, useEffect } from "react";
 import {
   View,
@@ -14,6 +27,9 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import Svg, { Path } from "react-native-svg";
 
 const { width, height } = Dimensions.get("window");
+
+// Ola decorativa superior: beziers cuadráticas
+// ancladas a `width` para cubrir toda la pantalla.
 const CURVE_PATH = `M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`;
 
 const STEPS = [
@@ -26,6 +42,8 @@ export default function VerifyEmailScreen() {
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email: string }>();
 
+  // translateY inicial = height desplaza el panel
+  // completamente fuera de pantalla hacia abajo.
   const panelAnim = useRef(new Animated.Value(height)).current;
   useEffect(() => {
     Animated.spring(panelAnim, {

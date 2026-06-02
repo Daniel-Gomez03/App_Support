@@ -1,3 +1,21 @@
+// ============================================
+// PANTALLA: PERFIL DE USUARIO (PerfilScreen)
+// Muestra la información del cliente autenticado
+// y permite gestionar preferencias de la cuenta.
+//
+// Sub-componentes locales:
+//   MenuItem       — fila navegable con ícono y
+//                    chevron (→ otra pantalla).
+//   MenuItemToggle — fila con Switch; el ícono
+//                    rebota al cambiar el valor.
+//
+// Secciones:
+//   CUENTA    — editar perfil, contraseña,
+//               notificaciones, modo oscuro.
+//   POLÍTICAS — enlace a políticas de garantía.
+//   SÍGUENOS  — links a redes sociales de TBOXSA.
+// ============================================
+
 import React, { useRef, useEffect } from "react";
 import {
   View,
@@ -36,8 +54,14 @@ const AVATAR_COLORS = [
   "#059669",
   "#DC2626",
 ];
+
+// Asigna un color de avatar determinista basado
+// en el código ASCII de la inicial del nombre.
 const avatarColor = (name: string) =>
   AVATAR_COLORS[(name?.charCodeAt(0) ?? 0) % AVATAR_COLORS.length];
+
+// La foto es válida solo si es una URL completa
+// del SSO; 'default.jpg' indica que no hay foto.
 const validPhoto = (foto?: string | null) =>
   !!foto && foto !== "default.jpg" && foto.startsWith("http");
 
@@ -85,7 +109,15 @@ function MenuItemToggle({
 }) {
   const iconScale = useRef(new Animated.Value(1)).current;
 
+  // Rebota el ícono al cambiar el toggle.
+  // mounted evita que la animación corra en el
+  // render inicial antes del primer interacción.
+  const mounted = useRef(false);
   useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
     Animated.sequence([
       Animated.timing(iconScale, {
         toValue: 0.55,

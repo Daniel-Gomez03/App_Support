@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.1.18:8000/api';
+const API_URL = 'http://192.168.1.20:8000/api';
 
 const authHeader = async (): Promise<Record<string, string>> => {
     const token = await SecureStore.getItemAsync('userToken');

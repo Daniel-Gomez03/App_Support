@@ -1,3 +1,15 @@
+// ============================================
+// PANTALLA: LOGIN (LoginScreen)
+// Formulario de acceso con validación touch-first
+// y tres animaciones de entrada en paralelo:
+//   logoOpacity     — fade-in del logo.
+//   panelEntranceAnim — spring del panel desde
+//                       abajo (80 ms de delay).
+//
+// "Recuérdame": persiste el email en SecureStore
+// entre sesiones; se pre-llena al montar.
+// ============================================
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
@@ -20,6 +32,8 @@ import { useAuth } from "@/hooks/useAuth";
 import * as SecureStore from "expo-secure-store";
 import { loginStyles as styles, height } from "@/styles/login.styles";
 
+const isEmailValidFormat = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
 export default function LoginScreen() {
   const router = useRouter();
   const authContext = useAuth();
@@ -35,8 +49,10 @@ export default function LoginScreen() {
 
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const panelEntranceAnim = useRef(new Animated.Value(height)).current;
-  const userOpacity = useRef(new Animated.Value(1)).current;
 
+  // Logo y panel entran en paralelo; el delay de
+  // 80 ms escalona el panel tras el logo para dar
+  // sensación de profundidad en la animación.
   useEffect(() => {
     Animated.parallel([
       Animated.timing(logoOpacity, {
@@ -56,6 +72,8 @@ export default function LoginScreen() {
     ]).start();
   }, []);
 
+  // Pre-llena el email si el usuario activó
+  // "Recuérdame" en una sesión anterior.
   useEffect(() => {
     const load = async () => {
       try {
@@ -69,10 +87,11 @@ export default function LoginScreen() {
     load();
   }, []);
 
-  const isEmailValidFormat = (v: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const loginFormValid = email.trim() !== "" && password.trim() !== "";
 
+  // Muestra el borde de error solo si el campo
+  // fue tocado (onBlur), no mientras el usuario
+  // escribe por primera vez.
   const getLoginBorderColor = (field: "email" | "password", value: string) => {
     if (!loginTouched[field]) return "#C4C4C4";
     if (value.trim() === "") return "#D9534F";
@@ -88,6 +107,8 @@ export default function LoginScreen() {
       } else {
         await SecureStore.deleteItemAsync("remembered_email");
       }
+      // Limpia las credenciales del estado luego
+      // del login para no dejarlas en memoria.
       setEmail("");
       setPassword("");
     } catch (error: any) {
@@ -117,14 +138,12 @@ export default function LoginScreen() {
         <Animated.View
           style={{ transform: [{ translateY: panelEntranceAnim }] }}
         >
-          <Animated.View
-            style={[styles.userImageContainer, { opacity: userOpacity }]}
-          >
+          <View style={styles.userImageContainer}>
             <Image
               source={require("@/assets/images/vector-asomado-1.png")}
               resizeMode="contain"
             />
-          </Animated.View>
+          </View>
 
           <CurvedBorder>
             <Text style={styles.title}>Bienvenido</Text>

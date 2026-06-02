@@ -1,3 +1,18 @@
+// ============================================
+// PANTALLA: EDITAR PERFIL (EditarPerfilScreen)
+// Formulario de edición de datos personales:
+//   - Foto de perfil (ImagePicker, aspect 1:1).
+//   - Primer/segundo nombre y primer/segundo apellido.
+//   - Teléfono con selector de prefijo de país
+//     (CountryPickerModal).
+//   - Correo y empresa son solo lectura; no se
+//     pueden modificar desde la app.
+//
+// El botón "Guardar" solo se activa cuando los
+// campos obligatorios son válidos Y hay cambios
+// reales respecto al perfil guardado.
+// ============================================
+
 import React, { useState } from "react";
 import {
   View,
@@ -24,10 +39,17 @@ import CountryPickerModal from "@/components/CountryPickerModal";
 
 const { width } = Dimensions.get("window");
 
+const validPhoto = (uri?: string | null) =>
+  !!uri &&
+  (uri.startsWith("http") ||
+    uri.startsWith("file") ||
+    uri.startsWith("content"));
+
 export default function EditarPerfilScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { state, updateProfile } = useAuth();
+  const { colors } = useTheme();
   const user = state.user;
 
   const [firstName, setFirstName] = useState(user?.customer_first_name ?? "");
@@ -48,11 +70,6 @@ export default function EditarPerfilScreen() {
   const [saving, setSaving] = useState(false);
 
   const currentPhoto = photoUri ?? user?.customer_image ?? null;
-  const validPhoto = (uri?: string | null) =>
-    !!uri &&
-    (uri.startsWith("http") ||
-      uri.startsWith("file") ||
-      uri.startsWith("content"));
   const avatarInitial = (user?.customer_first_name ?? "U")
     .charAt(0)
     .toUpperCase();
@@ -120,14 +137,11 @@ export default function EditarPerfilScreen() {
     }
   };
 
-  const { colors } = useTheme();
-
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* Header */}
       <View
         style={[
           s.header,
@@ -160,7 +174,6 @@ export default function EditarPerfilScreen() {
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={true}
       >
-        {/* Foto de perfil */}
         <View style={s.avatarBlock}>
           <View style={s.avatarWrap}>
             {validPhoto(currentPhoto) ? (
@@ -239,7 +252,6 @@ export default function EditarPerfilScreen() {
           </View>
         ))}
 
-        {/* Teléfono */}
         <View style={s.field}>
           <Text style={[s.label, { color: colors.textSub }]}>
             Teléfono <Text style={s.req}>*</Text>
@@ -319,6 +331,7 @@ export default function EditarPerfilScreen() {
           />
         </View>
 
+        {/* El picker cubre el botón; se oculta mientras está abierto. */}
         {!showCountryPicker && (
           <TouchableOpacity
             style={[

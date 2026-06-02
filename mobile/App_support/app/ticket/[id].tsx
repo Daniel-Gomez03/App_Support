@@ -1,3 +1,23 @@
+// ============================================
+// PANTALLA: DETALLE DE TICKET (TicketDetailScreen)
+// Dos tabs:
+//   "chat"  — mensajes en tiempo real vía Socket.IO
+//             (canal `ticket_comment_${id}`).
+//   "info"  — detalles, técnicos asignados y
+//             solicitud de cancelación.
+//
+// Flujo de cancelación:
+//   1. Cliente pulsa "Solicitar cancelación".
+//   2. statusId pasa a 8 (pendiente); el chat muestra
+//      un banner y permite escribir el motivo.
+//   3. Si un Admin responde después del mensaje 🔴,
+//      `cancellationPending` se vuelve false y el
+//      chat vuelve al modo normal.
+//
+// ProgressBar: Nuevo (1) → En Proceso (2) → Finalizado (3).
+// Modal de imagen: zoom con ScrollView + maximumZoomScale.
+// ============================================
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
@@ -40,20 +60,6 @@ const avatarColor = (name: string) =>
 const validPhoto = (foto?: string | null) =>
   !!foto && foto !== "default.jpg" && foto.startsWith("http");
 
-const MESES = [
-  "Ene",
-  "Feb",
-  "Mar",
-  "Abr",
-  "May",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dic",
-];
 const fmtDate = (iso: string) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -225,6 +231,9 @@ export default function TicketDetailScreen() {
   useEffect(() => {
     fetchAll();
 
+    // Descarta el evento si el comentario ya existe en
+    // la lista — evita duplicados cuando el socket llega
+    // mientras la respuesta HTTP aún está en vuelo.
     const commentHandler = (comment: any) =>
       setComments((prev) =>
         prev.some((c) => c.comment_id === comment.comment_id)
@@ -248,6 +257,9 @@ export default function TicketDetailScreen() {
 
   useEffect(() => {
     if (comments.length > 0) {
+      // 100 ms de delay para que FlatList renderice el nuevo
+      // ítem antes de llamar scrollToEnd; sin él, scrollea
+      // al penúltimo mensaje.
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }, [comments]);
@@ -336,6 +348,11 @@ export default function TicketDetailScreen() {
   const step = getStep(statusId);
   const isClosed = statusId === 9 || statusId === 10;
   const isCancelled = statusId === 10;
+
+  // Busca el índice del mensaje de sistema 🔴 de cancelación
+  // más reciente. Si un Admin escribió después de ese mensaje,
+  // el equipo ya tomó nota y la cancelación deja de estar
+  // "pendiente" — se libera el chat normal.
   const cancelCommentIdx = comments.reduce(
     (acc: number, c: any, i: number) =>
       !c.user_id &&
@@ -351,12 +368,15 @@ export default function TicketDetailScreen() {
       .slice(cancelCommentIdx + 1)
       .some((c: any) => !!c.user_id && c.author?.rol === "Admin");
   const cancellationPending = statusId === 8 && !adminWroteAfterCancel;
+
   const isChatPaused = !!ticket?.chat_paused;
   const techs: any[] = ticket.assignedUsers ?? [];
   const techHasWritten = comments.some(
     (c) => !!c.user_id && !c.comment_text?.startsWith("🔴"),
   );
   const warranty = ticket.warranty;
+  // null cuando el ticket no tiene número de serie;
+  // en ese caso el badge de garantía no se renderiza.
   const warrantyLabel = !ticket.ticket_serial_number
     ? null
     : warranty?.is_expired
@@ -510,6 +530,8 @@ export default function TicketDetailScreen() {
                   !!item.customer_id && item.customer_id === customerId;
                 const isSystem = item.comment_text?.startsWith("🔴");
                 const hasAttachments = (item.attachments?.length ?? 0) > 0;
+                // Oculta el texto placeholder "📎 Archivo adjunto"
+                // cuando hay adjuntos reales; solo se muestran las imágenes.
                 const showText =
                   !hasAttachments || item.comment_text !== "📎 Archivo adjunto";
 

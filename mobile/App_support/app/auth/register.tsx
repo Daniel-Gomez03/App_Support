@@ -1,3 +1,17 @@
+// ============================================
+// PANTALLA: REGISTRO (RegisterScreen)
+// Wizard de 3 pasos con validación por paso:
+//   Paso 1 — Información personal (nombre,
+//             teléfono, email).
+//   Paso 2 — Empresa + verificación de garantía
+//             por número de serie o factura.
+//   Paso 3 — Creación de contraseña segura.
+//
+// Toast animado para el resultado de la
+// verificación de garantía; se re-muestra al
+// llegar al paso 3 si el check ya corrió.
+// ============================================
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
@@ -48,7 +62,15 @@ const STEP_INFO = [
 
 type WarrantyStatus = "idle" | "loading" | "valid" | "expired" | "notfound";
 
+// Ola decorativa superior: beziers cuadráticas
+// ancladas a `width` para cubrir toda la pantalla.
 const CURVE_PATH = `M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`;
+
+// Funciones puras de sanitización sin closure
+// sobre estado — definidas al nivel de módulo.
+const trim = (v: string) => v.trimStart();
+const noSpaces = (v: string) => v.replace(/\s/g, "");
+const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -56,6 +78,8 @@ export default function RegisterScreen() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  // translateY inicial = height desplaza el panel
+  // completamente fuera de pantalla hacia abajo.
   const panelAnim = useRef(new Animated.Value(height)).current;
   useEffect(() => {
     Animated.spring(panelAnim, {
@@ -74,6 +98,10 @@ export default function RegisterScreen() {
   const toastOpacity = useRef(new Animated.Value(0)).current;
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Resetea posición y opacidad antes de animar
+  // para que llamadas consecutivas partan desde
+  // el estado inicial y no desde una posición
+  // intermedia de una animación anterior.
   const showToast = (message: string, type: "success" | "warning") => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastY.setValue(-80);
@@ -101,6 +129,11 @@ export default function RegisterScreen() {
     }, 4000);
   };
 
+  // Al llegar al paso 3, re-muestra el toast de
+  // garantía si ya se verificó (el toast del paso 2
+  // puede haber expirado antes de avanzar).
+  // warrantyStatus === "idle" evita mostrarlo si
+  // el usuario aún no ha verificado nada.
   useEffect(() => {
     if (step !== 3 || warrantyStatus === "idle") return;
     const found = warrantyStatus === "valid" || warrantyStatus === "expired";
@@ -122,6 +155,8 @@ export default function RegisterScreen() {
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
 
+  // Prefetchea el contenido de la política para
+  // que el modal abra instantáneamente al tocarlo.
   useEffect(() => {
     authService
       .getWarrantyPolicy()
@@ -151,10 +186,6 @@ export default function RegisterScreen() {
     minLength: false,
     hasSpecialChar: false,
   });
-
-  const trim = (v: string) => v.trimStart();
-  const noSpaces = (v: string) => v.replace(/\s/g, "");
-  const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
   const handlePhone = (v: string) => {
     setPhone(v.replace(/[^0-9]/g, "").slice(0, selectedCountry.maxDigits));
@@ -193,7 +224,6 @@ export default function RegisterScreen() {
   const step3Valid =
     allPwValid && password === confirmPassword && confirmPassword !== "";
 
-  // Verificar garantía
   const checkWarranty = async () => {
     const typeName = verificationType === "factura" ? "Factura" : "Serie";
     setWarrantyStatus("loading");
@@ -228,6 +258,9 @@ export default function RegisterScreen() {
       setStep(2);
     } else if (step === 2) {
       if (!step2Valid) return;
+      // Verificación lazy: solo consulta si aún no
+      // se ha verificado, para no repetir la llamada
+      // si el usuario vuelve al paso 2 y avanza de nuevo.
       if (warrantyStatus === "idle") {
         await checkWarranty();
       }
@@ -248,6 +281,8 @@ export default function RegisterScreen() {
     try {
       await authService.register({
         customer_first_name: firstName.trim(),
+        // || undefined en campos opcionales para que
+        // el backend distinga "no enviado" de "".
         customer_second_name: secondName.trim() || undefined,
         customer_last_name: lastName.trim(),
         customer_second_last_name: secondLastName.trim() || undefined,

@@ -2,7 +2,7 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
-const API_URL = "http://192.168.1.18:8000/api";
+const API_URL = "http://192.168.1.20:8000/api";
 
 export interface RegisterPayload {
   // Paso 1
