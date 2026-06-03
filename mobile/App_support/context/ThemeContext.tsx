@@ -1,3 +1,11 @@
+// ============================================
+// CONTEXTO: TEMA (ThemeContext)
+// Gestiona el modo claro/oscuro de la app.
+// Persiste la preferencia en SecureStore.
+// fadeAnim anima la transición entre temas (350ms).
+// Expone: colors, isDark, fadeAnim, toggleTheme.
+// ============================================
+
 import React, {
   createContext,
   useContext,

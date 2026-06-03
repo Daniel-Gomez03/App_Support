@@ -1,9 +1,20 @@
+// ============================================
+// CONTEXTO: NOTIFICACIONES (NotificationContext)
+// Persiste hasta 50 notificaciones en un archivo
+// JSON local (expo-file-system). Escucha eventos
+// Socket.IO del canal mobile_notification_{id}
+// mientras el usuario tenga sesión activa.
+// Expone: notifications, unreadCount,
+// notificationsEnabled, markAllRead, clearAll.
+// ============================================
+
 import React, {
   createContext,
   useContext,
   useState,
   useEffect,
   useCallback,
+  useMemo,
   useRef,
 } from "react";
 import * as FileSystem from "expo-file-system/legacy";
@@ -77,6 +88,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
 
+  // Sincronizado en cada render para que el handler del socket
+  // lea el valor actual sin necesidad de re-suscribirse.
   const enabledRef = useRef(true);
   enabledRef.current = notificationsEnabled;
 
@@ -140,7 +153,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     FileSystem.deleteAsync(NOTIF_FILE, { idempotent: true }).catch(() => {});
   }, []);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications],
+  );
 
   return (
     <NotificationContext.Provider
