@@ -1,7 +1,22 @@
+// ============================================
+// COMPONENTE: LOGO ANIMADO (AnimatedLogo)
+// Secuencia de 6 fases con Animated API:
+//   1. Círculo gira y se desvanece; logo aparece
+//      con rebote y sube.
+//   2. Logo se encoge y baja al centro.
+//   3. Logo se desplaza a la izquierda.
+//   4. Nombre de la empresa aparece con spring.
+//   5. Letras del título entran escalonadas.
+//   6. Subtítulo entra en bloque desde abajo.
+//
+// Al completar la secuencia navega a /auth/login.
+// ============================================
+
 import React, { useEffect, useRef } from "react";
 import { View, Animated, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { splashStyles as styles, S } from "@/styles/splash.styles";
+
 const TITLE_LETTERS = ["T", "B", "O", "X", "S", "A"];
 const SUBTITLE_LETTERS = [
   "T",
@@ -134,7 +149,7 @@ export default function AnimatedLogo() {
         }),
       ]),
 
-      //Fase 5: Letras del título entran escalonadas desde la izquierda
+      // Fase 5: Letras del título entran escalonadas desde la izquierda
       Animated.stagger(
         50,
         letterAnims.slice(0, TITLE_COUNT).map((anim) =>

@@ -1,3 +1,15 @@
+// ============================================
+// COMPONENTE: CABECERA PERSONALIZADA (CustomHeader)
+// Header compartido entre las pantallas de tabs.
+// Adapta su contenido según la ruta activa:
+//   - Home: saludo con nombre del usuario.
+//   - faq / historial / nuevo: título + subtítulo.
+//   - perfil: título centrado (variante simple).
+// Siempre muestra campana de notificaciones
+// con badge si hay mensajes sin leer, y avatar
+// del usuario (foto o inicial).
+// ============================================
+
 import React from "react";
 import {
   View,

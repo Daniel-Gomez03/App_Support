@@ -1,3 +1,12 @@
+// ============================================
+// COMPONENTE: BOTTOM SHEET DE POLÍTICAS (PolicyBottomSheet)
+// Modal deslizante que muestra las secciones de
+// la política de garantía en un ScrollView.
+// Componente puramente presentacional: recibe
+// los datos como props. Botón "Aceptar" fijo
+// en el pie; cerrar con overlay o icono X.
+// ============================================
+
 import React from "react";
 import {
   View,
@@ -12,6 +21,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { PolicySection } from "@/Services/authService";
 
 const { width, height } = Dimensions.get("window");
+const SHEET_HEIGHT = height * 0.82;
 
 interface Props {
   visible: boolean;
@@ -24,7 +34,6 @@ interface Props {
 
 export default function PolicyBottomSheet({
   visible,
-  version,
   label,
   sections,
   onAccept,
@@ -104,8 +113,6 @@ export default function PolicyBottomSheet({
     </Modal>
   );
 }
-
-const SHEET_HEIGHT = height * 0.82;
 
 const styles = StyleSheet.create({
   root: {

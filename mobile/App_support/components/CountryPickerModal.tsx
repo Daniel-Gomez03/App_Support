@@ -1,4 +1,12 @@
-import React, { useState } from "react";
+// ============================================
+// COMPONENTE: SELECTOR DE PAÍS (CountryPickerModal)
+// Bottom sheet que lista países con bandera,
+// nombre y prefijo telefónico. Permite filtrar
+// por nombre o prefijo. Marca con checkmark
+// el país actualmente seleccionado.
+// ============================================
+
+import React, { useMemo, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -13,6 +21,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useTheme } from "@/context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
+const SHEET_HEIGHT = height * 0.58;
 
 interface Country {
   code: string;
@@ -39,10 +48,14 @@ export default function CountryPickerModal({
   const [search, setSearch] = useState("");
   const { colors } = useTheme();
 
-  const filtered = countries.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.prefix.includes(search),
+  const filtered = useMemo(
+    () =>
+      countries.filter(
+        (c) =>
+          c.name.toLowerCase().includes(search.toLowerCase()) ||
+          c.prefix.includes(search),
+      ),
+    [countries, search],
   );
 
   return (
@@ -111,8 +124,6 @@ export default function CountryPickerModal({
     </Modal>
   );
 }
-
-const SHEET_HEIGHT = height * 0.58;
 
 const styles = StyleSheet.create({
   root: {
