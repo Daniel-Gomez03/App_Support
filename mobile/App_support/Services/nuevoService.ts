@@ -1,3 +1,13 @@
+// ============================================
+// SERVICIO: TICKETS Y CATÁLOGOS (nuevoService)
+// Gestiona creación de tickets, catálogos
+// (categorías, productos, modelos), historial
+// y calificación de tickets finalizados.
+// Todos los endpoints son autenticados vía
+// authHeader(), excepto checkWarrantyBySerial
+// que es público (validación de número de serie).
+// ============================================
+
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 

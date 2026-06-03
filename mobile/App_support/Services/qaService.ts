@@ -1,3 +1,8 @@
+// ============================================
+// SERVICIO: FAQ (qaService)
+// Obtiene las preguntas frecuentes del backend.
+// ============================================
+
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 

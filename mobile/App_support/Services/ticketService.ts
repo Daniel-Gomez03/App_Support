@@ -1,3 +1,12 @@
+// ============================================
+// SERVICIO: DETALLE DE TICKET (ticketService)
+// Gestiona el detalle de un ticket individual:
+// obtener datos, comentarios, enviar mensajes
+// con adjuntos y solicitar cancelación.
+// sendComment usa fetch directo (multipart)
+// en lugar del helper authHeader().
+// ============================================
+
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
