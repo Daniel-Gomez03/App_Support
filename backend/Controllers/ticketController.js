@@ -317,10 +317,11 @@ exports.getActiveTicketCount = async (req, res) => {
 // DevSupport: solo los tickets asignados al
 // usuario autenticado.
 // Añade customer_last_reply_at: la fecha del
-// último mensaje enviado por el cliente en cada
-// ticket, calculada con MAX(created_at) sobre
-// los comentarios de clientes (customer_id NOT
-// NULL, user_id NULL) mediante TicketComment.
+// último mensaje del cliente, pero solo si es
+// posterior al último mensaje del técnico (si el
+// técnico ya respondió después, se devuelve null
+// para que el banner "Cliente respondió" deje de
+// mostrarse en el tablero).
 // ============================================
 exports.getActiveTickets = async (req, res) => {
     try {
@@ -355,6 +356,7 @@ exports.getActiveTickets = async (req, res) => {
 
         const ticketIds = tickets.map(t => t.ticket_id);
         let customerReplyMap = {};
+        let agentReplyMap = {};
 
         if (ticketIds.length > 0) {
             const rows = await TicketComment.findAll({
@@ -371,12 +373,33 @@ exports.getActiveTickets = async (req, res) => {
                 raw: true,
             });
             rows.forEach(r => { customerReplyMap[r.ticket_id] = r.customer_last_reply_at; });
+
+            const agentRows = await TicketComment.findAll({
+                attributes: [
+                    'ticket_id',
+                    [Sequelize.fn('MAX', Sequelize.col('created_at')), 'agent_last_reply_at'],
+                ],
+                where: {
+                    ticket_id: { [Op.in]: ticketIds },
+                    user_id: { [Op.not]: null },
+                },
+                group: ['ticket_id'],
+                raw: true,
+            });
+            agentRows.forEach(r => { agentReplyMap[r.ticket_id] = r.agent_last_reply_at; });
         }
 
-        const result = tickets.map(t => ({
-            ...t.toJSON(),
-            customer_last_reply_at: customerReplyMap[t.ticket_id] || null,
-        }));
+        const result = tickets.map(t => {
+            const customerReply = customerReplyMap[t.ticket_id] || null;
+            const agentReply = agentReplyMap[t.ticket_id] || null;
+            const pendingCustomerReply = customerReply
+                && (!agentReply || new Date(customerReply) > new Date(agentReply));
+
+            return {
+                ...t.toJSON(),
+                customer_last_reply_at: pendingCustomerReply ? customerReply : null,
+            };
+        });
 
         res.json(result);
     } catch (error) {

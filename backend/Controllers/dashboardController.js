@@ -274,12 +274,17 @@ exports.getDashboardStats = async (req, res) => {
         // Devuelve 100 si el período anterior era 0
         // y el actual tiene registros (crecimiento
         // desde cero), o 0 si ambos son cero.
+        // El resultado se limita a ±100% para que la
+        // tarjeta del dashboard no muestre variaciones
+        // desproporcionadas (ej. 400%) cuando el valor
+        // anterior es muy bajo.
         // ============================================
         const pct = (current, previous) => {
             const c = parseInt(current) || 0;
             const p = parseInt(previous) || 0;
             if (p === 0) return c > 0 ? 100 : 0;
-            return Math.round(((c - p) / p) * 100);
+            const change = Math.round(((c - p) / p) * 100);
+            return Math.max(-100, Math.min(100, change));
         };
 
         // Convertir filas de prioridades a formato { name, value, color }
