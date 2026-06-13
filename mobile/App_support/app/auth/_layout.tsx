@@ -1,3 +1,17 @@
+// ============================================
+// LAYOUT: FLUJO DE AUTENTICACIÓN (AuthLayout)
+// Stack sin header para las pantallas de auth:
+//   login, register, verify-email,
+//   forgot-password, reset-password.
+//
+// animation: "none" — evita el slide entre
+//   pantallas de fondo visual similar.
+// gestureEnabled: false — impide el swipe-back
+//   en todo el flujo para que el usuario no
+//   pueda retroceder a una pantalla anterior
+//   con datos ya enviados.
+// ============================================
+
 import { Stack } from "expo-router";
 
 export default function AuthLayout() {

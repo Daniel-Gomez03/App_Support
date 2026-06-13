@@ -1,3 +1,12 @@
+// ============================================
+// PANTALLA: POLÍTICAS DE GARANTÍAS (PoliticasGarantiaScreen)
+// Pantalla de solo lectura. Carga el contenido
+// desde authService.getWarrantyPolicy al montar.
+//
+// Si la petición falla, policy queda null y la UI
+// muestra el mensaje "No se pudo cargar la política."
+// ============================================
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -6,11 +15,11 @@ import {
   ScrollView,
   ActivityIndicator,
   Dimensions,
+  TouchableOpacity,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { TouchableOpacity } from "react-native";
 import authService, { WarrantyPolicy } from "@/Services/authService";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -28,6 +37,7 @@ export default function PoliticasGarantiaScreen() {
     authService
       .getWarrantyPolicy()
       .then(setPolicy)
+      // null activa el estado de error en la UI; no hay acción extra.
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

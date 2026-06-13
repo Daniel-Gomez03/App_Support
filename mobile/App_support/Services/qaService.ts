@@ -1,7 +1,12 @@
+// ============================================
+// SERVICIO: FAQ (qaService)
+// Obtiene las preguntas frecuentes del backend.
+// ============================================
+
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.1.18:8000/api';
+const API_URL = 'http://10.86.65.105:8000/api';
 
 const authHeader = async () => {
     const token = await SecureStore.getItemAsync('userToken');

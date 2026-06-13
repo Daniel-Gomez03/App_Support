@@ -1,3 +1,12 @@
+// ============================================
+// HOOK / CONTEXTO: AUTENTICACIÓN (useAuth)
+// Gestiona la sesión con useReducer (6 acciones).
+// Al montar, bootstrapea el token y usuario desde
+// SecureStore antes de mostrar cualquier pantalla.
+// Expone: state, login, updateProfile, logout,
+// clearError.
+// ============================================
+
 import React, { ReactNode, createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import authService from '@/Services/authService';
 import * as SecureStore from 'expo-secure-store';
@@ -66,7 +75,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
@@ -87,7 +95,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     bootstrapAsync();
   }, []);
 
-
   const login = useCallback(async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password);
@@ -104,17 +111,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const updateProfile = useCallback(async (data: Partial<User>, imageUri?: string | null) => {
-    try {
-      const response = await authService.updateProfile(data as any, imageUri);
-      const updatedUser = response.customer;
-      if (updatedUser) {
-        await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
-        dispatch({ type: 'UPDATE_USER', payload: updatedUser });
-      }
-      return response;
-    } catch (error: any) {
-      throw error;
+    const response = await authService.updateProfile(data as any, imageUri);
+    const updatedUser = response.customer;
+    if (updatedUser) {
+      await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
+      dispatch({ type: 'UPDATE_USER', payload: updatedUser });
     }
+    return response;
   }, []);
 
   const logout = useCallback(async () => {

@@ -1,3 +1,14 @@
+// ============================================
+// CONTEXTO: CALIFICACIÓN PENDIENTE (RatingContext)
+// Persiste una calificación pendiente en JSON
+// local para sobrevivir reinicios de la app.
+// Escucha el evento rating_request_{customerId}
+// por Socket.IO cuando el backend finaliza un
+// ticket. skipRating solo limpia el estado en
+// memoria; el archivo persiste para re-mostrar
+// el modal si la app se reinicia antes de calificar.
+// ============================================
+
 import React, {
   createContext,
   useContext,

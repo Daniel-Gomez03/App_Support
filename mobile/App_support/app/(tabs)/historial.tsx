@@ -1,4 +1,18 @@
-import React, { useState, useEffect, useCallback } from "react";
+// ============================================
+// PANTALLA: HISTORIAL DE TICKETS (HistorialScreen)
+// Lista los tickets finalizados y cancelados del
+// cliente autenticado con búsqueda en tiempo real.
+//
+// Sub-componente local:
+//   HistorialCard — tarjeta de ticket con avatares
+//                   de técnicos apilados y badge
+//                   de estado.
+//
+// No usa socket: el historial es estático entre
+// sesiones; el pull-to-refresh es suficiente.
+// ============================================
+
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -34,6 +48,9 @@ const MESES = [
   "Nov",
   "Dic",
 ];
+// Parsea la parte de fecha del ISO sin construir
+// un objeto Date para evitar problemas de zona
+// horaria en dispositivos móviles.
 const formatDate = (iso: string) => {
   const [y, m, d] = iso.split("T")[0].split("-");
   return `${d} ${MESES[parseInt(m) - 1]} ${y}`;
@@ -49,17 +66,26 @@ const AVATAR_COLORS = [
   "#059669",
   "#DC2626",
 ];
+// Asigna un color de avatar determinista basado
+// en el código ASCII de la inicial del nombre.
 const avatarColor = (name: string) =>
   AVATAR_COLORS[(name?.charCodeAt(0) ?? 0) % AVATAR_COLORS.length];
+
+// La foto es válida solo si es una URL completa
+// del SSO; 'default.jpg' indica que no hay foto.
 const validPhoto = (foto?: string | null) =>
   !!foto && foto !== "default.jpg" && foto.startsWith("http");
 
+// Heurística por nombre de categoría para mostrar
+// el ícono correcto (dispositivo vs software).
 const isDispositivo = (ticket: any) =>
   ticket.category?.category_name?.toLowerCase().includes("dispositivo");
 
+// El historial solo contiene estados 9 (Finalizado)
+// y 10 (Cancelado), por eso solo se manejan dos casos.
 const getStatusStyle = (statusId: number) => {
-  if (statusId === 10) return { bg: "#F3F4F6", text: "#6B7280" }; // Cancelado
-  return { bg: "#FEF2F2", text: "#DC2626" }; // Finalizado
+  if (statusId === 10) return { bg: "#F3F4F6", text: "#6B7280" };
+  return { bg: "#FEF2F2", text: "#DC2626" };
 };
 
 function HistorialCard({ ticket }: { ticket: any }) {
@@ -195,14 +221,18 @@ export default function HistorialScreen() {
     fetchTickets();
   }, []);
 
-  const filtered = tickets.filter((t) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      t.ticket_subject?.toLowerCase().includes(q) ||
-      t.ticket_description?.toLowerCase().includes(q)
-    );
-  });
+  const filtered = useMemo(
+    () =>
+      tickets.filter((t) => {
+        if (!search) return true;
+        const q = search.toLowerCase();
+        return (
+          t.ticket_subject?.toLowerCase().includes(q) ||
+          t.ticket_description?.toLowerCase().includes(q)
+        );
+      }),
+    [tickets, search],
+  );
 
   if (loading) {
     return (

@@ -1,7 +1,16 @@
+// ============================================
+// SERVICIO: DETALLE DE TICKET (ticketService)
+// Gestiona el detalle de un ticket individual:
+// obtener datos, comentarios, enviar mensajes
+// con adjuntos y solicitar cancelación.
+// sendComment usa fetch directo (multipart)
+// en lugar del helper authHeader().
+// ============================================
+
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.1.18:8000/api';
+const API_URL = 'http://10.86.65.105:8000/api';
 
 const authHeader = async (): Promise<Record<string, string>> => {
     const token = await SecureStore.getItemAsync('userToken');

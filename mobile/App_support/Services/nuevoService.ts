@@ -1,7 +1,17 @@
+// ============================================
+// SERVICIO: TICKETS Y CATÁLOGOS (nuevoService)
+// Gestiona creación de tickets, catálogos
+// (categorías, productos, modelos), historial
+// y calificación de tickets finalizados.
+// Todos los endpoints son autenticados vía
+// authHeader(), excepto checkWarrantyBySerial
+// que es público (validación de número de serie).
+// ============================================
+
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.1.18:8000/api';
+const API_URL = 'http://10.86.65.105:8000/api';
 
 const authHeader = async (): Promise<Record<string, string>> => {
     const token = await SecureStore.getItemAsync('userToken');

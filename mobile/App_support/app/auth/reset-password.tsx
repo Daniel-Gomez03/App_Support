@@ -1,3 +1,19 @@
+// ============================================
+// PANTALLA: RESTABLECER CONTRASEÑA (ResetPasswordScreen)
+// Recibe `token` como parámetro de ruta (deep link
+// generado por ForgotPasswordScreen y enviado al
+// correo del usuario).
+//
+// RULES — 5 reglas de complejidad evaluadas en
+// tiempo real; cada ítem cambia de color:
+//   gris   → campo vacío (sin feedback).
+//   verde  → regla cumplida.
+//   rojo   → regla incumplida.
+//
+// El panel blanco entra con spring desde abajo
+// al montar la pantalla.
+// ============================================
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
@@ -17,6 +33,9 @@ import Svg, { Path } from "react-native-svg";
 import authService from "@/Services/authService";
 
 const { width, height } = Dimensions.get("window");
+
+// Ola decorativa superior: beziers cuadráticas
+// ancladas a `width` para cubrir toda la pantalla.
 const CURVE_PATH = `M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`;
 
 interface ValidationRule {
@@ -58,6 +77,8 @@ export default function ResetPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // translateY inicial = height desplaza el panel
+  // completamente fuera de pantalla hacia abajo.
   const panelAnim = useRef(new Animated.Value(height)).current;
   useEffect(() => {
     Animated.spring(panelAnim, {
@@ -73,6 +94,8 @@ export default function ResetPasswordScreen() {
   const canSubmit = allRulesPass && passwordsMatch && !loading;
 
   const handleConfirm = async () => {
+    // Token ausente: deep link malformado o ruta
+    // navegada directamente sin pasar por el correo.
     if (!token) {
       setError("Token inválido. Por favor solicita un nuevo enlace.");
       return;

@@ -1,4 +1,14 @@
-import React, { useEffect } from "react";
+// ============================================
+// PANTALLA: NOTIFICACIONES (NotificacionesScreen)
+// Lista de notificaciones agrupadas por fecha:
+//   "Hoy" / "Esta semana" / "Antes".
+//
+// Al montar la pantalla se marcan todas como leídas
+// (abrir la pantalla = el usuario las vio).
+// Cada tarjeta navega a /ticket/[id].
+// ============================================
+
+import React, { useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -198,15 +208,19 @@ export default function NotificacionesScreen() {
   const { colors } = useTheme();
   const { notifications, markAllRead, clearAll } = useNotifications();
 
+  // Abrir la pantalla se toma como señal de que el
+  // usuario leyó las notificaciones pendientes.
   useEffect(() => {
     markAllRead();
   }, []);
 
-  const groups = groupNotifications(notifications);
+  const groups = useMemo(
+    () => groupNotifications(notifications),
+    [notifications],
+  );
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View
         style={[
           s.header,
@@ -217,11 +231,7 @@ export default function NotificacionesScreen() {
           },
         ]}
       >
-        <TouchableOpacity
-          style={s.backBtn}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
           <View style={[s.backCircle, { backgroundColor: colors.input }]}>
             <Ionicons name="arrow-back" size={20} color={colors.text} />
           </View>
@@ -289,7 +299,6 @@ const s = StyleSheet.create({
     borderBottomWidth: 1,
     gap: 12,
   },
-  backBtn: {},
   backCircle: {
     width: 36,
     height: 36,

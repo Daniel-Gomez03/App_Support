@@ -1,3 +1,12 @@
+// ============================================
+// COMPONENTE: BARRA DE NAVEGACIÓN (TabBar)
+// Barra inferior personalizada con notch SVG
+// centrado para el botón de nuevo ticket.
+// Animación spring en cada cambio de tab.
+// buildPath genera el contorno curvo del notch
+// usando d3-shape con curveBasis.
+// ============================================
+
 import React, { useEffect, useRef } from "react";
 import {
   View,

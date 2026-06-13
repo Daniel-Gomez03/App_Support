@@ -1,3 +1,13 @@
+// ============================================
+// PANTALLA: HISTORIAL DE TICKETS (HistorialScreen)
+// Lista de tickets del cliente obtenida de
+// nuevoService.getTicketsByCustomer.
+// Soporta pull-to-refresh.
+//
+// Nota: pantalla sin soporte de tema; usa colores
+// hardcodeados (no consume useTheme).
+// ============================================
+
 import React, { useState, useEffect, StrictMode } from "react";
 import {
   View,
@@ -20,6 +30,21 @@ import { useAuth } from "../hooks/useAuth";
 import nuevoService from "../Services/nuevoService";
 
 const { width } = Dimensions.get("window");
+
+const MESES_CORTOS = [
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
+];
 
 export default function HistorialScreen() {
   const router = useRouter();
@@ -58,25 +83,10 @@ export default function HistorialScreen() {
 
     const datePart = item.created_at.split("T")[0];
     const [year, month, day] = datePart.split("-");
-    const meses = [
-      "Ene",
-      "Feb",
-      "Mar",
-      "Abr",
-      "May",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dic",
-    ];
-    const fechaBonita = `${day} ${meses[parseInt(month) - 1]} ${year}`;
+    const fechaBonita = `${day} ${MESES_CORTOS[parseInt(month) - 1]} ${year}`;
 
     return (
       <View style={styles.ticketCard}>
-        {/* PARTE SUPERIOR */}
         <View style={styles.topSection}>
           <View style={styles.cardHeader}>
             <View style={styles.titleContainer}>
@@ -111,7 +121,6 @@ export default function HistorialScreen() {
 
         <View style={styles.divider} />
 
-        {/* PARTE INFERIOR */}
         <View style={styles.bottomSection}>
           <View style={styles.techContainer}>
             <View style={styles.avatarPlaceholder}>
@@ -122,7 +131,11 @@ export default function HistorialScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.chatButton} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.chatButton}
+            activeOpacity={0.8}
+            onPress={() => router.push(`/ticket/${item.ticket_id}` as any)}
+          >
             <Ionicons name="chevron-forward" size={20} color="white" />
           </TouchableOpacity>
         </View>

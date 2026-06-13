@@ -1,8 +1,19 @@
+// ============================================
+// SERVICIO: AUTENTICACIÓN (authService)
+// Endpoints del módulo mobile: login, registro,
+// validación de garantía, política, perfil y
+// recuperación de contraseña.
+// Endpoints públicos usan axios; los autenticados
+// (changePassword, updateProfile) usan fetch nativo
+// para adjuntar el token de SecureStore y enviar
+// multipart/form-data sin conflictos con axios.
+// ============================================
+
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
-const API_URL = "http://192.168.1.18:8000/api";
+const API_URL = "http://10.86.65.105:8000/api";
 
 export interface RegisterPayload {
   // Paso 1

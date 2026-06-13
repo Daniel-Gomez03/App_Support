@@ -1,3 +1,11 @@
+// ============================================
+// COMPONENTE: BORDE CURVO (CurvedBorder)
+// Wrapper que aplica una esquina curva en la
+// parte superior-derecha usando un Path SVG
+// superpuesto. Los valores del Path son empíricos;
+// no modificar sin validar visualmente.
+// ============================================
+
 import React, { ReactNode } from "react";
 import { View, Dimensions } from "react-native";
 import Svg, { Path } from "react-native-svg";

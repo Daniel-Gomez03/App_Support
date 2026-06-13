@@ -1,3 +1,13 @@
+// ============================================
+// COMPONENTE: MODAL DE CALIFICACIÓN (RatingModal)
+// Permite al usuario calificar el servicio técnico
+// al cerrar un ticket. Muestra avatar(s) del/los
+// técnico(s), fila de 5 estrellas y campo de
+// comentario (obligatorio si la puntuación es ≤ 3).
+// Exportado con React.memo para evitar re-renders
+// innecesarios desde el contexto padre.
+// ============================================
+
 import React, { useState } from "react";
 import {
   View,
@@ -116,13 +126,10 @@ function RatingModal({ visible, techs, onSubmit, onSkip }: Props) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={[s.sheet, { backgroundColor: colors.card }]}>
-          {/* Handle */}
           <View style={[s.handle, { backgroundColor: colors.border }]} />
 
-          {/* Técnico(s) */}
           <View style={s.techWrap}>
             {isMultiple ? (
-              /* Stack de avatares superpuestos */
               <View style={s.avatarStack}>
                 {visible3.map((t, i) => (
                   <View
@@ -197,7 +204,6 @@ function RatingModal({ visible, techs, onSubmit, onSkip }: Props) {
             </Text>
           </View>
 
-          {/* Título */}
           <Text style={[s.title, { color: colors.text }]}>
             ¿Cómo fue la atención?
           </Text>
@@ -205,10 +211,8 @@ function RatingModal({ visible, techs, onSubmit, onSkip }: Props) {
             Tu opinión nos ayuda a mejorar
           </Text>
 
-          {/* Estrellas */}
           <StarRow score={score} onChange={setScore} />
 
-          {/* Comentario */}
           <TextInput
             style={[
               s.input,
@@ -236,7 +240,6 @@ function RatingModal({ visible, techs, onSubmit, onSkip }: Props) {
             </Text>
           )}
 
-          {/* Botones */}
           <View style={s.btnRow}>
             <TouchableOpacity
               style={[s.skipBtn, { borderColor: colors.border }]}

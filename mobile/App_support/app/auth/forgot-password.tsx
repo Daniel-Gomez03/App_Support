@@ -1,3 +1,14 @@
+// ============================================
+// PANTALLA: RECUPERAR CONTRASEÑA (ForgotPasswordScreen)
+// Dos estados controlados por `sent`:
+//   false — formulario para ingresar el email.
+//   true  — confirmación con próximos pasos y
+//           botón para volver al login.
+//
+// El panel blanco entra con un spring desde
+// abajo al montar la pantalla.
+// ============================================
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
@@ -15,7 +26,11 @@ import Svg, { Path } from "react-native-svg";
 import { styles, width, height } from "@/styles/forgot-password.styles";
 import authService from "@/Services/authService";
 
+// Ola decorativa superior: beziers cuadráticas
+// ancladas a `width` para cubrir toda la pantalla.
 const CURVE_PATH = `M 0 100000 Q ${width * 0.25} 50 ${width * 0.5} 79.5 Q ${width * 1} 85 ${width} 2 L ${width} 100 L 0 100 Z`;
+
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 const NEXT_STEPS = [
   "Revisa tu bandeja de entrada",
@@ -31,6 +46,8 @@ export default function ForgotPasswordScreen() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
+  // translateY inicial = height desplaza el panel
+  // completamente fuera de pantalla hacia abajo.
   const panelAnim = useRef(new Animated.Value(height)).current;
   useEffect(() => {
     Animated.spring(panelAnim, {
@@ -41,13 +58,14 @@ export default function ForgotPasswordScreen() {
     }).start();
   }, []);
 
-  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const canSend = email.trim() !== "" && isValidEmail(email);
 
   const handleSend = async () => {
     setError("");
     setLoading(true);
     try {
+      // toLowerCase evita errores por mayúsculas en
+      // cuentas que el backend trata como case-sensitive.
       await authService.forgotPassword(email.trim().toLowerCase());
       setSent(true);
     } catch (e: any) {

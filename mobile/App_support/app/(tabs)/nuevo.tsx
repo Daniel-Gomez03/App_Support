@@ -1,4 +1,25 @@
-import React, { useState, useEffect } from "react";
+// ============================================
+// PANTALLA: NUEVO TICKET (NuevoTicketScreen)
+// Formulario de 5 campos para crear un ticket
+// de soporte desde la app móvil.
+//
+// Flujo de envío (handleSubmit):
+//   1. Valida garantía por número de serie.
+//   2a. Garantía vigente → crea ticket directo.
+//   2b. Garantía vencida → modal de advertencia.
+//   2c. Serie no encontrada → modal informativo.
+//   2d. Error de red → crea ticket igualmente
+//       (fail-open para no bloquear al cliente).
+//
+// Sub-componente local:
+//   DropdownField — selector modal con FlatList,
+//   reutilizado para categoría, producto y modelo.
+//
+// El formulario se resetea al enfocar la pestaña
+// para que siempre aparezca limpio al volver.
+// ============================================
+
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,7 +36,6 @@ import {
 } from "react-native";
 import { makeNuevoStyles } from "@/styles/nuevo.styles";
 import { useTheme } from "@/context/ThemeContext";
-import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -142,11 +162,14 @@ export default function NuevoTicketScreen() {
   const [showExpiredModal, setShowExpiredModal] = useState(false);
   const [showNotFoundModal, setShowNotFoundModal] = useState(false);
 
+  // Evita que el usuario empiece un campo con espacio.
   const clean = (t: string) => (t.startsWith(" ") ? t.trimStart() : t);
 
   const isAsuntoValid = asunto.trim().length >= 5;
   const isDescValid = descripcion.trim().length >= 20;
   const isSerialValid = serial.trim().length > 0;
+  // El botón se habilita solo cuando todos los campos
+  // obligatorios son válidos y hay al menos una evidencia.
   const canSubmit =
     selectedCat &&
     isAsuntoValid &&
@@ -173,6 +196,8 @@ export default function NuevoTicketScreen() {
       .catch(console.error);
   }, []);
 
+  // Al cambiar categoría se resetean producto, modelo
+  // y serie para que el formulario siempre sea coherente.
   const handleCategoryChange = async (val: number) => {
     setSelectedCat(val);
     setSelectedProd(null);
@@ -244,6 +269,9 @@ export default function NuevoTicketScreen() {
     }
   };
 
+  // Valida la garantía antes de crear el ticket.
+  // Si la consulta falla por red, se crea el ticket
+  // igualmente (fail-open) para no bloquear al cliente.
   const handleSubmit = async () => {
     if (!canSubmit) return;
 

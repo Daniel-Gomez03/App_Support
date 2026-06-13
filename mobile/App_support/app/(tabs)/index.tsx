@@ -1,4 +1,25 @@
-import React, { useState, useEffect, useCallback } from "react";
+// ============================================
+// PANTALLA: INICIO / TICKETS ACTIVOS (HomeScreen)
+// Lista los tickets activos del cliente con
+// búsqueda en tiempo real y actualizaciones
+// via Socket.IO sin necesidad de recargar.
+//
+// Sub-componente local:
+//   TicketCard — tarjeta con ícono de categoría,
+//                badge de estado y avatares de
+//                técnicos apilados.
+//
+// Eventos socket:
+//   mobile_notification_{id} — nuevo mensaje en
+//     un ticket: sube la tarjeta al tope de la
+//     lista sin refetch.
+//   new_ticket_created — el cliente creó un nuevo
+//     ticket: refetch completo.
+//   ticket_updated — el admin actualizó el ticket:
+//     refetch completo.
+// ============================================
+
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -38,6 +59,9 @@ const MESES = [
   "Dic",
 ];
 
+// Parsea la parte de fecha del ISO sin construir
+// un objeto Date para evitar problemas de zona
+// horaria en dispositivos móviles.
 const formatDate = (iso: string) => {
   const [y, m, d] = iso.split("T")[0].split("-");
   return `${d} ${MESES[parseInt(m) - 1]} ${y}`;
@@ -53,14 +77,25 @@ const AVATAR_COLORS = [
   "#059669",
   "#DC2626",
 ];
+
+// Asigna un color de avatar determinista basado
+// en el código ASCII de la inicial del nombre.
 const avatarColor = (name: string) =>
   AVATAR_COLORS[(name?.charCodeAt(0) ?? 0) % AVATAR_COLORS.length];
+
+// La foto es válida solo si es una URL completa
+// del SSO; 'default.jpg' indica que no hay foto.
 const validPhoto = (foto?: string | null) =>
   !!foto && foto !== "default.jpg" && foto.startsWith("http");
 
+// Heurística por nombre de categoría para mostrar
+// el ícono correcto (dispositivo vs software).
 const isDispositivo = (ticket: any) =>
   ticket.category?.category_name?.toLowerCase().includes("dispositivo");
 
+// Colapsa los estados internos 4-8 ("Asignado",
+// "En proceso", etc.) en un único label "En Proceso"
+// para simplificar la vista del cliente.
 const getCustomerLabel = (statusId: number): string => {
   if (statusId === 10) return "Cancelado";
   if (statusId === 9) return "Finalizado";
@@ -212,6 +247,9 @@ export default function HomeScreen() {
     fetchTickets();
   }, []);
 
+  // Nuevo mensaje en un ticket: sube la tarjeta al
+  // tope de la lista localmente sin refetch.
+  // idx <= 0: ya está primero (-1 no existe, 0 ya es top).
   useEffect(() => {
     if (!customerId) return;
     const event = `mobile_notification_${customerId}`;
@@ -232,6 +270,8 @@ export default function HomeScreen() {
     };
   }, [customerId]);
 
+  // Nuevo ticket creado por el cliente: refetch
+  // para incluirlo en la lista inmediatamente.
   useEffect(() => {
     if (!customerId) return;
 
@@ -246,7 +286,9 @@ export default function HomeScreen() {
     };
   }, [customerId, fetchTickets]);
 
-  // Refresh when admin changes ticket status, assigns tech, pauses chat, etc.
+  // El admin actualizó el ticket (estado, técnico,
+  // pausa de chat, etc.): refetch para reflejar
+  // el cambio en la tarjeta.
   useEffect(() => {
     if (!customerId) return;
 
@@ -261,14 +303,18 @@ export default function HomeScreen() {
     };
   }, [customerId, fetchTickets]);
 
-  const filtered = tickets.filter((t) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      t.ticket_subject?.toLowerCase().includes(q) ||
-      t.ticket_description?.toLowerCase().includes(q)
-    );
-  });
+  const filtered = useMemo(
+    () =>
+      tickets.filter((t) => {
+        if (!search) return true;
+        const q = search.toLowerCase();
+        return (
+          t.ticket_subject?.toLowerCase().includes(q) ||
+          t.ticket_description?.toLowerCase().includes(q)
+        );
+      }),
+    [tickets, search],
+  );
 
   if (loading) {
     return (

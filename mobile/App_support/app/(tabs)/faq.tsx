@@ -1,3 +1,25 @@
+// ============================================
+// PANTALLA: PREGUNTAS FRECUENTES (FAQScreen)
+// Muestra el catálogo de FAQs con búsqueda de
+// texto libre, filtros encadenados por categoría
+// / producto / modelo y paginación de 10 ítems.
+//
+// Sub-componentes locales:
+//   Dropdown   — selector modal con FlatList
+//   Pagination — paginador deslizante de 5 páginas
+//
+// Socket: escucha faq_created / faq_updated /
+//   faq_toggled para recargar sin intervención
+//   del usuario.
+//
+// Animaciones:
+//   ctaAnim        — banner "Crear ticket" al
+//                    llegar al fondo del scroll
+//   arrowAnim /
+//   arrowBounce    — indicador de scroll antes
+//                    de llegar al fondo
+// ============================================
+
 import React, {
   useState,
   useEffect,
@@ -69,6 +91,9 @@ interface DropdownProps {
   onSelect: (v: number | null) => void;
   placeholder: string;
 }
+
+// Selector de una sola opción presentado como
+// modal con fondo semitransparente y FlatList.
 function Dropdown({
   label,
   options,
@@ -152,6 +177,9 @@ function Pagination({ current, total, onPage }: PaginationProps) {
   const pag = useMemo(() => makePaginationStyles(colors), [colors]);
   if (total <= 1) return null;
 
+  // Ventana deslizante de 5 páginas centrada en
+  // la actual; anclada al inicio/final para evitar
+  // saltos visuales en los extremos.
   const getPages = () => {
     if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
     if (current <= 3) return [1, 2, 3, 4, 5];
@@ -225,8 +253,9 @@ export default function FAQScreen() {
   const arrowVisible = useRef(false);
   const bounceLoop = useRef<any>(null);
   const scrollRef = useRef<ScrollView>(null);
-  const paginationY = useRef(0);
-
+  // startArrow / stopArrow gestionan el indicador
+  // de scroll: fade-in + loop de rebote al acercarse
+  // al fondo; fade-out y reset al alejarse.
   const startArrow = () => {
     Animated.timing(arrowAnim, {
       toValue: 1,
@@ -302,6 +331,9 @@ export default function FAQScreen() {
     return Array.from(map.values());
   }, [faqs]);
 
+  // Heurística por nombre para ajustar las etiquetas
+  // de producto ("Dispositivo" vs "Solución") según
+  // el tipo de categoría seleccionada.
   const isDeviceCategory = useMemo(() => {
     if (!selectedCategory) return false;
     const cat = categories.find((c) => c.id === selectedCategory);
@@ -426,6 +458,9 @@ export default function FAQScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
+  // Dos umbrales de scroll activan animaciones
+  // distintas: nearBottom muestra la flecha de
+  // rebote; atBottom la reemplaza por el banner CTA.
   const handleScroll = useCallback((e: any) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
     const scrollY = contentOffset.y;
@@ -745,11 +780,7 @@ export default function FAQScreen() {
           })
         )}
 
-        <View
-          onLayout={(e) => {
-            paginationY.current = e.nativeEvent.layout.y;
-          }}
-        >
+        <View>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -777,7 +808,7 @@ export default function FAQScreen() {
           { bottom: insets.bottom + 130 },
           { opacity: ctaOpacity, transform: [{ translateY: ctaTranslateY }] },
         ]}
-        pointerEvents={ctaVisible.current ? "auto" : "none"}
+        pointerEvents="box-none"
       >
         <View style={s.ctaIconBg}>
           <Ionicons name="flash" size={20} color="#fff" />

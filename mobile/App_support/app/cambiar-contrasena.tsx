@@ -1,3 +1,16 @@
+// ============================================
+// PANTALLA: CAMBIAR CONTRASEÑA (CambiarContrasenaScreen)
+// Requiere la contraseña actual + nueva (5 reglas
+// evaluadas en tiempo real) + confirmación.
+//
+// PasswordField — sub-componente con su propio estado
+// `show` para mostrar/ocultar el texto; desacoplado
+// para no duplicar lógica en los tres campos.
+//
+// En éxito: logout() invalida la sesión actual y
+// redirige al flujo de auth.
+// ============================================
+
 import React, { useState } from "react";
 import {
   View,
@@ -124,6 +137,8 @@ export default function CambiarContrasenaScreen() {
           {
             text: "Aceptar",
             onPress: async () => {
+              // logout invalida la sesión actual para que
+              // el token anterior no siga siendo válido.
               await logout();
               router.replace("/auth" as any);
             },
@@ -323,7 +338,6 @@ const s = StyleSheet.create({
     fontSize: width * 0.029,
     color: "#CCC",
   },
-  reqOk: { color: "#3C6034" },
 
   errorText: {
     fontFamily: "Poppins-Regular",
