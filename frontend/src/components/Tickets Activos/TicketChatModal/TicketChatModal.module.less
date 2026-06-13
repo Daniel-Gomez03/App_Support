@@ -1,3 +1,36 @@
+// ============================================
+// STYLES: TICKET CHAT MODAL
+// Modal de gestión activa de un ticket.
+// Estructura: overlay → modalContent (flex col)
+//   topHeader  → ID, prioridad, estado, due date
+//   mainLayout → summaryColumn (fija 360px) +
+//                chatColumn (flex: 1)
+//   modalFooter → acciones según estado y rol
+//
+// POSICIONAMIENTO INTERNO:
+//   modalContent tiene position: relative para que
+//   interventionOverlay e imageOverlay (ambos con
+//   position: absolute; inset: 0) se anclen al modal
+//   y no al viewport. overflow: hidden los recorta
+//   al border-radius: 28px del contenedor.
+//
+// SCROLL DEL CHAT:
+//   .commentsSection usa min-height: 0 para romper
+//   el comportamiento por defecto de flex donde los
+//   ítems no se encogen por debajo de su contenido;
+//   sin esto, .messageList no puede hacer scroll
+//   porque el padre crece indefinidamente.
+//
+// ANIMACIONES:
+//   fadeIn → aparición del overlay (opacidad).
+//   slideUp → entrada del modal con traslación + escala.
+//   urgentPulse → pulso de box-shadow en badges de
+//     fechas vencidas; a diferencia del urgentPulse
+//     del ActiveTicketCard (que usa opacidad), este
+//     usa un anillo de sombra expansivo para no
+//     interferir con el color de fondo del badge.
+// ============================================
+
 @import "../../../less/main.less";
 
 .modalOverlay {
@@ -23,7 +56,9 @@
     flex-direction: column;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    // overflow: hidden recorta interventionOverlay e imageOverlay al border-radius.
     overflow: hidden;
+    // position: relative ancla los overlays internos (absolute; inset: 0) al modal.
     position: relative;
 }
 
@@ -136,7 +171,10 @@
             border-color: #fde68a;
         }
 
-        &.dueDateCritical {
+        // dueDateCritical (vence hoy/vencido) y dueDateLate (cerrado tarde)
+        // comparten colores; solo dueDateLate añade el pulso de sombra.
+        &.dueDateCritical,
+        &.dueDateLate {
             color: #dc2626;
             background: #fef2f2;
             border-color: #fca5a5;
@@ -144,10 +182,6 @@
         }
 
         &.dueDateLate {
-            color: #dc2626;
-            background: #fef2f2;
-            border-color: #fca5a5;
-            font-weight: 700;
             animation: urgentPulse 1.6s ease-in-out infinite;
         }
 
@@ -440,6 +474,8 @@
     padding: 20px;
     border: 1px solid fade(@secondary-color, 10%);
     overflow: hidden;
+    // min-height: 0 necesario en flex para que .messageList pueda hacer scroll;
+    // sin esto el item flex no se encoge por debajo de su contenido natural.
     min-height: 0;
 
     .messageList {
@@ -1261,7 +1297,9 @@
             padding: 8px 20px;
             border-radius: 20px;
 
-            &.badgeFinalizado {
+            // badgeFinalizado y badgeOnTime comparten el mismo estilo verde.
+            &.badgeFinalizado,
+            &.badgeOnTime {
                 background: #f0fdf4;
                 color: #15803d;
                 border: 1px solid #bbf7d0;
@@ -1271,12 +1309,6 @@
                 background: #f9fafb;
                 color: #374151;
                 border: 1px solid #e5e7eb;
-            }
-
-            &.badgeOnTime {
-                background: #f0fdf4;
-                color: #15803d;
-                border: 1px solid #bbf7d0;
             }
 
             &.badgeLate {

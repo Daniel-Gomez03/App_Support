@@ -1,4 +1,49 @@
+// ============================================
+// STYLES: USERS TABLE
+// Tabla unificada para usuarios internos y clientes externos.
+//
+// ESTRUCTURA (clases de módulo, usadas en UsersTable.jsx):
+//   .tableWrapper       — wrapper raíz con scroll horizontal en móvil
+//   .userProfile        — celda de nombre: avatar + texto
+//     .avatarContainer  — contenedor del avatar circular
+//     .avatar           — imagen real del usuario/cliente
+//     .avatarFallback   — inicial cuando no hay foto
+//     .userName         — nombre completo; 14px en desktop
+//   .emailContainer     — celda email + ícono de verificación
+//     .emailText        — email con overflow ellipsis
+//     .verifiedIcon     — ícono verde de email verificado
+//     .pendingIcon      — ícono naranja con animación pulse
+//   .statusActive / .statusInactive — badge de estado; comparten base
+//   .statusDot          — punto de color dentro del badge
+//   .actions            — fila de botones de acción
+//     .iconBtn          — botón icónico (ver / editar)
+//   .toggleContainer    — switch on/off de estado
+//     .toggle           — input checkbox oculto
+//     .toggleLabel      — pista visual del switch
+//   .noData             — mensaje cuando la tabla está vacía
+//
+// ANIMACIONES:
+//   pulse — latido del ícono de email pendiente
+// ============================================
+
 @import '../../../less/main.less';
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.15);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
 
 .tableWrapper {
     width: 100%;
@@ -50,9 +95,12 @@
         color: @quaternary-color;
         font-size: 13.5px;
         white-space: nowrap;
+
+        @media(min-width: #breaks[desktop]) {
+            font-size: 14px;
+        }
     }
 }
-
 
 .emailContainer {
     display: flex;
@@ -95,6 +143,11 @@
     border: 1px solid transparent;
     white-space: nowrap;
     min-width: 95px;
+
+    @media(min-width: #breaks[desktop]) {
+        font-size: 13px;
+        padding: 6px 16px;
+    }
 }
 
 .statusActive {
@@ -190,33 +243,4 @@
     color: #888;
     text-align: center;
     font-size: 14px;
-}
-
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-    }
-
-    50% {
-        transform: scale(1.15);
-        opacity: 0.8;
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@media(min-width: #breaks[desktop]) {
-    .userName {
-        font-size: 14px;
-    }
-
-    .statusActive,
-    .statusInactive {
-        font-size: 13px;
-        padding: 6px 16px;
-    }
 }

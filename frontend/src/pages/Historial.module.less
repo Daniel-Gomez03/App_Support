@@ -1,3 +1,29 @@
+// ============================================
+// STYLES: HISTORIAL PAGE
+// Bitácora de tickets cerrados/archivados.
+//
+// ESTRUCTURA:
+//   .historialContainer — layout principal (flex column)
+//     .header           — título + subtítulo
+//     .controlsWrapper  — barra de búsqueda + filtro
+//       .toolbar        — flex row (col en tablet)
+//         .searchBar    — input con ícono + focus ring
+//         .actionButtons > .iconGroup > .filterBtn
+//           &.activeFilter — resaltado cuando hay filtros activos
+//     .tableContainer   — scroll horizontal en overflow
+//       .loadingState   — spinner/texto mientras carga
+//     .errorInfo        — mensaje sin permisos; es hijo
+//                         directo de .historialContainer
+//                         (early return), NO de .tableContainer,
+//                         por eso está a este nivel y no anidado
+//
+// .successToast — toast de notificación (fixed top-right)
+//   &.errorToast — variante roja (fondo, borde, textos)
+//   .toastClose  — botón de cierre posicionado absolute
+//
+// ANIMACIÓN: toastSlideIn (entrada del toast desde arriba).
+// ============================================
+
 @import '../less/main.less';
 
 .historialContainer {
@@ -140,13 +166,19 @@
         width: 100%;
         overflow-x: auto;
 
-        .loadingState,
-        .errorInfo {
+        .loadingState {
             padding: 60px;
             text-align: center;
             font-size: 15px;
             color: darken(@secondary-color, 40%);
         }
+    }
+
+    .errorInfo {
+        padding: 60px;
+        text-align: center;
+        font-size: 15px;
+        color: darken(@secondary-color, 40%);
     }
 }
 

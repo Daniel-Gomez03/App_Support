@@ -1,23 +1,82 @@
-import React, { useState } from 'react';
+// ============================================
+// COMPONENT: SALIDAS TABLE
+// Tabla paginada de solicitudes de salida técnica.
+//
+// PROPS:
+//   data      — array de salidas filtradas (desde Salidas.jsx useMemo)
+//   onView    — fn(salida); abre SalidaViewModal
+//   onApprove — fn(salida); abre ConfirmModal en modo approve
+//   onReject  — fn(salida); abre ConfirmModal en modo reject
+//   isAdmin   — booleano; muestra botones de aprobar/rechazar
+//               solo cuando isAdmin && salida_status === 0
+//
+// MÓDULO SCOPE:
+//   formatID / formatDate / formatTime — helpers de formato
+//   STATUS_MAP   — label + clase CSS por salida_status (0/1/2)
+//   customStyles — estilos estáticos para react-data-table-component
+//   UserCell     — sub-componente con estado local para fallback de avatar
+//
+// columns se envuelve en useMemo (deps: isAdmin, onView, onApprove, onReject)
+// para evitar que DataTable re-renderice todas las columnas en cada render
+// del padre.
+// ============================================
+
+import React, { useState, useMemo } from 'react';
 import DataTable from 'react-data-table-component';
 import styles from './SalidasTable.module.less';
 import { FiEye, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 
-const formatID    = (id) => `T-${id.toString().padStart(4, '0')}`;
-const formatDate  = (d) => new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-const formatTime  = (t) => t ? t.slice(0, 5) : '—';
+const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
+const formatDate = (d) => new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+const formatTime = (t) => t ? t.slice(0, 5) : '—';
 
 const STATUS_MAP = {
     0: { label: 'Pendiente', cls: styles.pendiente },
-    1: { label: 'Aprobada',  cls: styles.aprobada  },
-    2: { label: 'Rechazada', cls: styles.rechazada  },
+    1: { label: 'Aprobada', cls: styles.aprobada },
+    2: { label: 'Rechazada', cls: styles.rechazada },
+};
+
+const customStyles = {
+    headCells: {
+        style: {
+            fontSize: '12px',
+            fontWeight: '700',
+            color: '#6b7280',
+            textTransform: 'uppercase',
+            letterSpacing: '0.3px',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+        },
+    },
+    cells: {
+        style: {
+            fontSize: '13px',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+            paddingTop: '12px',
+            paddingBottom: '12px',
+        },
+    },
+    rows: {
+        style: {
+            borderBottom: '1px solid #f3f4f6',
+            '&:hover': { backgroundColor: '#fafafa' },
+        },
+    },
+    pagination: {
+        style: {
+            borderTop: '1px solid #f3f4f6',
+            fontSize: '13px',
+            color: '#6b7280',
+        },
+    },
 };
 
 const UserCell = ({ row }) => {
     const [imgOk, setImgOk] = useState(true);
-    const foto    = row.user?.foto;
-    const name    = row.user?.nombre_completo;
-    const hasImg  = foto && foto !== 'default.jpg' && imgOk;
+    const foto = row.user?.foto;
+    const name = row.user?.nombre_completo;
+    const hasImg = foto && foto !== 'default.jpg' && imgOk;
     const initial = (name || '?').charAt(0).toUpperCase();
     return (
         <div className={styles.userCell}>
@@ -36,7 +95,7 @@ const UserCell = ({ row }) => {
 };
 
 const SalidasTable = ({ data, onView, onApprove, onReject, isAdmin }) => {
-    const columns = [
+    const columns = useMemo(() => [
         {
             name: 'ID',
             selector: row => row.salida_id,
@@ -95,7 +154,7 @@ const SalidasTable = ({ data, onView, onApprove, onReject, isAdmin }) => {
             sortable: true,
             width: '120px',
             cell: row => {
-                const s = STATUS_MAP[row.salida_status] || STATUS_MAP[0];
+                const s = STATUS_MAP[row.salida_status] ?? STATUS_MAP[0];
                 return <span className={`${styles.statusBadge} ${s.cls}`}>{s.label}</span>;
             },
         },
@@ -120,43 +179,7 @@ const SalidasTable = ({ data, onView, onApprove, onReject, isAdmin }) => {
                 </div>
             ),
         },
-    ];
-
-    const customStyles = {
-        headCells: {
-            style: {
-                fontSize: '12px',
-                fontWeight: '700',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.3px',
-                paddingLeft: '16px',
-                paddingRight: '16px',
-            },
-        },
-        cells: {
-            style: {
-                fontSize: '13px',
-                paddingLeft: '16px',
-                paddingRight: '16px',
-                paddingTop: '12px',
-                paddingBottom: '12px',
-            },
-        },
-        rows: {
-            style: {
-                borderBottom: '1px solid #f3f4f6',
-                '&:hover': { backgroundColor: '#fafafa' },
-            },
-        },
-        pagination: {
-            style: {
-                borderTop: '1px solid #f3f4f6',
-                fontSize: '13px',
-                color: '#6b7280',
-            },
-        },
-    };
+    ], [isAdmin, onView, onApprove, onReject]);
 
     return (
         <DataTable

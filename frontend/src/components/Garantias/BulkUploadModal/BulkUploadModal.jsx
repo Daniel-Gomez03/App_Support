@@ -1,3 +1,26 @@
+// ============================================
+// COMPONENT: BULK UPLOAD MODAL (Garantías)
+// Modal de carga masiva de garantías desde un
+// archivo Excel (.xlsx, .xls) o CSV.
+//
+// FLUJO:
+//   1. Drop zone → selección de archivo
+//   2. Botón "Procesar Archivo" → llama bulkUploadWarranties
+//   3. Si created > 0 → dispara onSuccess() para
+//      que el padre recargue la tabla via socket
+//   4. Pantalla de resultado: total / cargadas / errores
+//      con detalle de filas fallidas
+//
+// PROTECCIÓN beforeunload: mientras uploading=true
+//   se registra un listener que advierte al usuario
+//   si intenta cerrar/refrescar la pestaña, para
+//   que no pierda el reporte de errores.
+//
+// resetModal está bloqueado durante uploading para
+//   evitar cerrar el modal mientras el servidor
+//   aún procesa el archivo.
+// ============================================
+
 import React, { useState, useRef, useEffect } from 'react';
 import {
     LuX,
@@ -56,7 +79,7 @@ const BulkUploadModal = ({ isOpen, onClose, onSuccess }) => {
             const response = await bulkUploadWarranties(file);
             setResult(response.summary);
 
-            if (response.summary && response.summary.created > 0) {
+            if (response.summary?.created > 0) {
                 onSuccess();
             }
         } catch (error) {
@@ -68,10 +91,8 @@ const BulkUploadModal = ({ isOpen, onClose, onSuccess }) => {
 
     const resetModal = () => {
         if (uploading) return;
-
         setFile(null);
         setResult(null);
-        setUploading(false);
         onClose();
     };
 
@@ -152,19 +173,19 @@ const BulkUploadModal = ({ isOpen, onClose, onSuccess }) => {
                             <div className={styles.summaryGrid}>
                                 <div className={styles.summaryItem}>
                                     <span>Filas Totales</span>
-                                    <strong>{result.total || 0}</strong>
+                                    <strong>{result.total ?? 0}</strong>
                                 </div>
                                 <div className={styles.summaryItem}>
                                     <span>Cargadas</span>
-                                    <strong className={styles.countCreated}>{result.created || 0}</strong>
+                                    <strong className={styles.countCreated}>{result.created ?? 0}</strong>
                                 </div>
                                 <div className={styles.summaryItem}>
                                     <span>Errores</span>
-                                    <strong className={styles.countSkipped}>{result.skipped || 0}</strong>
+                                    <strong className={styles.countSkipped}>{result.skipped ?? 0}</strong>
                                 </div>
                             </div>
 
-                            {result.errors && result.errors.length > 0 && (
+                            {result.errors?.length > 0 && (
                                 <div className={styles.errorLog}>
                                     <h4>
                                         <LuTriangleAlert /> Detalles de errores:

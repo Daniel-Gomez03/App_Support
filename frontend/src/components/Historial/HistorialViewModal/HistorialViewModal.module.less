@@ -1,3 +1,43 @@
+// ============================================
+// STYLES: HISTORIAL VIEW MODAL
+// Modal de solo lectura para un ticket del historial.
+// Layout de dos columnas: resumen del caso (izq) + chat (der).
+//
+// ESTRUCTURA:
+//   .modalOverlay  — backdrop fixed + blur; altura fija 90vh
+//   .modalContent  — tarjeta max-w:1100px; flex column
+//     .topHeader   — título + estado actual + closeBtn absolute
+//     .mainLayout  — flex row → col en tablet; overflow hidden
+//       .summaryColumn (340px fijo)
+//         .summaryCard — panel blanco con scroll interno
+//           .summaryHeader / .summaryBody
+//             .miniLabel, .clientInfo, .tagsRow (.cat/.prod/.mod),
+//             .serialWarranty
+//               [class*="warrantyLabel"] — selector de atributo;
+//                 CSS Modules preserva el substring hasheado,
+//                 aplica base a .warrantyLabelOk/Expired/Error
+//             .infoRow, .techList > .techChip,
+//             .descriptionSection
+//               .descBox, .remarksBox — selector combinado para
+//                 base compartida; .remarksBox solo sobreescribe
+//                 background (#fefce8 amarillo claro)
+//             .evidenceSection > .evidenceGrid > .evidenceThumb
+//       .chatColumn (flex:1) — misma base visual que .summaryCard
+//         .chatHeader — h3 + .lockedBadge
+//         .messageList — scroll; .emptyChat, .sysMsg,
+//           .messageRow (.rowLeft/.rowRight)
+//             .avatarSmall — avatar circular con img + span fallback
+//             .bubble + (.bubbleLeft / .bubbleRight)
+//               .bubbleMeta > .bubbleAuthor, .adminBadge, .bubbleTime
+//               .bubbleText
+//               .attachmentList > .attachMedia (img/video), .attachmentChip
+//   .lightbox — overlay fullscreen z-index:3000
+//     img, video — selector combinado (mismo display)
+//     .closeLightbox
+//
+// ANIMACIONES: fadeIn (overlay + lightbox), slideUp (modal + media).
+// ============================================
+
 @import "../../../less/main.less";
 
 .modalOverlay {

@@ -1,27 +1,46 @@
+// ============================================
+// COMPONENT: WARRANTY FILTER MODAL (Garantías)
+// Modal de filtrado de garantías por vigencia.
+//
+// PROPS:
+//   isOpen         — controla visibilidad
+//   onClose        — cierra el modal
+//   currentFilters — objeto con el estado actual
+//                    de filtros { status: 'all'|'active'|'expired' }
+//   onApply        — fn(updater | object); acepta tanto
+//                    un updater funcional como un objeto
+//                    directo para resetear filtros
+//
+// Los filtros se aplican en tiempo real al hacer clic
+// en cada opción (handleFilterChange llama onApply
+// inmediatamente). "Aplicar Filtros" solo cierra el modal.
+// ============================================
+
 import React from 'react';
 import { LuX, LuFilter, LuUndo2, LuCheck } from 'react-icons/lu';
 import styles from './WarrantyFilterModal.module.less';
+
+const STATUS_OPTIONS = [
+    { value: 'all', label: 'Todas las garantías' },
+    { value: 'active', label: 'Solo Vigentes' },
+    { value: 'expired', label: 'Solo Expiradas' },
+];
 
 const WarrantyFilterModal = ({ isOpen, onClose, currentFilters, onApply }) => {
 
     if (!isOpen) return null;
 
     const handleFilterChange = (field, value) => {
-        onApply(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        onApply(prev => ({ ...prev, [field]: value }));
     };
 
     const resetFilters = () => {
-        onApply({
-            status: 'all',
-        });
+        onApply({ status: 'all' });
     };
 
     return (
         <div className={styles.modalOverlay}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalContent}>
                 <div className={styles.modalHeader}>
                     <div className={styles.titleGroup}>
                         <LuFilter className={styles.headerIcon} />
@@ -36,29 +55,16 @@ const WarrantyFilterModal = ({ isOpen, onClose, currentFilters, onApply }) => {
                     <div className={styles.filterSection}>
                         <label className={styles.sectionLabel}>Vigencia de Garantía</label>
                         <div className={styles.filterOptions}>
-                            <button
-                                className={`${styles.optionBtn} ${currentFilters.status === 'all' ? styles.active : ''}`}
-                                onClick={() => handleFilterChange('status', 'all')}
-                            >
-                                <div className={styles.radioCircle}></div>
-                                Todas las garantías
-                            </button>
-
-                            <button
-                                className={`${styles.optionBtn} ${currentFilters.status === 'active' ? styles.active : ''}`}
-                                onClick={() => handleFilterChange('status', 'active')}
-                            >
-                                <div className={styles.radioCircle}></div>
-                                Solo Vigentes
-                            </button>
-
-                            <button
-                                className={`${styles.optionBtn} ${currentFilters.status === 'expired' ? styles.active : ''}`}
-                                onClick={() => handleFilterChange('status', 'expired')}
-                            >
-                                <div className={styles.radioCircle}></div>
-                                Solo Expiradas
-                            </button>
+                            {STATUS_OPTIONS.map(opt => (
+                                <button
+                                    key={opt.value}
+                                    className={`${styles.optionBtn} ${currentFilters.status === opt.value ? styles.active : ''}`}
+                                    onClick={() => handleFilterChange('status', opt.value)}
+                                >
+                                    <div className={styles.radioCircle}></div>
+                                    {opt.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>

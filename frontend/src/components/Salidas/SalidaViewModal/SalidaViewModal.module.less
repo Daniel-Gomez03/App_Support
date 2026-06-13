@@ -1,4 +1,55 @@
+// ============================================
+// STYLES: SALIDA VIEW MODAL
+// Modal de solo lectura con el detalle completo de una salida.
+//
+// ESTRUCTURA:
+//   .overlay   — fondo fijo con blur y fadeIn
+//   .modal     — tarjeta centrada con slideUp; overflow:hidden para
+//                que el .body scrollable quede contenido
+//     .header       — ID + status badge + botón X;
+//                     .headerLeft agrupa ID y badge
+//     .body         — área scrollable (max-height 70vh) con secciones
+//       .section / .sectionLabel — bloque genérico con label uppercase
+//       .userRow / .avatar — fila técnico solicitante con foto o inicial
+//       .userName / .userSub  — nombre y cargo del técnico
+//       .infoCard — card del ticket relacionado;
+//                   .ticketId / .ticketSubject / .ticketCompany internos
+//       .detailGrid — grid 2x2 para destino/fecha/hora/solicitud;
+//                     .detailItem + .detailValue por celda
+//       .statusBadge — pill de estado; modificadores .pendiente /
+//                      .aprobada / .rechazada sobreescriben colores
+//       .rejectionBox — alerta roja visible solo si status === 2;
+//                       .rejectionTitle / .rejectionText internos
+//     .footer       — botón Cerrar alineado a la derecha
+//
+// ANIMACIONES:
+//   fadeIn  — opacity 0→1 para el overlay
+//   slideUp — entrada del modal desde abajo con scale
+// ============================================
+
 @import "../../../less/main.less";
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
 
 .overlay {
     position: fixed;
@@ -88,7 +139,9 @@
     align-items: center;
     gap: 5px;
 
-    svg { font-size: 12px; }
+    svg {
+        font-size: 12px;
+    }
 }
 
 .userRow {
@@ -215,7 +268,9 @@
         align-items: center;
         gap: 5px;
 
-        svg { font-size: 13px; }
+        svg {
+            font-size: 13px;
+        }
     }
 
     .rejectionText {
@@ -248,14 +303,4 @@
             background: #e5e7eb;
         }
     }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
 }

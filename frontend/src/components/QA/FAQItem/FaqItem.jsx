@@ -1,3 +1,35 @@
+// ============================================
+// COMPONENT: FAQ ITEM
+// Tarjeta expandible para una FAQ individual.
+//
+// PROPS:
+//   faq            — objeto FAQ completo
+//   onEdit         — fn(faq) | null; si es null se oculta el botón
+//   onToggleStatus — fn(faq_id) | null; si es null se oculta el toggle
+//
+// ESTADO:
+//   isExpanded — controla si el panel de respuesta (.faqBody)
+//                está visible; se alterna con handleCardClick
+//
+// PERMISOS LOCALES:
+//   canEdit / canToggle se derivan del tipo de la prop (function vs null)
+//   en lugar de recibir booleanos separados; centraliza la lógica
+//   en el padre (QA.jsx pasa null cuando no hay permiso).
+//
+// INTERACCIÓN:
+//   Click en la tarjeta → toggle expand
+//   Click en botón editar / toggle → e.stopPropagation() para
+//   no disparar el toggle de expansión del padre
+//   Link de video → e.stopPropagation() idem
+//
+// CLASES DINÁMICAS:
+//   .expanded  — aplicada al .faqCard cuando isExpanded
+//   .inactive  — aplicada cuando faq.faq_status es falsy
+//   .active    — aplicada al .faqIcon cuando isExpanded
+//   .show      — hace visible el .faqBody
+//   .rotated   — gira el .expandIcon 180°
+// ============================================
+
 import React, { useState } from "react";
 import styles from "./FAQItem.module.less";
 import qaIcon from "../../../assets/icons/QA-icon.svg";
@@ -97,7 +129,6 @@ const FAQItem = ({ faq, onEdit, onToggleStatus }) => {
             </div>
 
             <div className={`${styles.faqBody} ${isExpanded ? styles.show : ''}`}>
-                <div className={styles.divider}></div>
                 <div className={styles.answerSection}>
                     <div className={styles.answerHeader}>
                         <span className={styles.answerTitle}>INSTRUCCIONES / SOLUCIÓN</span>

@@ -1,3 +1,29 @@
+// ============================================
+// COMPONENT: USER VIEW MODAL
+// Modal de solo lectura para ver el detalle de un usuario interno
+// o cliente externo. El tipo se detecta automáticamente por la
+// presencia de customer_id en el objeto user.
+//
+// PROPS:
+//   user    — objeto del usuario o cliente a mostrar
+//   isOpen  — booleano; si false (o user es null), retorna null
+//   onClose — fn(); cierra el modal
+//
+// ESTADO:
+//   showPermissions — controla el panel colapsable de permisos (solo internos)
+//
+// ESTRUCTURA DEL MODAL:
+//   Header  — título dinámico según tipo
+//   Body
+//     userInfoCard    — avatar + nombre + email + ID
+//     infoGrid        — campos variables según tipo:
+//       Internos: rol, cargo, área, última conexión, racha de actividad
+//       Clientes: empresa, teléfono, tipo doc., referencia, verificación email
+//     permissionsDropdown — panel colapsable (solo internos); filtra
+//       activePermissions (read|write|edit === 1) antes de renderizar
+//   Footer  — botón de cierre
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import styles from './UserViewModal.module.less';
 import { MdClose, MdExpandMore, MdExpandLess, MdOutlineAlternateEmail, MdPhoneIphone, MdVerified, MdPendingActions } from 'react-icons/md';
@@ -5,6 +31,24 @@ import { TbPointFilled } from "react-icons/tb";
 import { FaFire, FaGhost, FaCheck, FaBuilding, FaIdCard, FaUserTag, FaCalendarAlt } from "react-icons/fa";
 import { IoShieldOutline, IoCloseSharp } from "react-icons/io5";
 import { RiLoginCircleLine } from "react-icons/ri";
+
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit', month: 'long', year: 'numeric'
+    });
+};
+
+const getCustomerFullName = (user) => {
+    const parts = [
+        user.customer_first_name,
+        user.customer_second_name,
+        user.customer_last_name,
+        user.customer_second_last_name
+    ];
+    return parts.filter(part => part && part.trim() !== '').join(' ');
+};
 
 const UserViewModal = ({ user, isOpen, onClose }) => {
     const [showPermissions, setShowPermissions] = useState(false);
@@ -17,28 +61,10 @@ const UserViewModal = ({ user, isOpen, onClose }) => {
 
     if (!isOpen || !user) return null;
 
-    const isCustomer = user && user.customer_id !== undefined;
-
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', {
-            day: '2-digit', month: 'long', year: 'numeric'
-        });
-    };
-
-    const getCustomerFullName = () => {
-        const parts = [
-            user.customer_first_name,
-            user.customer_second_name,
-            user.customer_last_name,
-            user.customer_second_last_name
-        ];
-        return parts.filter(part => part && part.trim() !== '').join(' ');
-    };
+    const isCustomer = user.customer_id !== undefined;
 
     const displayData = {
-        name: isCustomer ? getCustomerFullName() : user.nombre_completo,
+        name: isCustomer ? getCustomerFullName(user) : user.nombre_completo,
         email: isCustomer ? user.customer_email : user.correo,
         photo: isCustomer ? user.customer_image : user.foto,
         id: isCustomer ? user.customer_id : user.user_id,
@@ -157,7 +183,7 @@ const UserViewModal = ({ user, isOpen, onClose }) => {
                                     </p>
                                 ) : (
                                     <p className={styles.streakLost}>
-                                        <FaGhost className={styles.ghostIcon} /> Racha interrumpida ({user.racha_perdida || 0} días)
+                                        <FaGhost className={styles.ghostIcon} /> Racha interrumpida ({user.racha_perdida ?? 0} días)
                                     </p>
                                 )}
                             </div>

@@ -1,3 +1,31 @@
+// ============================================
+// COMPONENT: COMENTARIOS GRID
+// Cuadrícula paginada de tarjetas de reseña
+// (RatingCard). Recibe el array `data` ya
+// filtrado desde Comentarios.jsx y muestra 6
+// ítems por página (LIMIT).
+//
+// COMPONENTES INTERNOS:
+//   ClientAvatar / TechAvatar: imagen de perfil
+//     con fallback a inicial cuando la URL falla
+//     o es 'default.jpg'.
+//   TechAvatarStack: apila hasta 3 avatares de
+//     técnico con un "+N" para el excedente.
+//   Stars: fila de 5 estrellas llenas/vacías.
+//   RatingCard: tarjeta individual de reseña
+//     con nombre de cliente, empresa, score,
+//     comentario, técnicos y fecha.
+//
+// PAGINACIÓN:
+//   useEffect [data.length] reinicia a página 1
+//   cada vez que cambia el número de resultados
+//   (nuevo filtro aplicado desde el padre).
+//
+// Funciones puras fuera del árbol de componentes:
+//   formatID, formatDate, getLabel — no se
+//   recrean en cada render.
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import styles from './ComentariosGrid.module.less';
 import { FaStar, FaRegStar } from 'react-icons/fa';
@@ -72,11 +100,11 @@ const Stars = ({ score }) => (
 
 const RatingCard = ({ r }) => {
     const clientName = `${r.customer?.customer_first_name || ''} ${r.customer?.customer_last_name || ''}`.trim();
-    const label      = getLabel(r.rating_score);
-    const techs      = r.ticket?.assignedUsers ?? [];
-    const techNames  = techs.map(u => u.nombre_completo);
-    const techFotos  = techs.map(u => u.foto || '');
-    const techLabel  = techNames.length > 0 ? techNames.join(', ') : 'Sin asignar';
+    const label = getLabel(r.rating_score);
+    const techs = r.ticket?.assignedUsers ?? [];
+    const techNames = techs.map(u => u.nombre_completo);
+    const techFotos = techs.map(u => u.foto || '');
+    const techLabel = techNames.length > 0 ? techNames.join(', ') : 'Sin asignar';
 
     return (
         <div className={styles.card}>

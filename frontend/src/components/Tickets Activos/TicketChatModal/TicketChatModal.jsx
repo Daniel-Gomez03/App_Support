@@ -1,3 +1,43 @@
+// ============================================
+// COMPONENT: TICKET CHAT MODAL
+// Modal de gestión activa de un ticket. Combina
+// chat en tiempo real con panel de acciones.
+//
+// MODOS DEL CHAT (chatLocked):
+//   El área de escritura se bloquea cuando:
+//     - statusId 4 (Asignado): aún no iniciado
+//     - statusId 9/10 (terminado)
+//     - Sin permiso de escritura
+//     - Sol. cancelación y el usuario no es Admin
+//     - Admin no asignado que no confirmó intervención
+//
+//   noInteraction bloquea Escalar/Finalizar hasta
+//   que haya al menos un mensaje enviado, para
+//   evitar cierres sin gestión real del cliente.
+//
+// INTERVENCIÓN DE ADMIN:
+//   Dos pasos de confirmación para que un Admin
+//   no asignado pueda escribir en el ticket.
+//   interventionStep: 0=sin iniciar, 1=primera
+//   confirmación, 2=segunda confirmación.
+//   interventionConfirmed persiste solo mientras
+//   el modal está montado (se resetea al cerrar).
+//
+// SOCKET EVENTS:
+//   new_comment / comment_deleted → canal global,
+//   filtrado por ticket_id.
+//   ticket_comment_{id} → canal específico del
+//   ticket; ambos deduplicados por comment_id
+//   para evitar mensajes dobles.
+//
+// DUE DATE:
+//   Activo → urgency relativa a hoy (warning/
+//   critical/overdue). Cerrado → wasLate compara
+//   momento de cierre (updated_at) vs due date.
+//   Ambos se calculan una sola vez en el cuerpo
+//   del componente y se reutilizan en header y footer.
+// ============================================
+
 import React, { useEffect, useState, useRef } from 'react';
 import styles from './TicketChatModal.module.less';
 import {
@@ -35,6 +75,16 @@ const getMediaType = (filePath = '') => {
     return 'file';
 };
 
+// Fuera del componente: funciones puras sin dependencias del scope — no se recrean en cada render.
+const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
+const formatDate = (d) => !d ? 'Sin fecha' : new Date(d).toLocaleDateString('es-ES', {
+    year: 'numeric', month: '2-digit', day: '2-digit'
+});
+const formatTime = (d) => new Date(d).toLocaleString('es-ES', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: true
+});
+
 const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit = false, canDelete = false }) => {
     const { user } = useAuth();
     const messagesEndRef = useRef(null);
@@ -51,15 +101,6 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
     const [interventionConfirmed, setInterventionConfirmed] = useState(false);
     const [interventionStep, setInterventionStep] = useState(0); // 0=none 1=primera confirm 2=segunda confirm
 
-    const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
-    const formatDate = (d) => !d ? 'Sin fecha' : new Date(d).toLocaleDateString('es-ES', {
-        year: 'numeric', month: '2-digit', day: '2-digit'
-    });
-    const formatTime = (d) => new Date(d).toLocaleString('es-ES', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', hour12: true
-    });
-
     const isAdmin = user?.rol === 'Admin';
     const currentStatusId = ticket.ticket_status_id;
     const isAsignado = currentStatusId === 4;
@@ -67,13 +108,13 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
     const isSolCancelacion = currentStatusId === 8;
     const isTerminado = currentStatusId === 9 || currentStatusId === 10;
     const isChatPaused = !!ticket.chat_paused;
-    const noInteraction = isEnProceso && comments.length === 0 && canWrite;
-    const evidences = ticket.evidences || [];
+    const evidences = ticket.evidences ?? [];
 
     const isAssigned = ticket.assignedUsers?.some(
         u => parseInt(u.user_id) === parseInt(user?.user_id)
     );
     const isAdminIntervening = isAdmin && !isAssigned && !isTerminado && canWrite;
+    // chatLocked: bloquea la escritura en todos los casos donde el chat no está disponible.
     const chatLocked = isAsignado || isTerminado || !canWrite
         || (isSolCancelacion && !isAdmin)
         || (!isSolCancelacion && isAdminIntervening && !interventionConfirmed);
@@ -83,7 +124,19 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
         : null;
     const canSend = !chatLocked && !sending && !msgError &&
         (clientMsg.trim().length > 0 || pendingFiles.length > 0);
+    // noInteraction: bloquea Escalar/Finalizar hasta que haya al menos un mensaje al cliente.
+    const noInteraction = isEnProceso && comments.length === 0 && canWrite;
     const visibleEvidences = evidences.slice(evidenceStart, evidenceStart + 3);
+
+    // urgency: solo para tickets activos con fecha límite.
+    const urgency = !isTerminado && ticket.ticket_due_date
+        ? getDueDateUrgency(ticket.ticket_due_date)
+        : null;
+    // wasLate: compara el momento de cierre (updated_at) contra la fecha límite.
+    // Se calcula una vez y se reutiliza tanto en el header como en el footer.
+    const wasLate = isTerminado && !!ticket.ticket_due_date
+        ? new Date(ticket.updated_at ?? ticket.updatedAt ?? Date.now()) > new Date(ticket.ticket_due_date)
+        : false;
 
     useEffect(() => { loadComments(); }, [ticket.ticket_id]);
 
@@ -101,18 +154,21 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                 setComments(prev => prev.filter(c => c.comment_id !== data.comment_id));
             }
         };
-        socket.on('new_comment', onNewComment);
-        socket.on('comment_deleted', onDeleteComment);
-        socket.on(`ticket_comment_${ticket.ticket_id}`, (comment) => {
+        // Referencia nombrada necesaria para que socket.off elimine solo este handler
+        // y no todos los listeners del canal ticket_comment_{id}.
+        const onTicketComment = (comment) => {
             setComments(prev => {
                 if (prev.some(c => c.comment_id === comment.comment_id)) return prev;
                 return [...prev, comment];
             });
-        });
+        };
+        socket.on('new_comment', onNewComment);
+        socket.on('comment_deleted', onDeleteComment);
+        socket.on(`ticket_comment_${ticket.ticket_id}`, onTicketComment);
         return () => {
             socket.off('new_comment', onNewComment);
             socket.off('comment_deleted', onDeleteComment);
-            socket.off(`ticket_comment_${ticket.ticket_id}`);
+            socket.off(`ticket_comment_${ticket.ticket_id}`, onTicketComment);
         };
     }, [ticket.ticket_id]);
 
@@ -204,7 +260,7 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
 
     const handleRejectCancel = async () => {
         try {
-            // Restore to exact previous status; fallback based on assignment if not stored
+            // Restaurar al estado anterior exacto; recurrir a la opción alternativa según la asignación si no está almacenado.
             const rejectToStatus = ticket.cancellation_prev_status_id
                 ?? ((ticket.assignedUsers?.length ?? 0) > 0 ? 5 : 3);
             await updateTicketStatus(ticket.ticket_id, rejectToStatus);
@@ -237,34 +293,23 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                         )}
                         <span className={styles.statusBadge}>{STATUS_LABELS[currentStatusId] || 'Activo'}</span>
                     </div>
-                    {ticket.ticket_due_date && (() => {
-                        if (isTerminado) {
-                            const wasLate = new Date(ticket.updated_at || ticket.updatedAt || Date.now()) > new Date(ticket.ticket_due_date);
-                            return (
-                                <span className={`${styles.dueDateBadge} ${wasLate ? styles.dueDateLate : styles.dueDateOnTime}`}>
-                                    {wasLate ? <FiAlertCircle /> : <FiCheckCircle />}
-                                    {wasLate
-                                        ? currentStatusId === 9 ? ' Finalizado tarde' : ' Cancelado tarde'
-                                        : currentStatusId === 9 ? ' Finalizado a tiempo' : ' Cancelado a tiempo'
-                                    }
-                                </span>
-                            );
-                        }
-                        const urgency = getDueDateUrgency(ticket.ticket_due_date);
-                        const badgeClass = urgency === 'warning' ? styles.dueDateWarning
-                            : (urgency === 'critical' || urgency === 'overdue') ? styles.dueDateCritical
-                                : '';
-                        return (
-                            <span className={`${styles.dueDateBadge} ${badgeClass}`}>
-                                {urgency === 'overdue' && <FiAlertCircle />}
-                                {urgency === 'critical' && <FiAlertCircle />}
-                                {urgency === 'warning' && <FiAlertCircle />}
-                                {urgency === 'overdue' ? 'Vencido'
-                                    : urgency === 'critical' ? '¡Vence hoy!'
-                                        : `Fecha Máx: ${formatDate(ticket.ticket_due_date)}`}
-                            </span>
-                        );
-                    })()}
+                    {ticket.ticket_due_date && isTerminado && (
+                        <span className={`${styles.dueDateBadge} ${wasLate ? styles.dueDateLate : styles.dueDateOnTime}`}>
+                            {wasLate ? <FiAlertCircle /> : <FiCheckCircle />}
+                            {wasLate
+                                ? currentStatusId === 9 ? ' Finalizado tarde' : ' Cancelado tarde'
+                                : currentStatusId === 9 ? ' Finalizado a tiempo' : ' Cancelado a tiempo'
+                            }
+                        </span>
+                    )}
+                    {ticket.ticket_due_date && !isTerminado && (
+                        <span className={`${styles.dueDateBadge} ${urgency === 'warning' ? styles.dueDateWarning : (urgency === 'critical' || urgency === 'overdue') ? styles.dueDateCritical : ''}`}>
+                            {urgency !== 'ok' && <FiAlertCircle />}
+                            {urgency === 'overdue' ? 'Vencido'
+                                : urgency === 'critical' ? '¡Vence hoy!'
+                                    : `Fecha Máx: ${formatDate(ticket.ticket_due_date)}`}
+                        </span>
+                    )}
                 </div>
 
                 {/* ── MAIN ── */}
@@ -422,10 +467,9 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                                             <div key={comment.comment_id} className={`${styles.messageRow} ${isMe ? styles.rowRight : styles.rowLeft}`}>
                                                 {!isMe && (
                                                     <div className={styles.avatarSmall}>
-                                                        {hasFoto
-                                                            ? <img src={displayFoto} alt={displayName} onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                                                            : null
-                                                        }
+                                                        {hasFoto && (
+                                                            <img src={displayFoto} alt={displayName} onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                                                        )}
                                                         <span style={{ display: hasFoto ? 'none' : 'flex' }}>
                                                             {displayInitial}
                                                         </span>
@@ -476,10 +520,9 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                                                 </div>
                                                 {isMe && (
                                                     <div className={styles.avatarSmall}>
-                                                        {myFoto
-                                                            ? <img src={user.foto} alt={user.nombre_completo} onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                                                            : null
-                                                        }
+                                                        {myFoto && (
+                                                            <img src={user.foto} alt={user.nombre_completo} onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                                                        )}
                                                         <span style={{ display: myFoto ? 'none' : 'flex' }}>
                                                             {user?.nombre_completo?.charAt(0)?.toUpperCase()}
                                                         </span>
@@ -588,15 +631,12 @@ const TicketChatModal = ({ ticket, onClose, onSuccess, canWrite = false, canEdit
                                 <span className={`${styles.closedBadge} ${currentStatusId === 9 ? styles.badgeFinalizado : styles.badgeCancelado}`}>
                                     {currentStatusId === 9 ? '✓ Ticket Finalizado' : '✗ Ticket Cancelado'}
                                 </span>
-                                {ticket.ticket_due_date && (() => {
-                                    const wasLate = new Date(ticket.updated_at || ticket.updatedAt || Date.now()) > new Date(ticket.ticket_due_date);
-                                    return (
-                                        <span className={`${styles.closedBadge} ${wasLate ? styles.badgeLate : styles.badgeOnTime}`}>
-                                            {wasLate ? <FiAlertCircle /> : <FiCheckCircle />}
-                                            {' '}{wasLate ? 'Fuera de plazo' : 'Dentro del plazo'}
-                                        </span>
-                                    );
-                                })()}
+                                {ticket.ticket_due_date && (
+                                    <span className={`${styles.closedBadge} ${wasLate ? styles.badgeLate : styles.badgeOnTime}`}>
+                                        {wasLate ? <FiAlertCircle /> : <FiCheckCircle />}
+                                        {' '}{wasLate ? 'Fuera de plazo' : 'Dentro del plazo'}
+                                    </span>
+                                )}
                             </div>
                             <p className={styles.closedFooterNote}>Este ticket ya no puede ser modificado.</p>
                         </div>

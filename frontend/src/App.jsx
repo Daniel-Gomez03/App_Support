@@ -1,3 +1,25 @@
+// ============================================
+// APP — RAÍZ DE LA APLICACIÓN
+// Define el árbol de rutas del panel admin con
+// protección por sesión SSO y por permisos de
+// módulo. Toda ruta está envuelta en
+// ProtectedRoute; las rutas sin moduleName solo
+// requieren sesión activa.
+//
+// Rutas:
+//   /                          → Dashboard
+//   /tickets/createTicket      → CreateTicket   (Crear Ticket)
+//   /tickets/assignedTicket    → AssignedTicket (Asignar Tickets)
+//   /tickets/activeTicket      → ActiveTicket   (Tickets Activos)
+//   /history                   → History        (Historial)
+//   /warranty                  → Warranties     (Garantias)
+//   /users                     → Users          (Usuarios)
+//   /departures                → Departures     (Salidas)
+//   /qa                        → QA             (Q&A)
+//   /comments                  → Comments       (Comentarios)
+//   *                          → redirect /
+// ============================================
+
 import React from 'react';
 import './less/main.less';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -15,6 +37,15 @@ import Departures from './pages/Salidas';
 import QA from './pages/QA';
 import Comments from './pages/Comentarios';
 
+// ============================================
+// PROTECTED ROUTE
+// Guarda de ruta con dos niveles de validación:
+// 1. Sesión activa: si no hay usuario redirige
+//    al Portal de Aplicativos SSO.
+// 2. Permiso de módulo: si se provee moduleName,
+//    verifica que el usuario tenga permissions_read
+//    en esa sección; si no, redirige a /.
+// ============================================
 const ProtectedRoute = ({ children, moduleName }) => {
   const { user, loading } = useAuth();
 
@@ -30,7 +61,7 @@ const ProtectedRoute = ({ children, moduleName }) => {
   }
 
   if (!user) {
-    window.location.href = "http://localhost/PortalAplicativos/public/inicio";
+    window.location.href = 'http://localhost/PortalAplicativos/public/inicio';
     return null;
   }
 
@@ -47,79 +78,82 @@ const ProtectedRoute = ({ children, moduleName }) => {
   return children;
 };
 
+// ============================================
+// APP
+// ============================================
 function App() {
   return (
     <AuthProvider>
       <TicketProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/*" element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Routes>
-                  <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Routes>
+                    <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
-                  <Route path="/tickets/createTicket" element={
-                    <ProtectedRoute moduleName="Crear Ticket">
-                      <CreateTicket title="Crear Ticket" />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/tickets/createTicket" element={
+                      <ProtectedRoute moduleName="Crear Ticket">
+                        <CreateTicket title="Crear Ticket" />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path="/tickets/assignedTicket" element={
-                    <ProtectedRoute moduleName="Asignar Tickets">
-                      <AssignedTicket title="Asignar Tickets" />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/tickets/assignedTicket" element={
+                      <ProtectedRoute moduleName="Asignar Tickets">
+                        <AssignedTicket title="Asignar Tickets" />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path="/tickets/activeTicket" element={
-                    <ProtectedRoute moduleName="Tickets Activos">
-                      <ActiveTicket title="Tickets Activos" />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/tickets/activeTicket" element={
+                      <ProtectedRoute moduleName="Tickets Activos">
+                        <ActiveTicket title="Tickets Activos" />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path='/history' element={
-                    <ProtectedRoute moduleName="Historial">
-                      <History />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/history" element={
+                      <ProtectedRoute moduleName="Historial">
+                        <History />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path='/warranty' element={
-                    <ProtectedRoute moduleName="Garantias">
-                      <Warranties />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/warranty" element={
+                      <ProtectedRoute moduleName="Garantias">
+                        <Warranties />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path='/users' element={
-                    <ProtectedRoute moduleName="Usuarios">
-                      <Users />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/users" element={
+                      <ProtectedRoute moduleName="Usuarios">
+                        <Users />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path='/departures' element={
-                    <ProtectedRoute moduleName="Salidas">
-                      <Departures />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/departures" element={
+                      <ProtectedRoute moduleName="Salidas">
+                        <Departures />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path='/qa' element={
-                    <ProtectedRoute moduleName="Q&A">
-                      <QA />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/qa" element={
+                      <ProtectedRoute moduleName="Q&A">
+                        <QA />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path='/comments' element={
-                    <ProtectedRoute moduleName="Comentarios">
-                      <Comments />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/comments" element={
+                      <ProtectedRoute moduleName="Comentarios">
+                        <Comments />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </MainLayout>
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </BrowserRouter>
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </BrowserRouter>
       </TicketProvider>
     </AuthProvider>
   );

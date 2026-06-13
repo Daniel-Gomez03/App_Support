@@ -1,3 +1,35 @@
+// ============================================
+// COMPONENT: HISTORIAL TABLE
+// Tabla de tickets del historial (cerrados/archivados).
+// Renderiza con react-data-table-component.
+//
+// SUB-COMPONENTES (módulo):
+//   AvatarStack — apila hasta 3 fotos de técnicos asignados;
+//     cada avatar tiene img + fallback de inicial; el fallback
+//     se oculta con display:none y se muestra en onError de la img.
+//     Si hay más de 3, muestra "+N".
+//   ClientCell  — celda de cliente con foto + fallback de inicial.
+//
+// CONSTANTES (módulo):
+//   STATUS_MAP    — estilos por ticket_status_id
+//   PRIORITY_MAP  — estilos por prioridad
+//   formatID      — "T-0001"
+//   formatDate    — fecha localizada es-ES
+//   customStyles  — estilos de react-data-table (estáticos, sin deps)
+//
+// COLUMNA DE ACCIONES:
+//   s = ticket_status_id
+//   isClosed (9/10)  → solo ver
+//   isPending (≤ 3)  → icono flecha → redirige a AssignedTicket
+//   4–8              → icono editar → abre HistorialEditModal
+//
+// PROPS:
+//   data    — array de tickets filtrados
+//   onView  — fn(ticket) abre HistorialViewModal
+//   onEdit  — fn(ticket) navega o abre HistorialEditModal
+//   canEdit — controla visibilidad del botón de acción
+// ============================================
+
 import React from 'react';
 import DataTable from 'react-data-table-component';
 import { StyleSheetManager } from 'styled-components';
@@ -31,6 +63,34 @@ const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString('es-ES', {
         year: 'numeric', month: '2-digit', day: '2-digit'
     });
+};
+
+const customStyles = {
+    headCells: {
+        style: {
+            fontWeight: '600',
+            color: '#666',
+            fontSize: '13px',
+            borderBottom: '1px solid #eee',
+            textTransform: 'uppercase',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+        },
+    },
+    cells: {
+        style: {
+            fontSize: '14px',
+            color: '#333',
+            padding: '12px 16px',
+        },
+    },
+    rows: {
+        style: {
+            '&:hover': {
+                backgroundColor: '#f9fafb',
+            }
+        }
+    }
 };
 
 const AvatarStack = ({ users }) => {
@@ -176,7 +236,7 @@ const HistorialTable = ({ data, onView, onEdit, canEdit }) => {
             sortable: true,
             minWidth: '150px',
             cell: row => {
-                const st = STATUS_MAP[row.ticket_status_id] || { label: 'Desconocido', bg: '#f3f4f6', color: '#6b7280' };
+                const st = STATUS_MAP[row.ticket_status_id] ?? { label: 'Desconocido', bg: '#f3f4f6', color: '#6b7280' };
                 return (
                     <span
                         className={styles.statusBadge}
@@ -238,37 +298,9 @@ const HistorialTable = ({ data, onView, onEdit, canEdit }) => {
         }
     ];
 
-    const customStyles = {
-        headCells: {
-            style: {
-                fontWeight: '600',
-                color: '#666',
-                fontSize: '13px',
-                borderBottom: '1px solid #eee',
-                textTransform: 'uppercase',
-                paddingLeft: '16px',
-                paddingRight: '16px',
-            },
-        },
-        cells: {
-            style: {
-                fontSize: '14px',
-                color: '#333',
-                padding: '12px 16px',
-            },
-        },
-        rows: {
-            style: {
-                '&:hover': {
-                    backgroundColor: '#f9fafb',
-                }
-            }
-        }
-    };
-
     return (
         <div className={styles.tableWrapper}>
-            <StyleSheetManager shouldForwardProp={prop => isPropValid(prop)}>
+            <StyleSheetManager shouldForwardProp={isPropValid}>
                 <DataTable
                     columns={columns}
                     data={data}

@@ -1,3 +1,33 @@
+// ============================================
+// COMPONENT: ASSIGN TICKET MODAL
+// Modal de asignación de tickets: dos columnas
+// (resumen del caso a la izquierda, formulario
+// a la derecha).
+//
+// FLUJO DE DOS PASOS:
+//   1. El usuario rellena el formulario (técnicos,
+//      prioridad, fecha máxima, observaciones) y
+//      pulsa "Asignar Ticket" → setConfirmAction('assign').
+//   2. Se muestra la zona de confirmación; al
+//      confirmar se llama handleFinalSubmit que
+//      envía los datos y cierra el modal.
+//
+// DROPDOWN MULTI-TÉCNICO:
+//   - Cierre automático al hacer clic fuera
+//     (handleClickOutside con dropdownRef).
+//   - assignedUsers guarda los IDs; user_id se
+//     mantiene igual al primer técnico asignado
+//     como responsable principal.
+//   - Los chips permiten quitar técnicos con
+//     e.stopPropagation() para no abrir el dropdown.
+//
+// GARANTÍA: tres estados visuales según el campo
+//   warranty del ticket (null / is_expired / válida).
+//
+// LIGHTBOX: clic en una evidencia abre selectedImg
+//   que muestra la imagen a pantalla completa.
+// ============================================
+
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './AssignTicketModal.module.less';
 import { FiX, FiCheckCircle, FiAlertCircle, FiXCircle, FiChevronLeft, FiChevronRight, FiChevronDown } from "react-icons/fi";
@@ -6,6 +36,10 @@ import { FaQuestion } from "react-icons/fa";
 import { getUsers } from '../../../services/Userservice';
 import { assignTicket } from '../../../services/Ticketservice';
 import "flag-icons/css/flag-icons.min.css";
+
+// Puras sin dependencias del scope del componente — no se recrean en cada render.
+const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
+const today = new Date().toISOString().split('T')[0];
 
 const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
     const [technicians, setTechnicians] = useState([]);
@@ -22,9 +56,6 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
         ticket_due_date: '',
         assignment_remarks: ''
     });
-
-    const today = new Date().toISOString().split('T')[0];
-    const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -51,7 +82,6 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         const sanitizedValue = name === 'assignment_remarks' ? value.trimStart() : value;
-
         setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
     };
 
@@ -98,7 +128,6 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
                 ...formData,
                 assignment_remarks: formData.assignment_remarks.trim()
             };
-
             await assignTicket(ticket.ticket_id, finalData);
             onSuccess('Ticket asignado correctamente. Ya puedes gestionarlo desde Tickets Activos.');
             onClose();
@@ -109,6 +138,11 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
             setLoading(false);
         }
     };
+
+    // Calculado una vez por render para no filtrar dos veces en el JSX del dropdown.
+    const availableTechnicians = technicians.filter(
+        tech => !formData.assignedUsers.includes(tech.user_id)
+    );
 
     return (
         <div className={styles.modalOverlay}>
@@ -146,14 +180,14 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
                                         <LuBox /> {ticket.product?.product_name}
                                     </span>
                                     <span className={`${styles.tagBadge} ${styles.mod}`}>
-                                        {ticket.productModel?.product_model_name || 'N/A'}
+                                        {ticket.productModel?.product_model_name ?? 'N/A'}
                                     </span>
                                 </div>
 
                                 <div className={styles.serialWarranty}>
                                     <div className={styles.serialItem}>
                                         <span className={styles.miniLabel}>NO. DE SERIE</span>
-                                        <p>{ticket.ticket_serial_number || 'N/A'}</p>
+                                        <p>{ticket.ticket_serial_number ?? 'N/A'}</p>
                                     </div>
                                     <div className={styles.warrantyItem}>
                                         {!ticket.warranty ? (
@@ -231,16 +265,14 @@ const AssignTicketModal = ({ ticket, onClose, onSuccess }) => {
 
                                 {isDropdownOpen && !confirmAction && (
                                     <ul className={styles.dropdownMenu}>
-                                        {technicians.filter(t => !formData.assignedUsers.includes(t.user_id)).length === 0 ? (
+                                        {availableTechnicians.length === 0 ? (
                                             <li className={styles.emptyOption}>Todos los técnicos han sido seleccionados</li>
                                         ) : (
-                                            technicians
-                                                .filter(tech => !formData.assignedUsers.includes(tech.user_id))
-                                                .map(tech => (
-                                                    <li key={tech.user_id} onClick={() => handleAddUser(tech)}>
-                                                        {tech.nombre_completo}
-                                                    </li>
-                                                ))
+                                            availableTechnicians.map(tech => (
+                                                <li key={tech.user_id} onClick={() => handleAddUser(tech)}>
+                                                    {tech.nombre_completo}
+                                                </li>
+                                            ))
                                         )}
                                     </ul>
                                 )}

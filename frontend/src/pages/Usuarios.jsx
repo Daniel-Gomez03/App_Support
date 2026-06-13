@@ -1,4 +1,32 @@
-import React, { useState, useEffect } from "react";
+// ============================================
+// PAGE: USUARIOS
+// Gestión de usuarios internos y clientes externos con dos pestañas.
+//
+// PERMISOS (desde AuthContext):
+//   canRead  — habilita handleViewUser
+//   canEdit  — habilita handleEditUser / handleToggleStatus
+//   canWrite — muestra botón "Nuevo Cliente"
+//
+// ESTADO:
+//   activeTab      — 'internos' | 'clientes'; controla qué tabla se muestra
+//   users          — array de usuarios internos (excluye rol=cliente en filtro)
+//   customers      — array de clientes externos
+//   secciones      — secciones de permisos para UserEditModal
+//   appliedFilters — {rol, cargo, area}; solo aplica a la pestaña internos
+//   searchTerm     — búsqueda libre por nombre / email / empresa
+//   confirmActivate — cliente pendiente de activación manual (flujo con email)
+//   toastConfig    — {show, title, message, type}; auto-oculta a los 4s
+//
+// DATOS DERIVADOS (useMemo):
+//   filterOptions — opciones únicas de rol/cargo/area extraídas de users
+//   filteredData  — resultado de aplicar tab + filtros + búsqueda
+//
+// SOCKET (Customerservice):
+//   customer_review_required — recarga clientes + muestra toast warning
+//   customer_updated         — actualiza cliente en local sin reload
+// ============================================
+
+import React, { useState, useEffect, useMemo } from "react";
 import styles from "./Usuarios.module.less";
 import lensIcon from "../assets/icons/Lens-icon.svg";
 import { MdFilterListAlt } from "react-icons/md";
@@ -17,7 +45,7 @@ import { useAuth } from "../context/AuthContext";
 const Usuarios = () => {
     const { user } = useAuth();
 
-    const candRead = user?.Permissions?.some(p => p.Seccion?.module_name === "Usuarios" && p.permissions_read === 1);
+    const canRead = user?.Permissions?.some(p => p.Seccion?.module_name === "Usuarios" && p.permissions_read === 1);
     const canEdit = user?.Permissions?.some(p => p.Seccion?.module_name === "Usuarios" && p.permissions_edit === 1);
     const canWrite = user?.Permissions?.some(p => p.Seccion?.module_name === "Usuarios" && p.permissions_write === 1);
 
@@ -52,7 +80,6 @@ const Usuarios = () => {
                 getSecciones(),
                 getCustomers()
             ]);
-
             setUsers(usersData);
             setSecciones(seccionesData);
             setCustomers(customersData);
@@ -97,13 +124,13 @@ const Usuarios = () => {
         };
     }, []);
 
-    const filterOptions = {
+    const filterOptions = useMemo(() => ({
         roles: [...new Set(users.map(u => u.rol).filter(Boolean))],
         cargos: [...new Set(users.map(u => u.cargo).filter(Boolean))],
-        areas: [...new Set(users.map(u => u.area).filter(Boolean))]
-    };
+        areas: [...new Set(users.map(u => u.area).filter(Boolean))],
+    }), [users]);
 
-    const getFilteredData = () => {
+    const filteredData = useMemo(() => {
         if (activeTab === "internos") {
             return users.filter(u => {
                 if (u.rol?.toLowerCase() === 'cliente') return false;
@@ -122,8 +149,8 @@ const Usuarios = () => {
             });
         } else {
             return customers.filter(c => {
-                const searchLower = searchTerm.toLowerCase();
                 if (!searchTerm) return true;
+                const searchLower = searchTerm.toLowerCase();
                 return (
                     c.customer_id?.toString().includes(searchLower) ||
                     c.full_name?.toLowerCase().includes(searchLower) ||
@@ -133,7 +160,7 @@ const Usuarios = () => {
                 );
             });
         }
-    };
+    }, [activeTab, users, customers, appliedFilters, searchTerm]);
 
     const handleEditUser = (item) => {
         if (!canEdit) return;
@@ -149,7 +176,7 @@ const Usuarios = () => {
     };
 
     const handleViewUser = (item) => {
-        if (!candRead) return;
+        if (!canRead) return;
         setSelectedUser(item);
         setIsViewModalOpen(true);
     };
@@ -162,15 +189,14 @@ const Usuarios = () => {
                 showToast("Éxito", "Usuario interno actualizado correctamente.");
             } else {
                 await updateCustomer(id, dataToSave);
-
                 const updatedCustomers = await getCustomers();
                 setCustomers(updatedCustomers);
                 showToast("Éxito", "Información del cliente actualizada.");
             }
             setIsEditModalOpen(false);
-        } catch (error) {
-            console.error("Error en handleSaveUser:", error);
-            showToast("Error", error.message || "No se pudo realizar la actualización.");
+        } catch (err) {
+            console.error("Error en handleSaveUser:", err);
+            showToast("Error", err.message || "No se pudo realizar la actualización.");
         }
     };
 
@@ -201,9 +227,9 @@ const Usuarios = () => {
                     : response.message;
                 showToast("Estado de cliente actualizado", toastMsg);
             }
-        } catch (error) {
-            console.error(error);
-            showToast("Error", error.message || "No se pudo cambiar el estado.");
+        } catch (err) {
+            console.error(err);
+            showToast("Error", err.message || "No se pudo cambiar el estado.");
         }
     };
 
@@ -212,8 +238,8 @@ const Usuarios = () => {
         try {
             const updatedCustomers = await getCustomers();
             setCustomers(updatedCustomers);
-        } catch (error) {
-            console.error("Error al refrescar clientes:", error);
+        } catch (err) {
+            console.error("Error al refrescar clientes:", err);
         }
     };
 
@@ -287,7 +313,7 @@ const Usuarios = () => {
                     <div className={styles.errorInfo}>{error}</div>
                 ) : (
                     <UsersTable
-                        data={getFilteredData()}
+                        data={filteredData}
                         onEdit={handleEditUser}
                         onView={handleViewUser}
                         onToggleStatus={handleToggleStatus}

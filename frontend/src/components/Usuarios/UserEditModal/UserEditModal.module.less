@@ -1,4 +1,76 @@
+// ============================================
+// STYLES: USER EDIT MODAL
+// Edición de usuarios internos y clientes externos (2 pasos).
+//
+// ESTRUCTURA:
+//   .modalOverlay  — fondo fijo con blur
+//     .modalContent — tarjeta centrada; scaleUp al abrir
+//       .modalHeader — título + icono + botón X
+//         .headerTitle / .headerIcon / .closeBtn
+//       .modalBody   — scrollable; contiene paso 1 (form) y paso 2 (confirm)
+//
+//   PASO 1 — Vista de información + Formulario:
+//     .userInfoCard — avatar + datos del usuario
+//       .avatarWrapper (.editableAvatar para clientes) — .avatar / .avatarFallback
+//                     / .avatarOverlay (hover para subir foto)
+//       .userDetails  — nombre, email, .customerBadges
+//         .verifyBadge (&.active → verde) / .resendBtn
+//     .alert (&.success / &.error) — feedback del reenvío de email
+//     .form
+//       .formGrid     — 2 cols; 1 col en tablet
+//         .formGroup  — label + input/select; .phoneInputContainer para teléfono
+//                       (.flagSelector / .flagIcon / .hiddenSelect)
+//       .permissionsDropdown — panel colapsable con .dropdownHeader / .tableWrapper
+//         .permissionsTable  — thead + tbody con .moduleNameCell / .checkboxWrapper
+//                              / .customCheckbox (&.active)
+//       .modalActions — .saveBtn centrado
+//
+//   PASO 2 — Confirmación:
+//     .confirmationWrapper — .iconCircle / h3 / p / .confirmButtons
+//     Botones comparten base en selector `button` dentro de .confirmButtons;
+//     .btnSecondary y .btnPrimary solo sobreescriben colores.
+//
+// ANIMACIONES:
+//   scaleUp   — entrada del modal
+//   slideDown — apertura del panel de permisos (.tableWrapper)
+//   spin      — loader circular dentro de .btnPrimary
+// ============================================
+
 @import '../../../less/main.less';
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes scaleUp {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
 .modalOverlay {
     position: fixed;
@@ -579,39 +651,5 @@
                 }
             }
         }
-    }
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes scaleUp {
-    from {
-        transform: scale(0.95);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
     }
 }

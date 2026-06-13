@@ -1,3 +1,43 @@
+// ============================================
+// PAGE: CREATE TICKET
+// Formulario de tres pasos para registrar un
+// ticket desde el panel de administración.
+//
+// FLUJO:
+//   1. Búsqueda de cliente en dropdown con
+//      filtro en tiempo real. Al seleccionar,
+//      los campos de empresa, email, teléfono
+//      y registro se auto-rellenan como solo
+//      lectura.
+//   2. Selección en cascada: categoría →
+//      producto → modelo (carga dinámica).
+//      El número de serie dispara la verificación
+//      de garantía al perder el foco (onBlur).
+//   3. Asunto, descripción y evidencias.
+//
+// CONFIRMACIÓN:
+//   El submit del form abre un modal de
+//   confirmación; handleFinalSubmit construye
+//   un FormData y llama createTicketAdmin.
+//   El form se limpia con resetForm() tras
+//   el éxito.
+//
+// GARANTÍA:
+//   warrantyStatus { loading, data, error }
+//   muestra el resultado inline bajo el campo
+//   de serie: válida, expirada o no encontrada.
+//
+// PERMISOS:
+//   canRead && canWrite requeridos. Si alguno
+//   falta se muestra un panel de acceso
+//   restringido en lugar del formulario.
+//
+// countryRules: mapa de código de llamada a
+//   código ISO para el componente flag-icons.
+//   Definido fuera del componente para no
+//   recrearse en cada render.
+// ============================================
+
 import React, { useEffect, useState, useRef } from 'react';
 import styles from './CreateTicket.module.less';
 import { LuUpload, LuCheck, LuX, LuLoaderCircle, LuSearch, LuShieldCheck, LuShieldAlert, LuShieldX, LuCircleAlert } from "react-icons/lu";
@@ -183,7 +223,7 @@ const CreateTicket = () => {
     }
   };
 
-  const currentFlagIso = countryRules[formData.customer_country_code]?.iso || 'hn';
+  const currentFlagIso = countryRules[formData.customer_country_code]?.iso ?? 'hn';
 
   return (
     <div className={styles.createTicketContainer}>

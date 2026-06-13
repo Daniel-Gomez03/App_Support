@@ -1,3 +1,26 @@
+// ============================================
+// PAGE: SALIDAS
+// Gestión de solicitudes de salida técnica a campo.
+//
+// PERMISOS:
+//   canRead  — ver la tabla
+//   canWrite — crear solicitud
+//   canEdit  — aprobar / rechazar (solo Admin con canEdit)
+//   isAdmin  — rol Admin (determina visibilidad de acciones de revisión)
+//
+// ESTADO:
+//   salidas          — array completo desde API
+//   filteredSalidas  — derivado con useMemo (búsqueda por técnico,
+//                      destino, ticket, empresa, ID)
+//   showSolicitudModal — controla modal de nueva solicitud
+//   confirmAction    — { type: 'approve'|'reject', salida } |null
+//   viewSalida       — salida seleccionada para vista detalle | null
+//   toastConfig      — { show, title, message, type } para feedback
+//
+// TIEMPO REAL:
+//   socket 'salida_created' / 'salida_status_updated' → recarga lista
+// ============================================
+
 import React, { useState, useEffect, useMemo } from 'react';
 import styles from './Salidas.module.less';
 import lensIcon from '../assets/icons/Lens-icon.svg';
@@ -5,27 +28,27 @@ import { LuCheck, LuX, LuCircleAlert } from 'react-icons/lu';
 import { useAuth } from '../context/AuthContext';
 import { socket } from '../services/Userservice';
 import { getAllSalidas, createSalida, updateSalidaStatus } from '../services/SalidaService';
-import SalidasTable    from '../components/Salidas/SalidasTable/SalidasTable';
-import SolicitudModal  from '../components/Salidas/SolicitudModal/SolicitudModal';
-import ConfirmModal    from '../components/Salidas/ConfirmModal/ConfirmModal';
+import SalidasTable from '../components/Salidas/SalidasTable/SalidasTable';
+import SolicitudModal from '../components/Salidas/SolicitudModal/SolicitudModal';
+import ConfirmModal from '../components/Salidas/ConfirmModal/ConfirmModal';
 import SalidaViewModal from '../components/Salidas/SalidaViewModal/SalidaViewModal';
 
 const Salidas = () => {
     const { user } = useAuth();
 
-    const canRead  = user?.Permissions?.some(p => p.Seccion?.module_name === 'Salidas' && p.permissions_read  === 1);
+    const canRead = user?.Permissions?.some(p => p.Seccion?.module_name === 'Salidas' && p.permissions_read === 1);
     const canWrite = user?.Permissions?.some(p => p.Seccion?.module_name === 'Salidas' && p.permissions_write === 1);
-    const canEdit  = user?.Permissions?.some(p => p.Seccion?.module_name === 'Salidas' && p.permissions_edit  === 1);
-    const isAdmin  = user?.rol === 'Admin';
+    const canEdit = user?.Permissions?.some(p => p.Seccion?.module_name === 'Salidas' && p.permissions_edit === 1);
+    const isAdmin = user?.rol === 'Admin';
 
-    const [salidas, setSalidas]       = useState([]);
-    const [loading, setLoading]       = useState(true);
+    const [salidas, setSalidas] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [toastConfig, setToastConfig] = useState({ show: false, title: '', message: '', type: 'success' });
 
     const [showSolicitudModal, setShowSolicitudModal] = useState(false);
-    const [confirmAction, setConfirmAction]           = useState(null); // { type: 'approve'|'reject', salida }
-    const [viewSalida, setViewSalida]                 = useState(null);
+    const [confirmAction, setConfirmAction] = useState(null);
+    const [viewSalida, setViewSalida] = useState(null);
 
     const loadSalidas = async () => {
         try {
@@ -47,12 +70,11 @@ const Salidas = () => {
 
     useEffect(() => {
         if (!canRead) return;
-        const refresh = () => loadSalidas();
-        socket.on('salida_created', refresh);
-        socket.on('salida_status_updated', refresh);
+        socket.on('salida_created', loadSalidas);
+        socket.on('salida_status_updated', loadSalidas);
         return () => {
-            socket.off('salida_created', refresh);
-            socket.off('salida_status_updated', refresh);
+            socket.off('salida_created', loadSalidas);
+            socket.off('salida_status_updated', loadSalidas);
         };
     }, [canRead]);
 
@@ -137,7 +159,7 @@ const Salidas = () => {
                         data={filteredSalidas}
                         onView={s => setViewSalida(s)}
                         onApprove={s => setConfirmAction({ type: 'approve', salida: s })}
-                        onReject={s  => setConfirmAction({ type: 'reject',  salida: s })}
+                        onReject={s => setConfirmAction({ type: 'reject', salida: s })}
                         isAdmin={isAdmin && canEdit}
                     />
                 )}

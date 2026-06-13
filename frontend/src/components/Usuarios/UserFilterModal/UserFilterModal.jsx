@@ -1,28 +1,43 @@
+// ============================================
+// COMPONENT: USER FILTER MODAL
+// Panel de filtros para la tabla de usuarios internos.
+// Permite filtrar por rol, cargo y área; la limpieza
+// aplica el cambio inmediatamente sin cerrar el modal.
+//
+// PROPS:
+//   isOpen         — booleano; si false, retorna null
+//   onClose        — fn(); cierra el modal
+//   onApplyFilter  — fn(filters); notifica al padre del filtro activo
+//   currentFilters — objeto { rol, cargo, area } con los filtros actuales
+//   options        — { roles, cargos, areas } arrays de valores disponibles
+//
+// ESTADO:
+//   filters — copia local de currentFilters; se sincroniza al abrir
+//
+// FLUJO:
+//   handleChange — actualiza filtros locales en cada cambio de select
+//   handleApply  — aplica filtros y cierra el modal
+//   handleReset  — aplica filtros vacíos sin cerrar el modal
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import styles from './UserFilterModal.module.less';
 import { MdClose, MdFilterListAlt } from 'react-icons/md';
 
+const EMPTY_FILTERS = { rol: '', cargo: '', area: '' };
+
 const UserFilterModal = ({ isOpen, onClose, onApplyFilter, currentFilters, options }) => {
-    const [filters, setFilters] = useState({
-        rol: '',
-        cargo: '',
-        area: ''
-    });
+    const [filters, setFilters] = useState(EMPTY_FILTERS);
 
     useEffect(() => {
         if (isOpen) {
-            setFilters(currentFilters || { rol: '', cargo: '', area: '' });
+            setFilters(currentFilters ?? EMPTY_FILTERS);
         }
     }, [isOpen, currentFilters]);
 
-    if (!isOpen) return null;
-
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFilters(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFilters(prev => ({ ...prev, [name]: value }));
     };
 
     const handleApply = () => {
@@ -31,14 +46,15 @@ const UserFilterModal = ({ isOpen, onClose, onApplyFilter, currentFilters, optio
     };
 
     const handleReset = () => {
-        const emptyFilters = { rol: '', cargo: '', area: '' };
-        setFilters(emptyFilters);
-        onApplyFilter(emptyFilters);
+        setFilters(EMPTY_FILTERS);
+        onApplyFilter(EMPTY_FILTERS);
     };
 
+    if (!isOpen) return null;
+
     return (
-        <div className={styles.filterOverlay} >
-            <div className={styles.filterModal} >
+        <div className={styles.filterOverlay}>
+            <div className={styles.filterModal}>
                 <div className={styles.header}>
                     <div className={styles.headerTitle}>
                         <MdFilterListAlt className={styles.headerIcon} />
@@ -55,8 +71,8 @@ const UserFilterModal = ({ isOpen, onClose, onApplyFilter, currentFilters, optio
                         <select id="rol" name="rol" value={filters.rol} onChange={handleChange}>
                             <option value="">Todos los roles</option>
                             <option value="null">Sin asignar</option>
-                            {options.roles.map((rol, index) => (
-                                <option key={index} value={rol}>{rol}</option>
+                            {options.roles.map(rol => (
+                                <option key={rol} value={rol}>{rol}</option>
                             ))}
                         </select>
                     </div>
@@ -66,8 +82,8 @@ const UserFilterModal = ({ isOpen, onClose, onApplyFilter, currentFilters, optio
                         <select id="cargo" name="cargo" value={filters.cargo} onChange={handleChange}>
                             <option value="">Todos los cargos</option>
                             <option value="null">Sin asignar</option>
-                            {options.cargos.map((cargo, index) => (
-                                <option key={index} value={cargo}>{cargo}</option>
+                            {options.cargos.map(cargo => (
+                                <option key={cargo} value={cargo}>{cargo}</option>
                             ))}
                         </select>
                     </div>
@@ -77,8 +93,8 @@ const UserFilterModal = ({ isOpen, onClose, onApplyFilter, currentFilters, optio
                         <select id="area" name="area" value={filters.area} onChange={handleChange}>
                             <option value="">Todas las áreas</option>
                             <option value="null">Sin asignar</option>
-                            {options.areas.map((area, index) => (
-                                <option key={index} value={area}>{area}</option>
+                            {options.areas.map(area => (
+                                <option key={area} value={area}>{area}</option>
                             ))}
                         </select>
                     </div>

@@ -1,3 +1,23 @@
+// ============================================
+// STYLES: COMENTARIOS FILTER MODAL
+// Panel de filtros que se desliza desde la
+// esquina superior derecha de la pantalla
+// (overlay con justify-content: flex-end y
+// align-items: flex-start).
+//
+// .radioItem: pill-style que oculta el input
+//   nativo y activa &.selected para mostrar el
+//   color de acento al elegir una opción.
+//
+// .resetBtn usa margin-right: auto para
+//   desplazarse al extremo izquierdo del footer
+//   flex sin romper el flujo de los demás botones.
+//
+// .cancelBtn y .applyBtn comparten base en
+//   selector múltiple; solo background, color y
+//   padding horizontal los diferencian.
+// ============================================
+
 @import "../../../less/main.less";
 
 .overlay {
@@ -201,17 +221,22 @@
         }
     }
 
-    .cancelBtn {
-        background: #f3f4f6;
+    // Base compartida; background, color y padding-x los diferencian.
+    .cancelBtn,
+    .applyBtn {
         border: none;
         border-radius: 10px;
-        padding: 10px 18px;
         font-size: 14px;
         font-weight: 600;
-        color: #374151;
         cursor: pointer;
         transition: all 0.2s;
         font-family: @font-family;
+    }
+
+    .cancelBtn {
+        background: #f3f4f6;
+        padding: 10px 18px;
+        color: #374151;
 
         &:hover {
             background: #e5e7eb;
@@ -220,15 +245,8 @@
 
     .applyBtn {
         background: @quaternary-color;
-        border: none;
-        border-radius: 10px;
         padding: 10px 20px;
-        font-size: 14px;
-        font-weight: 600;
         color: white;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-family: @font-family;
 
         &:hover {
             background: darken(@quaternary-color, 5%);

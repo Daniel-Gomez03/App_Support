@@ -1,3 +1,19 @@
+// ============================================
+// STYLES: CARD (Dashboard KPI)
+// Tarjeta de indicador con variante oscura.
+//
+// TENDENCIA (aplicada sobre .percentage):
+//   .trendPositive — verde (#10B981)
+//   .trendNegative — rojo  (#EF4444)
+//   .trendNeutral  — gris  (#9CA3AF)
+//   Una de las tres siempre se aplica; no hay
+//   color base en .percentage para evitar
+//   redundancia.
+//
+// &.dark: override completo de colores para
+//   la card de "Tickets Pendientes" (fondo #105030).
+// ============================================
+
 @import "../../../less/variables.less";
 
 .card {
@@ -57,7 +73,6 @@
             font-size: 12px;
 
             .percentage {
-                color: #10B981;
                 font-weight: 600;
                 display: flex;
                 align-items: center;

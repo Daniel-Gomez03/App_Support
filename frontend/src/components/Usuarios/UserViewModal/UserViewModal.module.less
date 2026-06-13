@@ -1,4 +1,62 @@
+// ============================================
+// STYLES: USER VIEW MODAL
+// Modal de solo lectura para detalle de usuario interno o cliente externo.
+//
+// ESTRUCTURA:
+//   .modalOverlay  — fondo fijo con blur
+//     .modalContent — tarjeta centrada; scaleUp al abrir
+//       .modalHeader — título dinámico + botón X
+//         .headerTitle / .closeBtn
+//       .modalBody   — scrollable
+//         .userInfoCard — avatar + nombre + email + ID
+//           .avatarWrapper (.avatar / .avatarFallback)
+//           .userDetails  (.labelIcon)
+//         .infoGrid — 2 cols; campos variables por tipo de usuario
+//           .infoGroup
+//             label, p (.inlineIcon)
+//             .highlight / .unassigned    — variantes de texto de campo
+//             .statusActive / .statusInactive — badge de estado de cuenta
+//             .statusVerified / .statusPending — verificación de email
+//             .streakActive (.fireIcon) / .streakLost (.ghostIcon) — racha
+//         .permissionsDropdown — panel colapsable (solo usuarios internos)
+//           .dropdownHeader (.headerInfo / .shieldIcon / .arrow)
+//           .tableContainer → slideDown al expandirse
+//             .tableWrapper → .permissionsTable
+//               .moduleNameCell (.moduleIcon)
+//               .checkIcon / .crossIcon
+//             .noPermsRow — mensaje vacío
+//       .modalFooter — .closeActionBtn alineado a la derecha
+//
+// ANIMACIONES:
+//   scaleUp   — entrada del modal
+//   slideDown — expansión del panel de permisos
+// ============================================
+
 @import '../../../less/main.less';
+
+@keyframes scaleUp {
+    from {
+        transform: scale(0.97);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
 .modalOverlay {
     position: fixed;
@@ -420,29 +478,5 @@
                 }
             }
         }
-    }
-}
-
-@keyframes scaleUp {
-    from {
-        transform: scale(0.97);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
     }
 }

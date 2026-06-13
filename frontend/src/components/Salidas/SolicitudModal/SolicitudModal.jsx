@@ -1,43 +1,71 @@
+// ============================================
+// COMPONENT: SOLICITUD MODAL
+// Formulario para crear una nueva solicitud de salida técnica.
+//
+// PROPS:
+//   isOpen      — booleano; si false, retorna null
+//   onClose     — fn(); cierra el modal
+//   onSubmit    — fn(form); recibe el payload y llama al servicio
+//   currentUser — objeto del usuario en sesión
+//   isAdmin     — booleano; si true, muestra selector de técnico y
+//                 carga la lista de usuarios activos
+//
+// ESTADO:
+//   form           — campos del formulario (user_id, ticket_id,
+//                    salida_destination, salida_date, salida_time)
+//   techs          — lista de técnicos activos (solo en modo admin)
+//   tickets        — tickets activos del técnico seleccionado
+//   loadingTickets — spinner del select de tickets durante fetch
+//   submitting     — bloquea botón enviar durante el await
+//   error          — mensaje de validación o error de API
+//
+// FLUJO:
+//   Admin   → selecciona técnico → loadTickets(userId) → selecciona ticket
+//             → el destino se autocompletea con customer_company del ticket
+//             → editable manualmente
+//   No admin → user_id fijado a currentUser; tickets cargados al abrir
+//
+// Al abrir (isOpen=true): form se reinicia vía INITIAL_FORM; techs/tickets
+// se limpian para evitar estado residual de aperturas anteriores.
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import styles from './SolicitudModal.module.less';
-import { FiX, FiMapPin, FiCalendar, FiClock, FiTag } from 'react-icons/fi';
+import { FiX, FiMapPin, FiCalendar, FiClock } from 'react-icons/fi';
 import { LuTicket } from 'react-icons/lu';
 import { getTicketsByUser } from '../../../services/SalidaService';
 import { getUsers } from '../../../services/Userservice';
 
 const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
 
+const INITIAL_FORM = {
+    user_id: '',
+    ticket_id: '',
+    salida_destination: '',
+    salida_date: '',
+    salida_time: '',
+};
+
 const SolicitudModal = ({ isOpen, onClose, onSubmit, currentUser, isAdmin }) => {
-    const [form, setForm] = useState({
-        user_id:            '',
-        ticket_id:          '',
-        salida_destination: '',
-        salida_date:        '',
-        salida_time:        '',
-    });
-    const [techs,   setTechs]   = useState([]);
+    const [form, setForm] = useState(INITIAL_FORM);
+    const [techs, setTechs] = useState([]);
     const [tickets, setTickets] = useState([]);
     const [loadingTickets, setLoadingTickets] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
 
-    // Al abrir: inicializar form y cargar técnicos si es admin
     useEffect(() => {
         if (!isOpen) return;
         setError('');
         setTickets([]);
 
         if (isAdmin) {
-            setForm({ user_id: '', ticket_id: '', salida_destination: '', salida_date: '', salida_time: '' });
+            setForm(INITIAL_FORM);
             getUsers()
                 .then(users => setTechs(users.filter(u => u.estado === 1 || u.estado === true)))
                 .catch(() => setTechs([]));
         } else {
-            setForm(prev => ({
-                ...prev,
-                user_id: currentUser.user_id,
-                ticket_id: '', salida_destination: '', salida_date: '', salida_time: '',
-            }));
+            setForm({ ...INITIAL_FORM, user_id: currentUser.user_id });
             loadTickets(currentUser.user_id);
         }
     }, [isOpen]);
@@ -66,10 +94,10 @@ const SolicitudModal = ({ isOpen, onClose, onSubmit, currentUser, isAdmin }) => 
 
     const handleTicketChange = (e) => {
         const ticketId = e.target.value;
-        const ticket   = tickets.find(t => t.ticket_id === parseInt(ticketId));
+        const ticket = tickets.find(t => t.ticket_id === parseInt(ticketId));
         setForm(prev => ({
             ...prev,
-            ticket_id:          ticketId,
+            ticket_id: ticketId,
             salida_destination: ticket?.customer_company || prev.salida_destination,
         }));
     };
@@ -100,7 +128,7 @@ const SolicitudModal = ({ isOpen, onClose, onSubmit, currentUser, isAdmin }) => 
     if (!isOpen) return null;
 
     const techName = isAdmin
-        ? (techs.find(t => t.user_id === parseInt(form.user_id))?.nombre_completo || '')
+        ? (techs.find(t => t.user_id === parseInt(form.user_id))?.nombre_completo ?? '')
         : currentUser?.nombre_completo;
 
     return (
@@ -113,7 +141,6 @@ const SolicitudModal = ({ isOpen, onClose, onSubmit, currentUser, isAdmin }) => 
 
                 <form className={styles.body} onSubmit={handleSubmit}>
 
-                    {/* Técnico */}
                     <div className={styles.field}>
                         <label className={styles.label}>Técnico</label>
                         {isAdmin ? (
@@ -135,7 +162,6 @@ const SolicitudModal = ({ isOpen, onClose, onSubmit, currentUser, isAdmin }) => 
                         )}
                     </div>
 
-                    {/* Ticket */}
                     <div className={styles.field}>
                         <label className={styles.label}><LuTicket /> Ticket</label>
                         <select
@@ -159,7 +185,6 @@ const SolicitudModal = ({ isOpen, onClose, onSubmit, currentUser, isAdmin }) => 
                         )}
                     </div>
 
-                    {/* Destino */}
                     <div className={styles.field}>
                         <label className={styles.label}><FiMapPin /> Destino / Cliente</label>
                         <input
@@ -173,7 +198,6 @@ const SolicitudModal = ({ isOpen, onClose, onSubmit, currentUser, isAdmin }) => 
                         />
                     </div>
 
-                    {/* Fecha y Hora */}
                     <div className={styles.row}>
                         <div className={styles.field}>
                             <label className={styles.label}><FiCalendar /> Fecha</label>

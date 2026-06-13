@@ -1,3 +1,20 @@
+// ============================================
+// STYLES: MAIN LAYOUT
+// Shell de dos columnas: sidebar fijo a la izquierda (256px)
+// y área de contenido fluida a la derecha.
+//
+// ESTRUCTURA:
+//   .layoutContainer — flex row; ocupa 100vh mínimo
+//     .mainContent   — columna derecha; flex column (header + content + footer)
+//       &.expanded   — sidebar colapsado: ocupa el 100% del ancho
+//       .pageContent — área scrollable con padding; flex: 1 para empujar el footer al fondo
+//
+// NOTAS:
+//   - En móvil (≤ tablet) el sidebar se superpone sobre el contenido (position fixed en Sidebar.jsx),
+//     por lo que .mainContent ocupa el 100% del ancho sin margen izquierdo.
+//   - La transición de margin-left/width anima el colapso/expansión del sidebar en desktop.
+// ============================================
+
 @import "../less/variables.less";
 
 .layoutContainer {

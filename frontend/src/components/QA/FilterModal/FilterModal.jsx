@@ -1,20 +1,44 @@
+// ============================================
+// COMPONENT: FILTER MODAL
+// Panel lateral/modal para filtrar y ordenar FAQs.
+//
+// PROPS:
+//   faqs          — array completo de FAQs (para derivar
+//                   productos y modelos disponibles en cascada)
+//   onApplyFilter — fn(selectedFilters); aplica los filtros en QA.jsx
+//   onClose       — cierra el modal
+//   filterOptions — { categories: string[] } precalculadas por QA.jsx
+//
+// ESTADO:
+//   selectedFilters  — { sortBy, category, product, productModel }
+//   availableProducts — derivado de faqs según categoría activa
+//   availableModels   — derivado de faqs según categoría + producto activos
+//
+// CASCADA:
+//   Al cambiar categoría → resetea product y productModel
+//   Al cambiar product   → resetea productModel
+//   Los efectos recalculan las listas disponibles en cada cambio.
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import styles from './FilterModal.module.less';
 import { MdClose, MdRestartAlt, MdCheck } from "react-icons/md";
 
+const INITIAL_FILTERS = {
+    sortBy: '',
+    category: '',
+    product: '',
+    productModel: ''
+};
+
 const FilterModal = ({ faqs = [], onApplyFilter, onClose, filterOptions }) => {
-    const [selectedFilters, setSelectedFilters] = useState({
-        sortBy: '',
-        category: '',
-        product: '',
-        productModel: ''
-    });
+    const [selectedFilters, setSelectedFilters] = useState(INITIAL_FILTERS);
 
     const [availableProducts, setAvailableProducts] = useState([]);
     const [availableModels, setAvailableModels] = useState([]);
 
     useEffect(() => {
-        if (selectedFilters.category && Array.isArray(faqs)) {
+        if (selectedFilters.category) {
             const products = [...new Set(
                 faqs
                     .filter(faq => faq?.category?.category_name === selectedFilters.category)
@@ -28,7 +52,7 @@ const FilterModal = ({ faqs = [], onApplyFilter, onClose, filterOptions }) => {
     }, [selectedFilters.category, faqs]);
 
     useEffect(() => {
-        if (selectedFilters.product && selectedFilters.category && Array.isArray(faqs)) {
+        if (selectedFilters.product && selectedFilters.category) {
             const models = [...new Set(
                 faqs
                     .filter(faq =>
@@ -65,14 +89,7 @@ const FilterModal = ({ faqs = [], onApplyFilter, onClose, filterOptions }) => {
         onClose();
     };
 
-    const handleReset = () => {
-        setSelectedFilters({
-            sortBy: '',
-            category: '',
-            product: '',
-            productModel: ''
-        });
-    };
+    const handleReset = () => setSelectedFilters(INITIAL_FILTERS);
 
     return (
         <div className={styles.filterOverlay}>

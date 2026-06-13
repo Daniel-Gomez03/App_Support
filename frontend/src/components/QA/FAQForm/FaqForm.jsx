@@ -1,9 +1,49 @@
+// ============================================
+// COMPONENT: FAQ FORM
+// Modal para crear o editar una FAQ.
+//
+// PROPS:
+//   faq      — null = modo creación; objeto = modo edición
+//   onSubmit — fn(cleanData); en edición QA.jsx lo envuelve
+//              con el id; errores se propagan al catch local
+//   onClose  — cierra el modal
+//
+// ESTADO:
+//   formData       — campos del formulario (category, product,
+//                    product_model, question, answer, video_url)
+//   categories /
+//   products /
+//   productModels  — listas para los selects en cascada
+//   isSolution     — true cuando la categoría seleccionada es
+//                    "Soluciones"; oculta el selector de modelo
+//   loading / error — control de envío y feedback inline
+//
+// SELECTS EN CASCADA:
+//   1. Categoría → loadProducts filtra por category_id
+//   2. Producto  → loadProductModels (solo si !isSolution)
+//   Al cambiar categoría se resetean product y product_model.
+//
+// VALIDACIÓN (handleSubmit):
+//   - faq_question ≥ 10 chars (después de trim)
+//   - faq_answer   ≥ 20 chars (después de trim)
+//   - faq_video_url: solo YouTube o Vimeo (VIDEO_REGEX)
+//   handleInputChange bloquea espacios al inicio en tiempo real
+//   (complementa el trim() del submit).
+//
+// MODO EDICIÓN:
+//   El segundo useEffect se dispara cuando llegan tanto `faq`
+//   como `categories` (cargadas asincrónicamente); reconstituye
+//   el estado completo incluyendo los selects en cascada.
+// ============================================
+
 import React, { useState, useEffect } from "react";
 import styles from "./FAQForm.module.less";
 import { MdClose } from "react-icons/md";
 import { getCategories } from "../../../services/Categoryservice";
 import { getProducts } from "../../../services/Productservice";
 import { getProductModelsByProduct } from "../../../services/Productmodelservice";
+
+const VIDEO_REGEX = /^(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie|vimeo)\.(com|be)\//;
 
 const FAQForm = ({ faq, onSubmit, onClose }) => {
     const [formData, setFormData] = useState({
@@ -27,7 +67,7 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
             try {
                 const data = await getCategories();
                 setCategories(data);
-            } catch (err) {
+            } catch {
                 setError("Error al cargar las categorías");
             }
         };
@@ -59,9 +99,8 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
     const loadProducts = async (categoryId) => {
         try {
             const data = await getProducts();
-            const filtered = data.filter(p => p.category_id == categoryId);
-            setProducts(filtered);
-        } catch (err) {
+            setProducts(data.filter(p => p.category_id == categoryId));
+        } catch {
             setError("Error al cargar los productos");
         }
     };
@@ -70,7 +109,7 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
         try {
             const data = await getProductModelsByProduct(productId);
             setProductModels(data);
-        } catch (err) {
+        } catch {
             setError("Error al cargar los modelos");
         }
     };
@@ -80,12 +119,7 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
         const selectedCategory = categories.find(cat => cat.category_id == categoryId);
         const isSol = selectedCategory?.category_name.toLowerCase() === "soluciones";
 
-        setFormData({
-            ...formData,
-            category_id: categoryId,
-            product_id: "",
-            product_model_id: "",
-        });
+        setFormData({ ...formData, category_id: categoryId, product_id: "", product_model_id: "" });
         setIsSolution(isSol);
         setProductModels([]);
         if (categoryId) loadProducts(categoryId);
@@ -93,21 +127,13 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
 
     const handleProductChange = (e) => {
         const productId = e.target.value;
-        setFormData({
-            ...formData,
-            product_id: productId,
-            product_model_id: "",
-        });
+        setFormData({ ...formData, product_id: productId, product_model_id: "" });
         if (productId && !isSolution) loadProductModels(productId);
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-
-        if (value.startsWith(' ')) {
-            return;
-        }
-
+        if (value.startsWith(' ')) return;
         setFormData({ ...formData, [name]: value });
     };
 
@@ -133,9 +159,7 @@ const FAQForm = ({ faq, onSubmit, onClose }) => {
             setLoading(false);
             return;
         }
-
-        const videoRegex = /^(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie|vimeo)\.(com|be)\//;
-        if (cleanData.faq_video_url && !videoRegex.test(cleanData.faq_video_url)) {
+        if (cleanData.faq_video_url && !VIDEO_REGEX.test(cleanData.faq_video_url)) {
             setError("Solo se aceptan enlaces de YouTube o Vimeo.");
             setLoading(false);
             return;

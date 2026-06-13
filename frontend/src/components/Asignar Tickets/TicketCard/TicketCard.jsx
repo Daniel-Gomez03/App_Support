@@ -1,23 +1,43 @@
+// ============================================
+// COMPONENT: TICKET CARD (Asignar Tickets)
+// Tarjeta de ticket para el tablero de asignación.
+// Aparece en dos columnas con comportamientos
+// distintos según la prop showAssignButton:
+//
+//   false → columna "Nuevos" (estado 1-2):
+//     muestra botón "Ver Detalles" que abre
+//     TicketDetailModal para revisar antes de
+//     decidir la asignación.
+//
+//   true → columna "Backlog" (estado 3):
+//     muestra botón "Asignar Ticket" que abre
+//     AssignTicketModal directamente.
+//
+// highlighted: prop booleana que activa el borde
+//   de acento cuando la página recibe un
+//   highlightTicketId por navigation.state y
+//   hace scroll hasta esta tarjeta.
+// ============================================
+
 import React from 'react';
 import styles from './TicketCard.module.less';
 import { FiEye, FiUserPlus, FiClock } from "react-icons/fi";
 import { LuTag, LuBox } from "react-icons/lu";
 
+// Puras sin dependencias del scope del componente — no se recrean en cada render.
+const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
+
+const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+};
+
 const TicketCard = ({ ticket, onViewDetail, onAssign, showAssignButton, highlighted = false }) => {
-
-    const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
-
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
-    };
-
     const customerName = `${ticket.customer?.customer_first_name || ''} ${ticket.customer?.customer_last_name || ''}`.trim()
         || ticket.customer?.customer_company
         || 'Cliente Desconocido';

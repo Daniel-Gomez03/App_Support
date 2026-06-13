@@ -1,3 +1,25 @@
+// ============================================
+// STYLES: DASHBOARD
+// Layout principal de la página de monitoreo.
+//
+// ESTRUCTURA:
+//   .pageHeader       — título y subtítulo
+//   .statsGrid        — fila de 4 Cards de KPI
+//                       (4 cols → 2 cols → 1 col)
+//   .contentGrid      — cuerpo principal en
+//                       proporción 3fr/1.3fr que
+//                       colapsa a 1 columna en
+//                       tablet/móvil
+//     .leftColumn     — tablas (casos por técnico
+//                       + desglose por estado)
+//     .rightColumn    — gráfica de prioridades
+//                       + últimas reseñas
+//
+// .leftColumn y .rightColumn son idénticas;
+//   se combinan en un selector múltiple para
+//   evitar duplicación.
+// ============================================
+
 @import "../less/main.less";
 
 .dashboardContainer {
@@ -37,11 +59,10 @@
 
         @media (max-width: #breaks[tablet]) {
             gap: 16px;
-            justify-items: center;
         }
 
         @media (max-width: 767px) {
-            grid-template-columns: (1fr);
+            grid-template-columns: 1fr;
         }
     }
 
@@ -60,7 +81,9 @@
         }
     }
 
-    .leftColumn {
+    // Base compartida; sin diferencias entre columnas.
+    .leftColumn,
+    .rightColumn {
         display: flex;
         flex-direction: column;
         min-width: 0;
@@ -75,18 +98,32 @@
         }
     }
 
-    .rightColumn {
+    // Mensaje mostrado cuando el usuario no tiene
+    // permisos asignados aún.
+    .noPermissionsContainer {
         display: flex;
         flex-direction: column;
-        min-width: 0;
-        gap: 24px;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 64px 32px;
+        background: #F9FAFB;
+        border: 1px dashed #D0D5DD;
+        border-radius: 12px;
+        text-align: center;
 
-        @media(max-width: #breaks[desktop]) {
-            justify-content: center;
+        .noPermissionsTitle {
+            font-size: 18px;
+            font-weight: 600;
+            color: #344054;
+            margin: 0;
         }
 
-        @media(max-width: #breaks[tablet]) {
-            gap: 16px;
+        .noPermissionsText {
+            font-size: 14px;
+            color: #6A7282;
+            max-width: 420px;
+            margin: 0;
         }
     }
 }

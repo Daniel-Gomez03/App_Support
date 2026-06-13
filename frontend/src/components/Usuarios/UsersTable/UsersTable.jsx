@@ -1,3 +1,27 @@
+// ============================================
+// COMPONENT: USERS TABLE
+// Tabla unificada para usuarios internos y clientes externos.
+// El prop isCustomerTable conmuta entre dos sets de columnas:
+//   - Internos: rol, cargo, área, fecha ingreso, estado
+//   - Clientes: email/verificación, teléfono, empresa, tipo reg.,
+//               referencia, fecha registro, estado
+//
+// PROPS:
+//   data            — array de filas según el tipo de tabla activo
+//   onEdit          — fn(row); abre UserEditModal con el registro seleccionado
+//   onView          — fn(row); abre UserViewModal con el registro seleccionado
+//   onToggleStatus  — fn(row); activa/desactiva el usuario o cliente
+//   canEdit         — booleano; muestra u oculta acciones de edición y toggle
+//   isCustomerTable — booleano; conmuta entre columnas de internos y clientes
+//
+// NOTAS:
+//   StyleSheetManager + isPropValid suprimen warnings de styled-components
+//   cuando react-data-table-component pasa props DOM no reconocidas.
+//
+//   El onError del avatar oculta la img y muestra el fallback via DOM
+//   cuando la URL existe pero falla al cargar (no hay estado React para esto).
+// ============================================
+
 import React from 'react';
 import DataTable from 'react-data-table-component';
 import { StyleSheetManager } from 'styled-components';
@@ -7,18 +31,37 @@ import { TbPointFilled } from "react-icons/tb";
 import { LuMailCheck, LuMailWarning } from "react-icons/lu";
 import styles from './UsersTable.module.less';
 
-const UsersTable = ({ data, onEdit, onView, onToggleStatus, canEdit, isCustomerTable }) => {
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+    return localDate.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    });
+};
 
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
-        return localDate.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric'
-        });
-    };
+const customStyles = {
+    headCells: {
+        style: {
+            fontWeight: '600',
+            color: '#666',
+            fontSize: '13px',
+            borderBottom: '1px solid #eee',
+            backgroundColor: '#f9f9f9'
+        },
+    },
+    cells: {
+        style: {
+            fontSize: '13px',
+            color: '#333',
+            padding: '12px 16px',
+        },
+    },
+};
+
+const UsersTable = ({ data, onEdit, onView, onToggleStatus, canEdit, isCustomerTable }) => {
 
     const columns = [
         {
@@ -153,25 +196,6 @@ const UsersTable = ({ data, onEdit, onView, onToggleStatus, canEdit, isCustomerT
             width: '150px',
         }
     ];
-
-    const customStyles = {
-        headCells: {
-            style: {
-                fontWeight: '600',
-                color: '#666',
-                fontSize: '13px',
-                borderBottom: '1px solid #eee',
-                backgroundColor: '#f9f9f9'
-            },
-        },
-        cells: {
-            style: {
-                fontSize: '13px',
-                color: '#333',
-                padding: '12px 16px',
-            },
-        },
-    };
 
     return (
         <div className={styles.tableWrapper}>

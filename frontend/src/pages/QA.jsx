@@ -1,3 +1,33 @@
+// ============================================
+// PAGE: QA (Preguntas Frecuentes)
+// Gestión del banco de FAQs del sistema.
+// Permite buscar, filtrar, crear, editar y
+// activar/desactivar preguntas frecuentes.
+//
+// PERMISOS:
+//   canRead  — ver listado
+//   canEdit  — editar y cambiar estado
+//   canWrite — crear nuevas FAQs
+//
+// CARGA DE DATOS:
+//   loadFaqs hace dos llamadas en paralelo (getFaqs +
+//   getInactiveFaqs) y concatena ambas listas para que
+//   el admin vea activas e inactivas juntas.
+//
+// FILTRADO (filteredFaqs — useMemo):
+//   búsqueda por pregunta, categoría y producto;
+//   luego filtros opcionales por categoría/producto/modelo
+//   y orden por fecha (recent/oldest) o por estado activo primero.
+//
+// SOCKET:
+//   Suscribe loadFaqs (referencia directa, no wrapper) a 4 eventos
+//   para recargar en tiempo real; cleanup con la misma referencia
+//   para no eliminar otros listeners del mismo evento.
+//
+// handleEdit extrae la lógica de setEditingFaq + setShowForm
+//   para no recrear el inline arrow en cada render.
+// ============================================
+
 import React, { useEffect, useState, useMemo } from "react";
 import styles from "./QA.module.less";
 import FAQList from "../components/QA/FAQList/FaqList";
@@ -18,7 +48,6 @@ const QA = () => {
 
     const [faqs, setFaqs] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [editingFaq, setEditingFaq] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -32,26 +61,20 @@ const QA = () => {
         setTimeout(() => setToastConfig(prev => ({ ...prev, show: false })), 5000);
     };
 
-    const filterOptions = useMemo(() => {
-        return {
-            categories: [...new Set(faqs.map(faq => faq.category?.category_name))].filter(Boolean),
-            products: [...new Set(faqs.map(faq => faq.product?.product_name))].filter(Boolean),
-            productModels: [...new Set(faqs.map(faq => faq.product_model?.product_model_name))].filter(Boolean)
-        };
-    }, [faqs]);
+    const filterOptions = useMemo(() => ({
+        categories: [...new Set(faqs.map(faq => faq.category?.category_name))].filter(Boolean),
+        products: [...new Set(faqs.map(faq => faq.product?.product_name))].filter(Boolean),
+        productModels: [...new Set(faqs.map(faq => faq.product_model?.product_model_name))].filter(Boolean)
+    }), [faqs]);
 
     const loadFaqs = async () => {
         if (!canRead) return;
         try {
             setLoading(true);
-            const [activeFaqs, inactiveFaqs] = await Promise.all([
-                getFaqs(),
-                getInactiveFaqs()
-            ]);
+            const [activeFaqs, inactiveFaqs] = await Promise.all([getFaqs(), getInactiveFaqs()]);
             setFaqs([...activeFaqs, ...inactiveFaqs]);
-            setError(null);
-        } catch (err) {
-            setError("No tienes permiso o hubo un error al cargar los datos.");
+        } catch {
+            setFaqs([]);
         } finally {
             setLoading(false);
         }
@@ -61,16 +84,16 @@ const QA = () => {
         loadFaqs();
         document.title = "Soporte | Q&A";
         socket.connect();
-        socket.on('faq_created', () => loadFaqs());
-        socket.on('faq_updated', () => loadFaqs());
-        socket.on('faq_deleted', () => loadFaqs());
-        socket.on('faq_toggled', () => loadFaqs());
+        socket.on('faq_created', loadFaqs);
+        socket.on('faq_updated', loadFaqs);
+        socket.on('faq_deleted', loadFaqs);
+        socket.on('faq_toggled', loadFaqs);
 
         return () => {
-            socket.off('faq_created');
-            socket.off('faq_updated');
-            socket.off('faq_deleted');
-            socket.off('faq_toggled');
+            socket.off('faq_created', loadFaqs);
+            socket.off('faq_updated', loadFaqs);
+            socket.off('faq_deleted', loadFaqs);
+            socket.off('faq_toggled', loadFaqs);
         };
     }, [canRead]);
 
@@ -100,14 +123,20 @@ const QA = () => {
         try {
             await toggleFaqStatus(id);
             loadFaqs();
-        } catch (err) {
+        } catch {
             showToast("Error", "No se pudo cambiar el estado.", "error");
         }
     };
 
-    const filteredFaqs = faqs.filter(faq => {
+    const handleEdit = (faq) => {
+        setEditingFaq(faq);
+        setShowForm(true);
+    };
+
+    const filteredFaqs = useMemo(() => faqs.filter(faq => {
         const searchLower = searchTerm.toLowerCase();
-        const matchesSearch = faq.faq_question.toLowerCase().includes(searchLower) ||
+        const matchesSearch =
+            faq.faq_question.toLowerCase().includes(searchLower) ||
             faq.category?.category_name.toLowerCase().includes(searchLower) ||
             faq.product?.product_name.toLowerCase().includes(searchLower);
 
@@ -123,7 +152,7 @@ const QA = () => {
         if (appliedFilters?.sortBy === 'recent') return new Date(b.created_at) - new Date(a.created_at);
         if (appliedFilters?.sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
         return a.faq_status === b.faq_status ? 0 : a.faq_status ? -1 : 1;
-    });
+    }), [faqs, searchTerm, appliedFilters]);
 
     return (
         <div className={styles.qaContainer}>
@@ -141,7 +170,7 @@ const QA = () => {
                             placeholder="Buscar por problema, modelo o categoría..."
                             className={styles.searchInput}
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
 
@@ -166,7 +195,7 @@ const QA = () => {
                 <div className={styles.faqListContainer}>
                     <FAQList
                         faqs={filteredFaqs}
-                        onEdit={canEdit ? (faq) => { setEditingFaq(faq); setShowForm(true); } : null}
+                        onEdit={canEdit ? handleEdit : null}
                         onToggleStatus={handleToggleStatus}
                     />
                 </div>
@@ -182,7 +211,7 @@ const QA = () => {
 
             {showFilter && (
                 <FilterModal
-                    faqs={faqs} 
+                    faqs={faqs}
                     onApplyFilter={setAppliedFilters}
                     onClose={() => setShowFilter(false)}
                     filterOptions={filterOptions}

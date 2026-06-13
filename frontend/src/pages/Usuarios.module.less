@@ -1,4 +1,44 @@
+// ============================================
+// STYLES: USUARIOS PAGE
+// Gestión de usuarios internos y clientes externos.
+//
+// ESTRUCTURA:
+//   .usuariosContainer — layout raíz con padding y background
+//     .header / .titleSection / .title / .subtitle
+//     .controlsWrapper — tabs + toolbar en la misma fila;
+//                        .tabsContainer con .tabBtn / .activeTab
+//                        .toolbar con .searchBar, .actionButtons,
+//                        .createBtn, .iconGroup, .filterBtn / .activeFilter
+//     .tableContainer — wrapper de la tabla; .loadingInfo / .errorInfo
+//
+//   TOAST (fuera de .usuariosContainer):
+//     .successToast / .warningToast — comparten estructura (posición,
+//       tamaño, animación); solo difieren en colores de fondo y texto.
+//       Sub-clases internas: .toastIconContainer / .checkIcon /
+//       .toastContent / .toastClose
+//
+//   CONFIRM (activación de cuenta con email):
+//     .confirmOverlay / .confirmModal / .confirmTitle /
+//     .confirmText / .confirmSubtext / .confirmActions /
+//     .confirmCancel / .confirmAccept — comparten base de botón
+//
+// ANIMACIONES:
+//   toastSlideIn — entrada del toast desde la derecha
+// ============================================
+
 @import '../less/main.less';
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
 
 .usuariosContainer {
     display: flex;
@@ -229,7 +269,6 @@
     }
 
     .tableContainer {
-        background: @background-color;
         width: 100%;
         overflow: hidden;
 
@@ -243,13 +282,13 @@
     }
 }
 
+// ── Toast ──────────────────────────────────────────────
 
-.successToast {
+.successToast,
+.warningToast {
     position: fixed;
     top: 30px;
     right: 30px;
-    background-color: #f0fdf4;
-    border: 1px solid #bbf7d0;
     border-radius: 20px;
     padding: 16px 20px;
     display: flex;
@@ -259,7 +298,6 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
     min-width: 320px;
     max-width: 400px;
-
     animation: toastSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
     @media(max-width: 480px) {
@@ -273,12 +311,10 @@
         flex-shrink: 0;
         width: 32px;
         height: 32px;
-        background-color: #16a34a;
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
-        box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
 
         .checkIcon {
             color: white;
@@ -294,7 +330,6 @@
             margin: 0 0 4px 0;
             font-size: 16px;
             font-weight: 700;
-            color: #15803d;
             letter-spacing: -0.5px;
         }
 
@@ -302,7 +337,6 @@
             margin: 0;
             font-size: 13px;
             line-height: 1.4;
-            color: #166534;
             font-weight: 500;
         }
     }
@@ -313,7 +347,6 @@
         right: 12px;
         background: none;
         border: none;
-        color: #94a3b8;
         cursor: pointer;
         font-size: 20px;
         display: flex;
@@ -321,23 +354,68 @@
         transition: all 0.2s;
 
         &:hover {
-            color: #166534;
             transform: scale(1.1);
         }
     }
 }
 
-@keyframes toastSlideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
+.successToast {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+
+    .toastIconContainer {
+        background-color: #16a34a;
+        box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
     }
 
-    to {
-        transform: translateX(0);
-        opacity: 1;
+    .toastContent {
+        h4 {
+            color: #15803d;
+        }
+
+        p {
+            color: #166534;
+        }
+    }
+
+    .toastClose {
+        color: #94a3b8;
+
+        &:hover {
+            color: #166534;
+        }
     }
 }
+
+.warningToast {
+    background-color: #fffbeb;
+    border: 1px solid #fde68a;
+
+    .toastIconContainer {
+        background-color: #d97706;
+        box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
+    }
+
+    .toastContent {
+        h4 {
+            color: #92400e;
+        }
+
+        p {
+            color: #78350f;
+        }
+    }
+
+    .toastClose {
+        color: #d97706;
+
+        &:hover {
+            color: #92400e;
+        }
+    }
+}
+
+// ── Confirm overlay (activación de cuenta) ─────────────
 
 .confirmOverlay {
     position: fixed;
@@ -385,16 +463,20 @@
     justify-content: flex-end;
 }
 
-.confirmCancel {
+.confirmCancel,
+.confirmAccept {
     padding: 10px 20px;
     border-radius: 8px;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
-    color: #374151;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
+}
+
+.confirmCancel {
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
 
     &:hover {
         background: #f3f4f6;
@@ -402,99 +484,11 @@
 }
 
 .confirmAccept {
-    padding: 10px 20px;
-    border-radius: 8px;
     border: none;
     background: #1B3A1F;
     color: #ffffff;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
 
     &:hover {
         background: #3C6034;
-    }
-}
-
-.warningToast {
-    position: fixed;
-    top: 30px;
-    right: 30px;
-    background-color: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 20px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    z-index: 9999;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    min-width: 320px;
-    max-width: 400px;
-    animation: toastSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
-    @media(max-width: 480px) {
-        top: 20px;
-        right: 20px;
-        left: 20px;
-        min-width: auto;
-    }
-
-    .toastIconContainer {
-        flex-shrink: 0;
-        width: 32px;
-        height: 32px;
-        background-color: #d97706;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
-
-        .checkIcon {
-            color: white;
-            font-size: 24px;
-            stroke-width: 3px;
-        }
-    }
-
-    .toastContent {
-        flex: 1;
-
-        h4 {
-            margin: 0 0 4px 0;
-            font-size: 16px;
-            font-weight: 700;
-            color: #92400e;
-            letter-spacing: -0.5px;
-        }
-
-        p {
-            margin: 0;
-            font-size: 13px;
-            line-height: 1.4;
-            color: #78350f;
-            font-weight: 500;
-        }
-    }
-
-    .toastClose {
-        position: absolute;
-        top: 10px;
-        right: 12px;
-        background: none;
-        border: none;
-        color: #d97706;
-        cursor: pointer;
-        font-size: 20px;
-        display: flex;
-        align-items: center;
-        transition: all 0.2s;
-
-        &:hover {
-            color: #92400e;
-            transform: scale(1.1);
-        }
     }
 }

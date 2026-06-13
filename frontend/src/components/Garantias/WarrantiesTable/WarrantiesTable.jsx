@@ -1,3 +1,23 @@
+// ============================================
+// COMPONENT: WARRANTIES TABLE (Garantías)
+// Tabla principal de garantías con paginación.
+//
+// PROPS:
+//   data    — array de garantías
+//   onEdit  — fn(row); abre el modal de edición
+//   canEdit — muestra el botón de edición por fila
+//
+// Columnas: No. de Serie, No. Factura, Fecha Compra,
+//   Vencimiento, Vigencia/Estado, Acciones.
+//
+// rawDate: normaliza fechas ISO (con 'T' o espacio
+//   como separador) tomando solo la parte YYYY-MM-DD.
+//
+// StyleSheetManager + isPropValid: suprime warnings de
+//   styled-components por props no válidas de HTML que
+//   genera react-data-table-component internamente.
+// ============================================
+
 import React from 'react';
 import DataTable from 'react-data-table-component';
 import { StyleSheetManager } from 'styled-components';
@@ -6,12 +26,31 @@ import { FiEdit } from 'react-icons/fi';
 import { TbPointFilled } from "react-icons/tb";
 import styles from './WarrantiesTable.module.less';
 
-const WarrantiesTable = ({ data, onEdit, canEdit }) => {
+const rawDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    return dateStr.split('T')[0].split(' ')[0];
+};
 
-    const rawDate = (dateStr) => {
-        if (!dateStr) return 'N/A';
-        return dateStr.split('T')[0].split(' ')[0];
-    };
+const customStyles = {
+    headCells: {
+        style: {
+            fontWeight: '600',
+            color: '#666',
+            fontSize: '13px',
+            borderBottom: '1px solid #eee',
+            textTransform: 'uppercase',
+        },
+    },
+    cells: {
+        style: {
+            fontSize: '14px',
+            color: '#333',
+            padding: '12px 16px',
+        },
+    },
+};
+
+const WarrantiesTable = ({ data, onEdit, canEdit }) => {
 
     const columns = [
         {
@@ -84,28 +123,9 @@ const WarrantiesTable = ({ data, onEdit, canEdit }) => {
         }
     ];
 
-    const customStyles = {
-        headCells: {
-            style: {
-                fontWeight: '600',
-                color: '#666',
-                fontSize: '13px',
-                borderBottom: '1px solid #eee',
-                textTransform: 'uppercase',
-            },
-        },
-        cells: {
-            style: {
-                fontSize: '14px',
-                color: '#333',
-                padding: '12px 16px',
-            },
-        },
-    };
-
     return (
         <div className={styles.tableWrapper}>
-            <StyleSheetManager shouldForwardProp={(prop) => isPropValid(prop)}>
+            <StyleSheetManager shouldForwardProp={isPropValid}>
                 <DataTable
                     columns={columns}
                     data={data}

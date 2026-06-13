@@ -1,16 +1,38 @@
+// ============================================
+// COMPONENT: SALIDA VIEW MODAL
+// Modal de solo lectura con el detalle completo de una salida.
+//
+// PROPS:
+//   salida  — objeto salida a visualizar; null → retorna null
+//   onClose — fn(); cierra el modal
+//
+// MÓDULO SCOPE:
+//   formatID / formatDate / formatTime — helpers de formato
+//   STATUS_MAP — label + clase CSS por salida_status (0/1/2)
+//   Avatar     — sub-componente con fallback a inicial cuando la
+//                imagen no carga o es 'default.jpg'
+//
+// SECCIONES:
+//   Técnico solicitante — Avatar + nombre + cargo
+//   Ticket relacionado  — ID formateado + asunto + empresa
+//   Destino / Fecha / Hora / Fecha de solicitud — grid 2x2
+//   Procesada por       — visible si approvedBy.nombre_completo existe
+//   Razón de rechazo    — visible si salida_status === 2 y hay reason
+// ============================================
+
 import React, { useState } from 'react';
 import styles from './SalidaViewModal.module.less';
 import { FiX, FiMapPin, FiCalendar, FiClock, FiUser, FiAlertCircle } from 'react-icons/fi';
 import { LuTicket } from 'react-icons/lu';
 
-const formatID   = (id) => `T-${id.toString().padStart(4, '0')}`;
-const formatDate = (d)  => new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-const formatTime = (t)  => t ? t.slice(0, 5) : '—';
+const formatID = (id) => `T-${id.toString().padStart(4, '0')}`;
+const formatDate = (d) => new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+const formatTime = (t) => t ? t.slice(0, 5) : '—';
 
 const STATUS_MAP = {
     0: { label: 'Pendiente', cls: styles.pendiente },
-    1: { label: 'Aprobada',  cls: styles.aprobada  },
-    2: { label: 'Rechazada', cls: styles.rechazada  },
+    1: { label: 'Aprobada', cls: styles.aprobada },
+    2: { label: 'Rechazada', cls: styles.rechazada },
 };
 
 const Avatar = ({ src, name, size = 44 }) => {
@@ -30,13 +52,11 @@ const Avatar = ({ src, name, size = 44 }) => {
 const SalidaViewModal = ({ salida, onClose }) => {
     if (!salida) return null;
 
-    const status = STATUS_MAP[salida.salida_status] || STATUS_MAP[0];
+    const status = STATUS_MAP[salida.salida_status] ?? STATUS_MAP[0];
 
     return (
         <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
             <div className={styles.modal}>
-
-                {/* Header */}
                 <div className={styles.header}>
                     <div className={styles.headerLeft}>
                         <span className={styles.salidaId}>Salida #{salida.salida_id}</span>
@@ -46,8 +66,6 @@ const SalidaViewModal = ({ salida, onClose }) => {
                 </div>
 
                 <div className={styles.body}>
-
-                    {/* Técnico */}
                     <div className={styles.section}>
                         <p className={styles.sectionLabel}><FiUser /> Técnico Solicitante</p>
                         <div className={styles.userRow}>
@@ -59,7 +77,6 @@ const SalidaViewModal = ({ salida, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Ticket */}
                     <div className={styles.section}>
                         <p className={styles.sectionLabel}><LuTicket /> Ticket Relacionado</p>
                         <div className={styles.infoCard}>
@@ -69,7 +86,6 @@ const SalidaViewModal = ({ salida, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Destino + Fecha + Hora */}
                     <div className={styles.detailGrid}>
                         <div className={styles.detailItem}>
                             <p className={styles.sectionLabel}><FiMapPin /> Destino</p>
@@ -89,7 +105,6 @@ const SalidaViewModal = ({ salida, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Procesada por */}
                     {salida.approvedBy?.nombre_completo && (
                         <div className={styles.section}>
                             <p className={styles.sectionLabel}>
@@ -99,7 +114,6 @@ const SalidaViewModal = ({ salida, onClose }) => {
                         </div>
                     )}
 
-                    {/* Razón de rechazo */}
                     {salida.salida_status === 2 && salida.rejection_reason && (
                         <div className={styles.rejectionBox}>
                             <p className={styles.rejectionTitle}><FiAlertCircle /> Razón del rechazo</p>

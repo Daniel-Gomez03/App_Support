@@ -1,3 +1,30 @@
+// ============================================
+// STYLES: ADD WARRANTY MODAL (Garantías)
+// Modal de creación/edición de garantías.
+//
+// ESTRUCTURA:
+//   .modalOverlay        — backdrop fixed + blur
+//     .modalContent      — tarjeta centrada max-w:500px
+//       .modalHeader     — título con ícono + closeBtn
+//       .modalBody       — alterna entre dos vistas:
+//         .form          — formulario de 3 campos
+//           .formGrid    — grilla de 1 columna
+//           .modalActions — botón de submit full-width
+//         .confirmationWrapper — pantalla de confirm
+//           .iconCircle        — círculo con icono alerta
+//           .confirmButtons    — Revisar | Confirmar
+//
+// FONTS: <button> e <input> no heredan font-family
+//   del overlay → se declara explícitamente en cada
+//   uno. Dentro de .confirmButtons, el selector
+//   genérico `button {}` cubre todos los hijos, por
+//   lo que .btnSecondary y .btnPrimary no repiten
+//   la declaración.
+//
+// ANIMACIONES: scaleUp (apertura modal),
+//   fadeIn (transición a confirmación), spin (loader).
+// ============================================
+
 @import '../../../less/main.less';
 
 .modalOverlay {
@@ -230,7 +257,6 @@
                         background: white;
                         border: 1px solid #ddd;
                         color: #666;
-                        font-family: @font-family;
 
                         &:hover {
                             background: #f5f5f5;
@@ -245,7 +271,6 @@
                         align-items: center;
                         justify-content: center;
                         gap: 8px;
-                        font-family: @font-family;
 
                         &:hover {
                             background: darken(#43633b, 5%);

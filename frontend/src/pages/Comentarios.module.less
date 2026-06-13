@@ -1,3 +1,24 @@
+// ============================================
+// STYLES: COMENTARIOS
+// Página de historial de reseñas y puntuaciones.
+//
+// ESTRUCTURA:
+//   .header          — título y subtítulo
+//   .controlsWrapper — barra de búsqueda + botón filtro
+//   .statsRow        — cuatro tarjetas de métricas
+//   .gridContainer   — área de contenido (ComentariosGrid)
+//
+// .statsRow usa repeat(4, 1fr) en desktop; colapsa
+//   a repeat(2, 1fr) a partir del breakpoint desktop
+//   (tablet queda cubierto por esa misma regla).
+//
+// .loadingState y .errorInfo comparten padding y
+//   centrado en selector múltiple.
+//
+// .filterBtn.activeFilter cambia el color del icono
+//   a @tertiary-color para señalar filtros activos.
+// ============================================
+
 @import '../less/main.less';
 
 .comentariosContainer {
@@ -140,11 +161,8 @@
         grid-template-columns: repeat(4, 1fr);
         gap: 16px;
 
+        // tablet queda cubierto por esta misma regla (tablet < desktop).
         @media(max-width: #breaks[desktop]) {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        @media(max-width: #breaks[tablet]) {
             grid-template-columns: repeat(2, 1fr);
         }
 
@@ -181,6 +199,7 @@
 
     .gridContainer {
 
+        // Base compartida; .errorInfo solo aparece cuando canRead = false.
         .loadingState,
         .errorInfo {
             padding: 60px;

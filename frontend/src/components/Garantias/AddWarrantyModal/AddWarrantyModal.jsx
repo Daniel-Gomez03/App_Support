@@ -1,16 +1,39 @@
+// ============================================
+// COMPONENT: ADD WARRANTY MODAL (Garantías)
+// Modal de creación y edición de garantías.
+// Flujo de dos pasos: formulario → confirmación.
+//
+// PROPS:
+//   isOpen   — controla visibilidad del modal
+//   onClose  — cierra sin guardar
+//   onSave   — fn(id, formData); id=null → crear,
+//              id=warranty_id → actualizar
+//   warranty — objeto de garantía para edición;
+//              null → modo creación
+//
+// VALIDACIÓN (isFormValid):
+//   serial  ≥ 16 chars, factura ≥ 4 chars,
+//   fecha entre 2020-01-01 y hoy.
+//
+// El campo fecha normaliza el valor del API
+//   (ISO 'T' o espacio como separador) tomando
+//   solo la parte YYYY-MM-DD.
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import { LuX, LuSave, LuShieldCheck, LuCircleAlert, LuLoaderCircle } from 'react-icons/lu';
 import styles from './AddWarrantyModal.module.less';
 
+const today = new Date().toLocaleDateString('en-CA');
+
+const EMPTY_FORM = {
+    warranty_serial_number: '',
+    warranty_invoice_number: '',
+    warranty_purchase_date: '',
+};
+
 const AddWarrantyModal = ({ isOpen, onClose, onSave, warranty }) => {
-    const today = new Date().toLocaleDateString('en-CA');
-
-    const [formData, setFormData] = useState({
-        warranty_serial_number: '',
-        warranty_invoice_number: '',
-        warranty_purchase_date: '',
-    });
-
+    const [formData, setFormData] = useState(EMPTY_FORM);
     const [showConfirm, setShowConfirm] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,11 +49,7 @@ const AddWarrantyModal = ({ isOpen, onClose, onSave, warranty }) => {
                 warranty_purchase_date: cleanDate,
             });
         } else {
-            setFormData({
-                warranty_serial_number: '',
-                warranty_invoice_number: '',
-                warranty_purchase_date: '',
-            });
+            setFormData(EMPTY_FORM);
         }
         setShowConfirm(false);
     }, [warranty, isOpen]);
@@ -55,7 +74,7 @@ const AddWarrantyModal = ({ isOpen, onClose, onSave, warranty }) => {
     const handleConfirmSave = async () => {
         setIsSubmitting(true);
         try {
-            await onSave(warranty?.warranty_id || null, formData);
+            await onSave(warranty?.warranty_id ?? null, formData);
             setShowConfirm(false);
         } catch (error) {
             console.error(error);

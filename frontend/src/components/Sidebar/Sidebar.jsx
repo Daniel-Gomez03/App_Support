@@ -1,3 +1,31 @@
+// ============================================
+// COMPONENT: SIDEBAR
+// Menú de navegación lateral del layout principal.
+// Se muestra como overlay en móvil (position fixed) y como
+// columna fija de 256px en desktop.
+//
+// PROPS:
+//   isOpen        — booleano; si false se aplica .closed (traslada el sidebar fuera de la vista)
+//   toggleSidebar — fn(); abre/cierra el sidebar
+//
+// ESTADO:
+//   isTicketsOpen — controla el submenú de Tickets; se abre automáticamente
+//     si la ruta actual incluye '/tickets/' (useEffect sobre location.pathname)
+//
+// ACCESO POR PERMISOS:
+//   canRead(moduleName) — consulta user.Permissions para determinar si el usuario
+//     tiene permissions_read === 1 en el módulo dado. Cada ítem del menú se
+//     renderiza condicionalmente según este check.
+//
+// BADGES:
+//   unassignedCount — contador de tickets sin asignar (TicketContext); badge en "Asignar Tickets"
+//   activeCount     — contador de tickets activos (TicketContext); badge en "Tickets Activos"
+//
+// AVATAR:
+//   onError en la img oculta la imagen rota via DOM y muestra el fallback de inicial,
+//   sin estado React adicional (mismo patrón que UsersTable y UserViewModal).
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import logoImg from '../../assets/imgs/v199_29.png';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -29,11 +57,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
     const canRead = (moduleName) => {
         if (!user || !user.Permissions) return false;
-
-        const perm = user.Permissions.find(p =>
-            p.Seccion?.module_name === moduleName
-        );
-
+        const perm = user.Permissions.find(p => p.Seccion?.module_name === moduleName);
         return perm && perm.permissions_read === 1;
     };
 
@@ -42,7 +66,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             setIsTicketsOpen(true);
         }
     }, [location.pathname]);
-
 
     return (
         <>
@@ -57,7 +80,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 <nav className={styles.nav}>
                     <ul className={styles.menuList}>
 
-                        {/* DASHBOARD */}
                         {canRead('Dashboard') && (
                             <li className={`${styles.menuItem} ${isActive('/') ? styles.active : ''}`} onClick={() => navigate('/')}>
                                 <img src={dashboardIcon} alt="Dashboard" className={styles.icon} />
@@ -65,12 +87,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                             </li>
                         )}
 
-                        {/* GRUPO TICKETS */}
                         {(canRead('Crear Ticket') || canRead('Asignar Tickets') || canRead('Tickets Activos')) && (
                             <li className={`${styles.menuGroup} ${isTicketsOpen ? styles.groupOpen : ''}`}>
                                 <div
                                     className={styles.menuHeader}
-                                    onClick={() => setIsTicketsOpen(!isTicketsOpen)}
+                                    onClick={() => setIsTicketsOpen(prev => !prev)}
                                 >
                                     <div className={styles.leftContent}>
                                         <img src={ticketIcon} alt="Tickets" className={styles.icon} />
@@ -85,7 +106,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
                                 <ul className={`${styles.subMenu} ${isTicketsOpen ? styles.show : ''}`}>
 
-                                    {/* 1. CREAR TICKET */}
                                     {canRead('Crear Ticket') && (
                                         <li className={`${styles.subItem} ${isActive('/tickets/createTicket') ? styles.active : ''}`} onClick={() => navigate('/tickets/createTicket')}>
                                             <div className={styles.subItemContent}>
@@ -95,7 +115,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                         </li>
                                     )}
 
-                                    {/* 2. ASIGNAR TICKETS */}
                                     {canRead('Asignar Tickets') && (
                                         <li className={`${styles.subItem} ${isActive('/tickets/assignedTicket') ? styles.active : ''}`} onClick={() => navigate('/tickets/assignedTicket')}>
                                             <div className={styles.spaceBetween}>
@@ -110,7 +129,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                         </li>
                                     )}
 
-                                    {/* 3. TICKETS ACTIVOS */}
                                     {canRead('Tickets Activos') && (
                                         <li className={`${styles.subItem} ${isActive('/tickets/activeTicket') ? styles.active : ''}`} onClick={() => navigate('/tickets/activeTicket')}>
                                             <div className={styles.spaceBetween}>
@@ -141,7 +159,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                         )}
 
                         {canRead('Usuarios') && (
-                            <li className={`${styles.menuItem} ${isActive('/users') ? styles.active : ''}`} onClick={() => navigate('/users')} >
+                            <li className={`${styles.menuItem} ${isActive('/users') ? styles.active : ''}`} onClick={() => navigate('/users')}>
                                 <img src={usersIcon} alt="Usuarios" className={styles.icon} />
                                 <span className={styles.text}>Usuarios</span>
                             </li>

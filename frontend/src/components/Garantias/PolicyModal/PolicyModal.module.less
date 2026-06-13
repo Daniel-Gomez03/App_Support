@@ -1,3 +1,34 @@
+// ============================================
+// STYLES: POLICY MODAL (Garantías)
+// Modal de visualización y edición de la política
+// de garantía vigente.
+//
+// ESTRUCTURA:
+//   .modalOverlay    — backdrop fixed + blur
+//     .modalContent  — tarjeta max-w:600px + max-h:88vh
+//   .modalHeader     — título con ícono+wrap + closeBtn
+//   .modalBody       — scrollable; alterna entre:
+//     .policyView    — lectura: secciones + ítems
+//       .section > .sectionTitle + .item (.itemKey + .itemText)
+//     .editForm      — edición: metaRow + secciones
+//       .metaRow     — grilla 2 cols (versión, etiqueta)
+//       .editSection > .editSectionTitle + .editItem (label + textarea)
+//   .modalFooter     — acciones; el selector genérico
+//                      `button {}` cubre .editBtn,
+//                      .cancelBtn y .saveBtn (no repiten
+//                      font-family ni padding base).
+//                      .editBtn sobreescribe padding/radius/
+//                      size para actuar como CTA full-width.
+//
+// NOTA: .modalHeader, .modalBody y .modalFooter están
+//   a nivel raíz del módulo (no anidados dentro de
+//   .modalContent) — con CSS Modules los nombres son
+//   únicos de todas formas; el selector de LESS solo
+//   afectaría a los descendant-selectors generados.
+//
+// ANIMACIONES: scaleUp (apertura), spin (loader).
+// ============================================
+
 @import '../../../less/main.less';
 
 .modalOverlay {

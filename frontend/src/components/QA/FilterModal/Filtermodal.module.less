@@ -1,4 +1,47 @@
+// ============================================
+// STYLES: FILTER MODAL
+// Panel de filtros para la lista de FAQs.
+//
+// ESTRUCTURA:
+//   .filterOverlay  — fondo fijo con blur; en tablet ancla
+//                     el modal al borde inferior (flex-end)
+//   .filterModal    — tarjeta centrada con position:relative
+//                     (needed: .closeBtn es absolute dentro);
+//                     slideUp en desktop, slideUpBottom en tablet
+//     .modalHeader  — título + subtítulo (padding-right reserva
+//                     espacio para el .closeBtn absoluto)
+//   .closeBtn       — botón circular absolute (top/right 24px)
+//   .divider        — separador horizontal entre grupos de filtros
+//   .filterGroup    — label + select en cascada (deshabilitado si
+//                     el nivel superior está vacío)
+//   .filterActions  — fila de botones; .resetBtn y .applyBtn
+//                     comparten base (combinado); cada uno solo
+//                     declara lo que difiere
+// ============================================
+
 @import "../../../less/main.less";
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideUpBottom {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
 
 .filterOverlay {
     position: fixed;
@@ -39,28 +82,6 @@
         animation: slideUpBottom 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     }
 
-    @keyframes slideUp {
-        from {
-            transform: translateY(30px);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-
-    @keyframes slideUpBottom {
-        from {
-            transform: translateY(100%);
-        }
-
-        to {
-            transform: translateY(0);
-        }
-    }
-
     .modalHeader {
         margin-bottom: 24px;
         padding-right: 40px;
@@ -82,6 +103,35 @@
             color: #666666;
             font-weight: 400;
         }
+    }
+}
+
+.closeBtn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: fade(@secondary-color, 30%);
+    border: none;
+    font-size: 20px;
+    color: darken(@secondary-color, 50%);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+
+    @media (max-width: #breaks[tablet]) {
+        top: 20px;
+        right: 20px;
+    }
+
+    &:hover {
+        background-color: #fee2e2;
+        color: #dc2626;
+        transform: rotate(90deg);
     }
 }
 
@@ -209,34 +259,5 @@
 
     &:active:not(:disabled) {
         transform: translateY(0);
-    }
-}
-
-.closeBtn {
-    position: absolute;
-    top: 24px;
-    right: 24px;
-    background: fade(@secondary-color, 30%);
-    border: none;
-    font-size: 20px;
-    color: darken(@secondary-color, 50%);
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-
-    @media (max-width: #breaks[tablet]) {
-        top: 20px;
-        right: 20px;
-    }
-
-    &:hover {
-        background-color: #fee2e2;
-        color: #dc2626;
-        transform: rotate(90deg);
     }
 }
