@@ -1,0 +1,399 @@
+// ============================================
+// STYLES: ACTIVE TICKET
+// Tablero kanban de 10 columnas con scroll
+// horizontal. El toast de notificación está
+// fuera del contenedor principal porque usa
+// position: fixed y necesita estar en el
+// flujo raíz para no quedar recortado por
+// overflow de un padre.
+// ============================================
+
+@import "../less/main.less";
+
+.activeTicketContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+    background-color: @background-color;
+    min-height: calc(100vh - 100px);
+    border-radius: 30px;
+    font-family: @font-family;
+
+    @media(max-width: #breaks[tablet]) {
+        padding: 16px;
+        gap: 16px;
+        border-radius: 20px;
+    }
+
+    .pageHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        @media(max-width: #breaks[desktop]) {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .headerLeft {
+            .title {
+                margin: 0 0 4px 0;
+                font-size: 28px;
+                font-weight: 700;
+                color: @quaternary-color;
+                line-height: 1.2;
+
+                @media(max-width: #breaks[tablet]) {
+                    font-size: 22px;
+                }
+            }
+
+            .subtitle {
+                margin: 0;
+                font-size: 14px;
+                color: darken(@secondary-color, 40%);
+                font-weight: 400;
+            }
+        }
+
+        .filtersBar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+
+            @media(max-width: #breaks[desktop]) {
+                width: 100%;
+            }
+
+            .filterLabel {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 13px;
+                font-weight: 600;
+                color: darken(@secondary-color, 50%);
+
+                svg {
+                    font-size: 14px;
+                }
+            }
+
+            .filterGroup {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                background: #f9fafb;
+                border: 1px solid fade(darken(@secondary-color, 20%), 30%);
+                border-radius: 20px;
+                padding: 6px 12px;
+                transition: border-color 0.2s;
+
+                // Feedback visual cuando el select/input interior recibe foco.
+                &:focus-within {
+                    border-color: fade(@quaternary-color, 40%);
+                    background: #ffffff;
+                }
+
+                .filterIcon {
+                    font-size: 14px;
+                    color: darken(@secondary-color, 40%);
+                    flex-shrink: 0;
+                }
+
+                .filterSelect,
+                .filterDate {
+                    border: none;
+                    background: transparent;
+                    font-size: 13px;
+                    font-family: @font-family;
+                    color: darken(@secondary-color, 50%);
+                    font-weight: 500;
+                    outline: none;
+                    cursor: pointer;
+                    min-width: 80px;
+
+                    &::-webkit-calendar-picker-indicator {
+                        opacity: 0.5;
+                        cursor: pointer;
+                    }
+                }
+            }
+
+            .clearFilters {
+                background: none;
+                border: none;
+                font-size: 13px;
+                font-weight: 600;
+                color: #dc2626;
+                cursor: pointer;
+                padding: 6px 4px;
+                font-family: @font-family;
+                text-decoration: underline;
+                text-underline-offset: 2px;
+
+                &:hover {
+                    color: darken(#dc2626, 10%);
+                }
+            }
+        }
+    }
+
+    // overflow-x: auto habilita el scroll horizontal del tablero.
+    // El scrollbar personalizado lo hace discreto sin ocultarlo.
+    .boardWrapper {
+        overflow-x: auto;
+        flex: 1;
+        padding-bottom: 8px;
+
+        &::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: fade(darken(@secondary-color, 30%), 40%);
+            border-radius: 3px;
+        }
+    }
+
+    .boardLayout {
+        display: grid;
+        gap: 16px;
+        // 1800px garantiza que las 10 columnas tengan ancho mínimo
+        // razonable sin colapsar; el boardWrapper se encarga del scroll.
+        min-width: 1800px;
+        // start evita que columnas cortas se estiren para igualar
+        // la altura de la columna más larga del tablero.
+        align-items: start;
+
+        .columnContainer {
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            padding: 16px;
+            background-color: #f9fafb;
+            border: 1px solid fade(darken(@secondary-color, 20%), 25%);
+            min-height: 480px;
+
+            .columnHeader {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 16px;
+
+                h3 {
+                    margin: 0;
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: #111827;
+                    flex: 1;
+                }
+
+                // flex-shrink: 0 en dot y badge evita que se aplasten
+                // cuando el nombre del estado ocupa todo el espacio.
+                .dot {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    flex-shrink: 0;
+                }
+
+                .dotNuevo {
+                    background-color: #6b7280;
+                }
+
+                .dotRevision {
+                    background-color: #8b5cf6;
+                }
+
+                .dotPorAsignar {
+                    background-color: #3b82f6;
+                }
+
+                .dotAsignado {
+                    background-color: #06b6d4;
+                }
+
+                .dotEnProceso {
+                    background-color: #f59e0b;
+                }
+
+                .dotPendiente {
+                    background-color: #f97316;
+                }
+
+                .dotEscalado {
+                    background-color: #ef4444;
+                }
+
+                .dotSolCancel {
+                    background-color: #ec4899;
+                }
+
+                .dotFinalizado {
+                    background-color: #16a34a;
+                }
+
+                .dotCancelado {
+                    background-color: #374151;
+                }
+
+                .countBadge {
+                    background: fade(@secondary-color, 60%);
+                    color: darken(@secondary-color, 50%);
+                    padding: 2px 8px;
+                    border-radius: 12px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    flex-shrink: 0;
+                }
+            }
+
+            .columnBody {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                flex: 1;
+
+                .emptyState {
+                    text-align: center;
+                    padding: 40px 16px;
+                    color: #d1d5db;
+                    font-size: 13px;
+                    font-style: italic;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 150px;
+                }
+            }
+        }
+    }
+
+    .errorInfo {
+        text-align: center;
+        padding: 60px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        background-color: #fef2f2;
+        border: 1px solid #fca5a5;
+        color: #dc2626;
+        border-radius: 20px;
+        min-height: 200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
+
+// Toast fuera de .activeTicketContainer para que position: fixed
+// tome como referencia el viewport y no quede atrapado en un
+// contexto de apilamiento creado por el contenedor padre.
+// z-index: 2000 asegura que aparezca sobre cualquier modal abierto.
+.successToast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: #F0FDF4;
+    border: 1px solid #DCFCE7;
+    padding: 16px 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    z-index: 2000;
+    max-width: 400px;
+    animation: toastSlideIn 0.4s ease;
+
+    &.errorToast {
+        background-color: #fef2f2;
+        border-color: #fecaca;
+
+        .toastIcon {
+            background-color: #dc2626;
+        }
+
+        .toastContent {
+            h4 {
+                color: #991b1b;
+            }
+
+            p {
+                color: #b91c1c;
+            }
+        }
+    }
+
+    .toastIcon {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        background-color: #16A34A;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+    }
+
+    .toastContent {
+        flex: 1;
+
+        h4 {
+            margin: 0;
+            color: #166534;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        p {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            color: #15803D;
+            font-weight: 500;
+        }
+    }
+
+    .toastClose {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 20px;
+        padding: 0;
+
+        &:hover {
+            color: #64748b;
+        }
+    }
+
+    // En móvil el toast pasa a la parte inferior para mejor
+    // accesibilidad con el pulgar y no tapar el contenido.
+    @media (max-width: #breaks[tablet]) {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        max-width: none;
+    }
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

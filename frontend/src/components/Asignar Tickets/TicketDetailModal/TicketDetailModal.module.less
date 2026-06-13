@@ -1,0 +1,534 @@
+// ============================================
+// STYLES: TICKET DETAIL MODAL (Asignar Tickets)
+// Modal de revisión de ticket con scroll interno
+// en el cuerpo y footer fijo con botones de acción.
+//
+// ESTRUCTURA:
+//   .modalHeader  — título + botón cerrar (fijo)
+//   .modalBody    — secciones con scroll (overflow-y: auto)
+//   .modalFooter  — zona de acción / confirmación (fijo)
+//
+// .modalContent usa overflow: hidden para que
+//   border-radius recorte el header y el footer, y
+//   position: relative como ancla del lightbox.
+//
+// .imageOverlay (lightbox) usa z-index: 3000 para
+//   aparecer por encima del overlay del modal (1100).
+//
+// .badge: clase base con variantes de color mediante
+//   &.categoryBadge / &.productBadge / etc.
+//
+// .questionIcon y .dangerIcon comparten tamaño base
+//   en selector múltiple; el color los diferencia.
+//
+// La base del selector button dentro de .modalFooter
+//   define display/flex/gap compartidos; las variantes
+//   solo sobreescriben color y background.
+// ============================================
+
+@import "../../../less/main.less";
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: fade(#111827, 65%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+    padding: 20px;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+// overflow: hidden recorta el border-radius sobre header y footer;
+// position: relative ancla el lightbox (.imageOverlay) al modal.
+.modalContent {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 800px;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    position: relative;
+
+    @media(max-width: #breaks[tablet]) {
+        border-radius: 20px;
+        max-height: 95vh;
+    }
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid fade(@secondary-color, 15%);
+    background-color: #ffffff;
+
+    .headerLeft {
+        h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 800;
+            color: @quaternary-color;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+
+            .headerIcon {
+                font-size: 20px;
+                color: @quaternary-color;
+                opacity: 0.8;
+            }
+        }
+    }
+
+    .closeBtn {
+        background: fade(@secondary-color, 10%);
+        border: none;
+        color: darken(@secondary-color, 40%);
+        font-size: 20px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        display: flex;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background-color: #fee2e2;
+            color: #ef4444;
+            transform: rotate(90deg);
+        }
+    }
+}
+
+.modalBody {
+    padding: 24px;
+    overflow-y: auto;
+    flex-grow: 1;
+    background-color: #ffffff;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: fade(@secondary-color, 20%);
+        border-radius: 10px;
+    }
+
+    .section {
+        margin-bottom: 28px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        .sectionTitle {
+            font-size: 12px;
+            font-weight: 800;
+            color: darken(@secondary-color, 35%);
+            margin: 0 0 16px 0;
+            border-bottom: 2px solid fade(@secondary-color, 10%);
+            padding-bottom: 6px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+    }
+
+    .infoGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+
+        @media(max-width: #breaks[tablet]) {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .infoGroup {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+
+            .label {
+                font-size: 12px;
+                font-weight: 600;
+                color: #6b7280;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                svg {
+                    font-size: 14px;
+                    color: darken(@secondary-color, 20%);
+                }
+            }
+
+            .value {
+                font-size: 14px;
+                font-weight: 700;
+                color: #111827;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 0;
+                overflow: hidden;
+
+                svg {
+                    flex-shrink: 0;
+                }
+
+                .flagIcon {
+                    font-size: 16px;
+                    border-radius: 3px;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                    flex-shrink: 0;
+                }
+
+                .valueText {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    min-width: 0;
+                }
+            }
+        }
+    }
+
+    .serialGroup {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        width: fit-content;
+
+        svg {
+            font-size: 14px;
+        }
+
+        &.categoryBadge {
+            background-color: #f3e8ff;
+            color: #7e22ce;
+        }
+
+        &.productBadge {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+
+        &.modelBadge {
+            background-color: #ffedd5;
+            color: #c2410c;
+        }
+
+        &.warrantyOkBadge {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        &.warrantyWarnBadge {
+            background: #fffbeb;
+            color: #d97706;
+        }
+
+        &.warrantyExpiredBadge {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+    }
+
+    .problemBox {
+        background-color: #f9fafb;
+        border: 1px solid fade(@secondary-color, 15%);
+        border-radius: 16px;
+        padding: 20px;
+
+        .problemSubject {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: 800;
+            color: @quaternary-color;
+        }
+
+        .problemDescription {
+            margin: 0;
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+    }
+
+    .miniGallery {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f9fafb;
+        padding: 8px;
+        border-radius: 12px;
+
+        .navIcon {
+            color: #9ca3af;
+            font-size: 18px;
+            cursor: pointer;
+
+            &:hover {
+                color: @quaternary-color;
+            }
+        }
+
+        .imgWrapper {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            overflow: hidden;
+
+            .evidenceImage {
+                width: calc(33.33% - 6px);
+                height: 60px;
+                object-fit: cover;
+                border-radius: 8px;
+                cursor: pointer;
+                border: 1px solid #e5e7eb;
+                transition: all 0.2s;
+
+                &:hover {
+                    transform: scale(1.05);
+                    border-color: @quaternary-color;
+                }
+            }
+        }
+    }
+}
+
+.modalFooter {
+    padding: 20px 24px;
+    background-color: #f9fafb;
+    border-top: 1px solid fade(@secondary-color, 15%);
+
+    @media(max-width: #breaks[tablet]) {
+        padding: 16px;
+    }
+
+    .actionZone {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+
+        @media(max-width: #breaks[tablet]) {
+            flex-direction: column;
+
+            button {
+                width: 100%;
+            }
+        }
+    }
+
+    .confirmZone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+
+        // Base compartida; el color diferencia advance (azul) de close (rojo).
+        .questionIcon,
+        .dangerIcon {
+            font-size: 36px;
+            margin-bottom: 4px;
+        }
+
+        .questionIcon {
+            color: #2563eb;
+        }
+
+        .dangerIcon {
+            color: #ef4444;
+        }
+
+        .warningText {
+            font-size: 15px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .confirmBtns {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            justify-content: center;
+
+            @media(max-width: #breaks[tablet]) {
+                flex-direction: column-reverse;
+            }
+        }
+    }
+
+    button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        &:hover {
+            transform: translateY(-1px);
+        }
+    }
+
+    .successBtn {
+        background-color: @tertiary-color;
+        color: white;
+
+        &:hover {
+            background-color: darken(@tertiary-color, 5%);
+        }
+    }
+
+    .dangerBtn {
+        background-color: #ef4444;
+        color: white;
+
+        &:hover {
+            background-color: #dc2626;
+        }
+    }
+
+    .dangerOutlineBtn {
+        background-color: transparent;
+        border: 1px solid #fca5a5;
+        color: #ef4444;
+
+        &:hover {
+            background-color: #fef2f2;
+            border-color: #ef4444;
+        }
+    }
+
+    .cancelBtn {
+        background-color: #e5e7eb;
+        color: #374151;
+
+        &:hover {
+            background-color: #d1d5db;
+        }
+    }
+
+    .manageBtn {
+        background-color: @quaternary-color;
+        color: white;
+
+        &:hover {
+            background-color: darken(@quaternary-color, 5%);
+        }
+    }
+}
+
+// z-index: 3000 supera el overlay del modal (1100) para cubrir
+// toda la pantalla al ampliar una evidencia.
+.imageOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    cursor: zoom-out;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+
+    .largeImage {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease;
+    }
+
+    .closeLightbox {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 20px;
+        cursor: pointer;
+        color: #111827;
+
+        &:hover {
+            color: #ef4444;
+            transform: scale(1.1);
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}

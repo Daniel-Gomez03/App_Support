@@ -1,0 +1,238 @@
+// ============================================
+// STYLES: WARRANTY FILTER MODAL (Garantías)
+// Modal de filtrado por vigencia de garantía.
+//
+// ESTRUCTURA:
+//   .modalOverlay    — backdrop fixed + blur; z-index:2500
+//                      (más alto que otros modales)
+//     .modalContent  — tarjeta max-w:420px
+//       .modalHeader — título con ícono + closeBtn
+//       .modalBody   — lista de opciones de filtro
+//         .filterSection > .sectionLabel + .filterOptions
+//           .optionBtn  — botón de opción tipo radio
+//             .radioCircle  — círculo custom animado;
+//               ::after escala de 0→1 al activarse
+//             &.active — resalta opción seleccionada +
+//               activa la animación del radioCircle
+//       .modalFooter — fondo #f8fafc; botones reset/apply
+//         .resetBtn y .applyBtn comparten base (display,
+//           gap, padding, border-radius, font, transition);
+//           solo difieren en flex, colores y border.
+//
+// ANIMACIÓN: slideIn (apertura con translateY).
+// ============================================
+
+@import '../../../less/main.less';
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2500;
+    backdrop-filter: blur(4px);
+    padding: 20px;
+    font-family: @font-family;
+
+    .modalContent {
+        background-color: @background-color;
+        width: 100%;
+        max-width: 420px;
+        border-radius: 24px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.3s ease-out;
+
+        .modalHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid fade(@secondary-color, 50%);
+
+            .titleGroup {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                color: @quaternary-color;
+
+                .headerIcon {
+                    font-size: 20px;
+                    color: @tertiary-color;
+                }
+
+                h2 {
+                    margin: 0;
+                    font-size: 17px;
+                    font-weight: 600;
+                }
+            }
+
+            .closeBtn {
+                background: none;
+                border: none;
+                font-size: 22px;
+                color: #999;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                transition: color 0.2s;
+
+                &:hover {
+                    color: @quaternary-color;
+                }
+            }
+        }
+
+        .modalBody {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+
+            .filterSection {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+
+                .sectionLabel {
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: @quaternary-color;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .filterOptions {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+
+                    .optionBtn {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 12px 16px;
+                        background-color: #f8fafc;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 12px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        font-family: @font-family;
+                        font-size: 14px;
+                        color: #64748b;
+                        text-align: left;
+
+                        .radioCircle {
+                            width: 18px;
+                            height: 18px;
+                            border-radius: 50%;
+                            border: 2px solid #cbd5e1;
+                            background-color: white;
+                            position: relative;
+                            transition: all 0.2s ease;
+
+                            &::after {
+                                content: '';
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%) scale(0);
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 50%;
+                                background-color: white;
+                                transition: transform 0.2s ease;
+                            }
+                        }
+
+                        &:hover {
+                            background-color: #f1f5f9;
+                            border-color: #cbd5e1;
+                        }
+
+                        &.active {
+                            background-color: fade(@tertiary-color, 8%);
+                            border-color: @tertiary-color;
+                            color: @quaternary-color;
+                            font-weight: 600;
+
+                            .radioCircle {
+                                border-color: @tertiary-color;
+                                background-color: @tertiary-color;
+
+                                &::after {
+                                    transform: translate(-50%, -50%) scale(1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        .modalFooter {
+            padding: 20px 24px;
+            display: flex;
+            gap: 12px;
+            background-color: #f8fafc;
+
+            .resetBtn,
+            .applyBtn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                padding: 12px;
+                border-radius: 12px;
+                font-weight: 600;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s;
+                font-family: @font-family;
+            }
+
+            .resetBtn {
+                flex: 1;
+                background: white;
+                border: 1px solid #e2e8f0;
+                color: #64748b;
+
+                &:hover {
+                    background-color: #f1f5f9;
+                    color: @quaternary-color;
+                }
+            }
+
+            .applyBtn {
+                flex: 2;
+                background-color: @quaternary-color;
+                border: none;
+                color: white;
+
+                &:hover {
+                    background-color: @tertiary-color;
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px fade(@tertiary-color, 25%);
+                }
+            }
+        }
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

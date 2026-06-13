@@ -1,3 +1,24 @@
+// ============================================
+// STYLES: FEEDBACK (Dashboard)
+// Tarjeta lateral de opiniones de clientes.
+//
+// ESTRUCTURA:
+//   .feedbackCard       — contenedor flex-column
+//                         con height:100% en desktop
+//                         y auto en móvil
+//     .cardHeader       — título de la sección
+//     .listContainer    — lista scrollable de filas;
+//                         flex:1 + min-height:0
+//                         para que el scroll funcione
+//                         dentro del flex parent
+//       .userRow        — fila técnico: avatar +
+//                         nombre/reseñas a la izquierda,
+//                         estrellas + número a la derecha
+//       .emptyState     — mensaje cuando no hay datos
+//     .footer           — botón "Ver todos" anclado
+//                         al fondo con margin-top:auto
+// ============================================
+
 @import "../../../less/variables.less";
 
 .feedbackCard {
@@ -74,17 +95,42 @@
                     }
                 }
 
+                .userMeta {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+
                 .userName {
                     font-size: 14px;
                     font-weight: 600;
                     color: #111827;
                 }
+
+                .ratingCount {
+                    font-size: 11px;
+                    color: #9CA3AF;
+                    font-weight: 500;
+                }
             }
 
-            .stars {
+            .ratingArea {
                 display: flex;
-                align-items: center;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 3px;
                 flex-shrink: 0;
+
+                .stars {
+                    display: flex;
+                    align-items: center;
+                }
+
+                .ratingNum {
+                    font-size: 12px;
+                    font-weight: 700;
+                    color: #374151;
+                }
             }
         }
 

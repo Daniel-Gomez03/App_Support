@@ -1,5 +1,21 @@
-@import "../../../less/variables.less";
+// ============================================
+// STYLES: TABLES CASES (Dashboard)
+// Tabla paginada de casos por técnico.
+//
+// ESTRUCTURA:
+//   .tableCard      — contenedor con borde y sombra
+//     .cardHeader   — título + subtítulo de la sección
+//     .tableWrapper — scroll horizontal en pantallas
+//                     estrechas
+//
+// CELDAS:
+//   .userCell / .userName — columna de nombre de técnico
+//   .faded  — color gris claro para valor 0
+//   .badge  — pill coloreado (bg/color via inline
+//             style desde STATUS_STYLES en el .jsx)
+// ============================================
 
+@import "../../../less/variables.less";
 
 .userCell {
     display: flex;
@@ -15,12 +31,19 @@
 
 .faded {
     color: #E5E7EB;
+    font-weight: 600;
 }
 
-
-.boldNumber {
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 13px;
     font-weight: 700;
-    color: #111827;
+}
+
+.tableWrapper {
+    overflow-x: auto;
 }
 
 .emptyState {

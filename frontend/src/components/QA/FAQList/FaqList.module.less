@@ -1,5 +1,27 @@
+// ============================================
+// STYLES: FAQ LIST
+// Contenedor columna de FAQItems.
+//
+// ESTRUCTURA:
+//   .faqList — flex-column con gap entre tarjetas;
+//              en tablet reduce gap y añade padding lateral
+//
+// NOTA: &:empty::after eliminado — FAQList.jsx retorna null
+// cuando el array está vacío, por lo que .faqList nunca
+// existe sin hijos y el pseudo-elemento nunca se dispara.
+// ============================================
+
+@import "../../../less/main.less";
+
 .faqList {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    width: 100%;
+    padding-bottom: 40px;
+
+    @media (max-width: #breaks[tablet]) {
+        gap: 12px;
+        padding: 0 4px 30px 4px;
+    }
 }

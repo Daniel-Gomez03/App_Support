@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "TBOXSA Support",
+    "slug": "tboxsa-support",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/tboxsa-ico.png",
+    "scheme": "tboxsasupport",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tboxsa.support"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/tboxsa-ico.png",
+        "backgroundColor": "#0a1a0a"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.tboxsa.support"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/tboxsa-ico.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/Fonts/MICROGBE.ttf"
+          ]
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/tboxsa-ico.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0a1a0a",
+          "dark": {
+            "backgroundColor": "#0a1a0a"
+          }
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6704d004-df2a-4bc3-abcf-c4e5e4e37101"
+      }
+    }
+  }
+}
